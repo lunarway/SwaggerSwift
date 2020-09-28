@@ -1,11 +1,11 @@
-struct SwiftCodableStruct: SwiftType {
-    var description: String
-
-    let documentation: String?
-    let typeName: String
-    let properties: [SwiftProperty]
-    let conformance: [String]
-}
+//struct SwiftCodableStruct: SwiftType {
+//    var description: String
+//
+//    let documentation: String?
+//    let typeName: String
+//    let properties: [SwiftProperty]
+//    let conformance: [String]
+//}
 
 //func decoderOptionalDate(fieldName: String, indentationLevel: Int) -> String {
 //    let indentation = String(repeating: defaultSpacing, count: indentationLevel)

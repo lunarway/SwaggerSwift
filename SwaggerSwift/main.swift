@@ -31,30 +31,14 @@ for swagger in swaggers {
 
     let serviceDefinition = parse(swagger: swagger)
 
-    try! serviceDefinition.print().write(toFile: "\(serviceDirectory)/\(serviceDefinition.typeName).swift", atomically: true, encoding: .utf8)
+    try! serviceDefinition.toSwift()
+        .write(toFile: "\(serviceDirectory)/\(serviceDefinition.typeName).swift", atomically: true, encoding: .utf8)
 
     for type in serviceDefinition.innerTypes {
-        let file = type.print()
+        let file = type.toSwift()
         let prefix = swagger.serviceName.filter { !$0.unicodeScalars.map(CharacterSet.uppercaseLetters.contains).contains(false) }
         let filename = "\(modelDirectory)/\(prefix)\(type.typeName).swift"
         try! file.write(toFile: filename, atomically: true, encoding: .utf8)
         print("Wrote \(filename)")
-    }
-}
-
-extension ServiceDefinition: Printable {
-    func print() -> String {
-        return """
-import Foundation
-
-struct \(typeName) {
-    \(fields.map { "let \($0.name): \($0.typeName)" }.joined(separator: "\n    "))
-
-    \(self.functions
-        .sorted(by: { $0.functionName < $1.functionName })
-        .map { $0.print().replacingOccurrences(of: "\n", with: "\n    ") }
-        .joined(separator: "\n\n    "))
-}
-"""
     }
 }
