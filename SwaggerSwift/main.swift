@@ -15,13 +15,24 @@ enum ServiceError<ErrorType>: Error {
     case backendError(error: ErrorType)
 }
 """
+
+let urlQueryItemExtension = """
+import Foundation
+
+extension URLQueryItem {
+    init(name: String, value: Bool) {
+        self.init(name: name, value: value ? "true" : "false")
+    }
+}
+"""
+
 let path = "/Users/madsbogeskov/Developer/SwaggerFile.yml"
 let swaggers = try SwaggerFileParser.parse(path: path, authToken: "d9545c1fa435fccacbb5e6fd2339e38c6b3e7936")
 
 let sourceDirectory = try! createSwiftProject(at: "~/TestProject", named: "Services")
 
-let modelDirectory = "\(sourceDirectory)/Models"
 try! serviceError.write(toFile: "\(sourceDirectory)/ServiceError.swift", atomically: true, encoding: .utf8)
+try! urlQueryItemExtension.write(toFile: "\(sourceDirectory)/URLQueryExtension.swift", atomically: true, encoding: .utf8)
 
 for swagger in swaggers {
     let serviceDirectory = "\(sourceDirectory)/\(swagger.serviceName)"
