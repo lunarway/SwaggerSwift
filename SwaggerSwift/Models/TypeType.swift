@@ -100,7 +100,7 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
         return (.int, [])
     case .boolean:
         return (.boolean, [])
-    case .array(let items, collectionFormat: _, maxItems: _, minItems: let _, uniqueItems: _):
+    case .array(let items, _, _, _, _):
         let type = typeOfItems(items: items, typeNamePrefix: typeNamePrefix, swagger: swagger)
         return (.array(typeName: type.0), type.1)
     case .object(let properties, allOf: _):
@@ -145,15 +145,15 @@ private func typeOfItems(items: Node<Items>, typeNamePrefix: String, swagger: Sw
         }
     case .node(let node):
         switch node.type {
-        case .string(format: let format, enumValues: let enumValues, maxLength: let maxLength, minLength: let minLength, pattern: let pattern):
+        case .string(format: _, enumValues: _, maxLength: _, minLength: _, pattern: _):
             return (.string, [])
-        case .number(format: let format, maximum: let maximum, exclusiveMaximum: let exclusiveMaximum, minimum: let minimum, exclusiveMinimum: let exclusiveMinimum, multipleOf: let multipleOf):
+        case .number(format: _, maximum: _, exclusiveMaximum: _, minimum: _, exclusiveMinimum: _, multipleOf: _):
             return (.int, [])
-        case .integer(format: let format, maximum: let maximum, exclusiveMaximum: let exclusiveMaximum, minimum: let minimum, exclusiveMinimum: let exclusiveMinimum, multipleOf: let multipleOf):
+        case .integer(format: _, maximum: _, exclusiveMaximum: _, minimum: _, exclusiveMinimum: _, multipleOf: _):
             return (.int, [])
         case .boolean:
             return (.boolean, [])
-        case .array(let items, collectionFormat: let collectionFormat, maxItems: let maxItems, minItems: let minItems, uniqueItems: let uniqueItems):
+        case .array(let items, collectionFormat: _, maxItems: _, minItems: _, uniqueItems: _):
             return typeOfItems(items: Node.node(items), typeNamePrefix: typeNamePrefix, swagger: swagger)
         }
     }
