@@ -128,8 +128,8 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
                         let result = getType(forSchema: node, typeNamePrefix: typeNamePrefix, swagger: swagger)
                         return (nil, [], result.1)
                     }
-                case .node(let schema):
-                    if case let SchemaType.object(properties, allOf) = schema.type {
+                case .node(let innerSchema):
+                    if case let SchemaType.object(properties, allOf) = innerSchema.type {
                         assert(allOf == nil, "Not implemented")
                         let result: [(ModelField, [ModelDefinition])] = properties.map {
                             switch $0.value {
@@ -137,14 +137,14 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
                                 let node = swagger.findSchema(node: .reference(reference))
                                 let typeName = reference.components(separatedBy: "/").last ?? ""
                                 if case SchemaType.object = node.type {
-                                    return (ModelField(description: node.description, type: .object(typeName: typeName), name: $0.key, required: true), [])
+                                    return (ModelField(description: node.description, type: .object(typeName: typeName), name: $0.key, required: innerSchema.required.contains($0.key)), [])
                                 } else {
                                     let type = getType(forSchema: node, typeNamePrefix: typeName, swagger: swagger)
-                                    return (ModelField(description: node.description, type: type.0, name: $0.key, required: true), type.1)
+                                    return (ModelField(description: node.description, type: type.0, name: $0.key, required: innerSchema.required.contains($0.key)), type.1)
                                 }
                             case .node(let schema):
                                 let type = getType(forSchema: schema, typeNamePrefix: typeNamePrefix, swagger: swagger)
-                                return (ModelField(description: schema.description, type: type.0, name: $0.key, required: true), type.1)
+                                return (ModelField(description: schema.description, type: type.0, name: $0.key, required: innerSchema.required.contains($0.key)), type.1)
                             }
                         }
 
@@ -174,14 +174,14 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
                 let node = swagger.findSchema(node: .reference(reference))
                 let typeName = reference.components(separatedBy: "/").last ?? ""
                 if case SchemaType.object = node.type {
-                    return (ModelField(description: node.description, type: .object(typeName: typeName), name: $0.key, required: true), [])
+                    return (ModelField(description: node.description, type: .object(typeName: typeName), name: $0.key, required: schema.required.contains($0.key)), [])
                 } else {
                     let type = getType(forSchema: node, typeNamePrefix: typeName, swagger: swagger)
-                    return (ModelField(description: node.description, type: type.0, name: $0.key, required: true), type.1)
+                    return (ModelField(description: node.description, type: type.0, name: $0.key, required: schema.required.contains($0.key)), type.1)
                 }
-            case .node(let schema):
-                let type = getType(forSchema: schema, typeNamePrefix: "\(typeNamePrefix)Options", swagger: swagger)
-                return (ModelField(description: schema.description, type: type.0, name: $0.key, required: true), type.1)
+            case .node(let innerSchema):
+                let type = getType(forSchema: innerSchema, typeNamePrefix: "\(typeNamePrefix)Options", swagger: swagger)
+                return (ModelField(description: innerSchema.description, type: type.0, name: $0.key, required: schema.required.contains($0.key)), type.1)
             }
         }
 
@@ -192,8 +192,15 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
         inlineModels.append(.model(model))
 
         return (.object(typeName: typeNamePrefix), inlineModels)
-    case .dictionary(valueType: _, keys: _):
-        return (.string, [])
+    case .dictionary(valueType: let valueType, keys: _):
+        switch valueType {
+        case .any:
+            return (.object(typeName: "[String: Any]"), [])
+        case .reference(_):
+            fatalError("not supported")
+        case .schema(_):
+            fatalError("not supported")
+        }
     }
 }
 
