@@ -1,0 +1,505 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 52;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		450E216D24FAEEEB009EDD90 /* SwaggerFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450E216C24FAEEEB009EDD90 /* SwaggerFile.swift */; };
+		450E216F24FAEF1B009EDD90 /* Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450E216E24FAEF1B009EDD90 /* Service.swift */; };
+		450E217124FAEF3F009EDD90 /* SwaggerFileParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450E217024FAEF3F009EDD90 /* SwaggerFileParser.swift */; };
+		450E218724FC307D009EDD90 /* SchemaProperty+GetType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450E217424FC307C009EDD90 /* SchemaProperty+GetType.swift */; };
+		450E219024FC307D009EDD90 /* SwiftProperty.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450E218224FC307C009EDD90 /* SwiftProperty.swift */; };
+		450E219224FC307D009EDD90 /* SwiftMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450E218424FC307C009EDD90 /* SwiftMethod.swift */; };
+		450E219324FC307D009EDD90 /* SwiftCodableStruct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450E218524FC307C009EDD90 /* SwiftCodableStruct.swift */; };
+		450E219524FC33A4009EDD90 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450E217D24FC307C009EDD90 /* Constants.swift */; };
+		450EAEC2251BC4100064ABAA /* create_swift_package.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450EAEC1251BC40F0064ABAA /* create_swift_package.swift */; };
+		4546695B2523A9CE001C0BF3 /* Interface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4546695A2523A9CE001C0BF3 /* Interface.swift */; };
+		458A801E2521FFF900546F7E /* HttpStatusCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 458A801D2521FFF900546F7E /* HttpStatusCodes.swift */; };
+		458A802725220D0B00546F7E /* Swiftable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 458A802625220D0B00546F7E /* Swiftable.swift */; };
+		458A802A25220D9F00546F7E /* ModelDefinition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 458A802925220D9F00546F7E /* ModelDefinition.swift */; };
+		458A802D25220DB600546F7E /* Enumeration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 458A802C25220DB600546F7E /* Enumeration.swift */; };
+		458A803125220DF300546F7E /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 458A803025220DF300546F7E /* Model.swift */; };
+		458A803425220E2800546F7E /* ModelField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 458A803325220E2800546F7E /* ModelField.swift */; };
+		458A803725220E3500546F7E /* ServiceField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 458A803625220E3500546F7E /* ServiceField.swift */; };
+		458A803A25220E9A00546F7E /* NetworkRequestFunctionResponseType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 458A803925220E9A00546F7E /* NetworkRequestFunctionResponseType.swift */; };
+		459394C12513620E002B9341 /* String+Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 459394C02513620E002B9341 /* String+Utils.swift */; };
+		45B36E252514AE6D009CF73A /* Swagger+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45B36E242514AE6D009CF73A /* Swagger+Extensions.swift */; };
+		45C9CA7C24F8485D007D0BD1 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C9CA7B24F8485D007D0BD1 /* main.swift */; };
+		45C9CA8424F84904007D0BD1 /* SwaggerSwiftML in Frameworks */ = {isa = PBXBuildFile; productRef = 45C9CA8324F84904007D0BD1 /* SwaggerSwiftML */; };
+		45F06EBD2514D48300F9990B /* FunctionParameter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F06EBC2514D48300F9990B /* FunctionParameter.swift */; };
+		45F06EC12514D49C00F9990B /* NetworkRequestFunction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F06EC02514D49C00F9990B /* NetworkRequestFunction.swift */; };
+		45F06EC42514D4BC00F9990B /* TypeType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F06EC32514D4BC00F9990B /* TypeType.swift */; };
+		45F06EC82514DADA00F9990B /* ParameterType+ToString.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F06EC72514DADA00F9990B /* ParameterType+ToString.swift */; };
+		45F06ECB2514DAEF00F9990B /* DataFormat+ToString.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F06ECA2514DAEF00F9990B /* DataFormat+ToString.swift */; };
+		45F06ECF2514DF5F00F9990B /* parsePath.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F06ECE2514DF5F00F9990B /* parsePath.swift */; };
+		45F06ED32514DF7900F9990B /* parseOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F06ED22514DF7900F9990B /* parseOperation.swift */; };
+		45F06ED62514DF8C00F9990B /* getFunctionParameters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F06ED52514DF8C00F9990B /* getFunctionParameters.swift */; };
+		45F06ED92514DFCE00F9990B /* parseRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F06ED82514DFCE00F9990B /* parseRequest.swift */; };
+		45F06EDC2514E03400F9990B /* ServiceDefinition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F06EDB2514E03400F9990B /* ServiceDefinition.swift */; };
+		45F06EDF2514E26300F9990B /* parseSwagger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F06EDE2514E26300F9990B /* parseSwagger.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		45C9CA7624F8485D007D0BD1 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		450E216C24FAEEEB009EDD90 /* SwaggerFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwaggerFile.swift; sourceTree = "<group>"; };
+		450E216E24FAEF1B009EDD90 /* Service.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service.swift; sourceTree = "<group>"; };
+		450E217024FAEF3F009EDD90 /* SwaggerFileParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwaggerFileParser.swift; sourceTree = "<group>"; };
+		450E217424FC307C009EDD90 /* SchemaProperty+GetType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "SchemaProperty+GetType.swift"; sourceTree = "<group>"; };
+		450E217D24FC307C009EDD90 /* Constants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		450E218224FC307C009EDD90 /* SwiftProperty.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftProperty.swift; sourceTree = "<group>"; };
+		450E218424FC307C009EDD90 /* SwiftMethod.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftMethod.swift; sourceTree = "<group>"; };
+		450E218524FC307C009EDD90 /* SwiftCodableStruct.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftCodableStruct.swift; sourceTree = "<group>"; };
+		450EAEC1251BC40F0064ABAA /* create_swift_package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = create_swift_package.swift; sourceTree = "<group>"; };
+		4546695A2523A9CE001C0BF3 /* Interface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Interface.swift; sourceTree = "<group>"; };
+		458A801D2521FFF900546F7E /* HttpStatusCodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HttpStatusCodes.swift; sourceTree = "<group>"; };
+		458A802625220D0B00546F7E /* Swiftable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Swiftable.swift; sourceTree = "<group>"; };
+		458A802925220D9F00546F7E /* ModelDefinition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDefinition.swift; sourceTree = "<group>"; };
+		458A802C25220DB600546F7E /* Enumeration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Enumeration.swift; sourceTree = "<group>"; };
+		458A803025220DF300546F7E /* Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Model.swift; sourceTree = "<group>"; };
+		458A803325220E2800546F7E /* ModelField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelField.swift; sourceTree = "<group>"; };
+		458A803625220E3500546F7E /* ServiceField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceField.swift; sourceTree = "<group>"; };
+		458A803925220E9A00546F7E /* NetworkRequestFunctionResponseType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkRequestFunctionResponseType.swift; sourceTree = "<group>"; };
+		459394C02513620E002B9341 /* String+Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Utils.swift"; sourceTree = "<group>"; };
+		45B36E242514AE6D009CF73A /* Swagger+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Swagger+Extensions.swift"; sourceTree = "<group>"; };
+		45C9CA7824F8485D007D0BD1 /* SwaggerSwift */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SwaggerSwift; sourceTree = BUILT_PRODUCTS_DIR; };
+		45C9CA7B24F8485D007D0BD1 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		45F06EBC2514D48300F9990B /* FunctionParameter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FunctionParameter.swift; sourceTree = "<group>"; };
+		45F06EC02514D49C00F9990B /* NetworkRequestFunction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkRequestFunction.swift; sourceTree = "<group>"; };
+		45F06EC32514D4BC00F9990B /* TypeType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TypeType.swift; sourceTree = "<group>"; };
+		45F06EC72514DADA00F9990B /* ParameterType+ToString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ParameterType+ToString.swift"; sourceTree = "<group>"; };
+		45F06ECA2514DAEF00F9990B /* DataFormat+ToString.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DataFormat+ToString.swift"; sourceTree = "<group>"; };
+		45F06ECE2514DF5F00F9990B /* parsePath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = parsePath.swift; sourceTree = "<group>"; };
+		45F06ED22514DF7900F9990B /* parseOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = parseOperation.swift; sourceTree = "<group>"; };
+		45F06ED52514DF8C00F9990B /* getFunctionParameters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = getFunctionParameters.swift; sourceTree = "<group>"; };
+		45F06ED82514DFCE00F9990B /* parseRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = parseRequest.swift; sourceTree = "<group>"; };
+		45F06EDB2514E03400F9990B /* ServiceDefinition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceDefinition.swift; sourceTree = "<group>"; };
+		45F06EDE2514E26300F9990B /* parseSwagger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = parseSwagger.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		45C9CA7524F8485D007D0BD1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				45C9CA8424F84904007D0BD1 /* SwaggerSwiftML in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		450E216A24FAEED3009EDD90 /* SwaggerFileParser */ = {
+			isa = PBXGroup;
+			children = (
+				450E216B24FAEEDD009EDD90 /* Models */,
+				450E217024FAEF3F009EDD90 /* SwaggerFileParser.swift */,
+			);
+			path = SwaggerFileParser;
+			sourceTree = "<group>";
+		};
+		450E216B24FAEEDD009EDD90 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				450E216C24FAEEEB009EDD90 /* SwaggerFile.swift */,
+				450E216E24FAEF1B009EDD90 /* Service.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		450E217224FC305E009EDD90 /* SwaggerToSwift */ = {
+			isa = PBXGroup;
+			children = (
+				450E217324FC307C009EDD90 /* Extensions */,
+				450E218124FC307C009EDD90 /* Models */,
+			);
+			path = SwaggerToSwift;
+			sourceTree = "<group>";
+		};
+		450E217324FC307C009EDD90 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				450E217424FC307C009EDD90 /* SchemaProperty+GetType.swift */,
+				459394C02513620E002B9341 /* String+Utils.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		450E218124FC307C009EDD90 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				450E217D24FC307C009EDD90 /* Constants.swift */,
+				450E218224FC307C009EDD90 /* SwiftProperty.swift */,
+				450E218424FC307C009EDD90 /* SwiftMethod.swift */,
+				450E218524FC307C009EDD90 /* SwiftCodableStruct.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		450EAEC0251BC3E70064ABAA /* Swift Package */ = {
+			isa = PBXGroup;
+			children = (
+				450EAEC1251BC40F0064ABAA /* create_swift_package.swift */,
+			);
+			path = "Swift Package";
+			sourceTree = "<group>";
+		};
+		45C9CA6F24F8485D007D0BD1 = {
+			isa = PBXGroup;
+			children = (
+				45C9CA7A24F8485D007D0BD1 /* SwaggerSwift */,
+				45C9CA7924F8485D007D0BD1 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		45C9CA7924F8485D007D0BD1 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				45C9CA7824F8485D007D0BD1 /* SwaggerSwift */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		45C9CA7A24F8485D007D0BD1 /* SwaggerSwift */ = {
+			isa = PBXGroup;
+			children = (
+				450EAEC0251BC3E70064ABAA /* Swift Package */,
+				45F06ECD2514DF4900F9990B /* Utilities */,
+				45F06EBB2514D47800F9990B /* Models */,
+				450E217224FC305E009EDD90 /* SwaggerToSwift */,
+				450E216A24FAEED3009EDD90 /* SwaggerFileParser */,
+				45F06ECE2514DF5F00F9990B /* parsePath.swift */,
+				45F06ED22514DF7900F9990B /* parseOperation.swift */,
+				45F06ED52514DF8C00F9990B /* getFunctionParameters.swift */,
+				45F06ED82514DFCE00F9990B /* parseRequest.swift */,
+				45F06EDE2514E26300F9990B /* parseSwagger.swift */,
+				45C9CA7B24F8485D007D0BD1 /* main.swift */,
+			);
+			path = SwaggerSwift;
+			sourceTree = "<group>";
+		};
+		45F06EBB2514D47800F9990B /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				45F06EBC2514D48300F9990B /* FunctionParameter.swift */,
+				45F06EC02514D49C00F9990B /* NetworkRequestFunction.swift */,
+				458A803925220E9A00546F7E /* NetworkRequestFunctionResponseType.swift */,
+				45F06EC32514D4BC00F9990B /* TypeType.swift */,
+				45F06EDB2514E03400F9990B /* ServiceDefinition.swift */,
+				458A803625220E3500546F7E /* ServiceField.swift */,
+				458A803325220E2800546F7E /* ModelField.swift */,
+				458A803025220DF300546F7E /* Model.swift */,
+				4546695A2523A9CE001C0BF3 /* Interface.swift */,
+				458A802C25220DB600546F7E /* Enumeration.swift */,
+				458A802925220D9F00546F7E /* ModelDefinition.swift */,
+				458A802625220D0B00546F7E /* Swiftable.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		45F06ECD2514DF4900F9990B /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				45B36E242514AE6D009CF73A /* Swagger+Extensions.swift */,
+				45F06EC72514DADA00F9990B /* ParameterType+ToString.swift */,
+				45F06ECA2514DAEF00F9990B /* DataFormat+ToString.swift */,
+				458A801D2521FFF900546F7E /* HttpStatusCodes.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		45C9CA7724F8485D007D0BD1 /* SwaggerSwift */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 45C9CA7F24F8485D007D0BD1 /* Build configuration list for PBXNativeTarget "SwaggerSwift" */;
+			buildPhases = (
+				45C9CA7424F8485D007D0BD1 /* Sources */,
+				45C9CA7524F8485D007D0BD1 /* Frameworks */,
+				45C9CA7624F8485D007D0BD1 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SwaggerSwift;
+			packageProductDependencies = (
+				45C9CA8324F84904007D0BD1 /* SwaggerSwiftML */,
+			);
+			productName = SwaggerSwift;
+			productReference = 45C9CA7824F8485D007D0BD1 /* SwaggerSwift */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		45C9CA7024F8485D007D0BD1 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 1200;
+				LastUpgradeCheck = 1200;
+				TargetAttributes = {
+					45C9CA7724F8485D007D0BD1 = {
+						CreatedOnToolsVersion = 12.0;
+					};
+				};
+			};
+			buildConfigurationList = 45C9CA7324F8485D007D0BD1 /* Build configuration list for PBXProject "SwaggerSwift" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 45C9CA6F24F8485D007D0BD1;
+			packageReferences = (
+				45C9CA8224F84904007D0BD1 /* XCRemoteSwiftPackageReference "SwaggerSwiftML" */,
+			);
+			productRefGroup = 45C9CA7924F8485D007D0BD1 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				45C9CA7724F8485D007D0BD1 /* SwaggerSwift */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		45C9CA7424F8485D007D0BD1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				45F06ED62514DF8C00F9990B /* getFunctionParameters.swift in Sources */,
+				458A802725220D0B00546F7E /* Swiftable.swift in Sources */,
+				45B36E252514AE6D009CF73A /* Swagger+Extensions.swift in Sources */,
+				458A802D25220DB600546F7E /* Enumeration.swift in Sources */,
+				450E219524FC33A4009EDD90 /* Constants.swift in Sources */,
+				45F06EDC2514E03400F9990B /* ServiceDefinition.swift in Sources */,
+				450E216D24FAEEEB009EDD90 /* SwaggerFile.swift in Sources */,
+				458A803125220DF300546F7E /* Model.swift in Sources */,
+				45F06ECB2514DAEF00F9990B /* DataFormat+ToString.swift in Sources */,
+				458A801E2521FFF900546F7E /* HttpStatusCodes.swift in Sources */,
+				45F06ECF2514DF5F00F9990B /* parsePath.swift in Sources */,
+				450E218724FC307D009EDD90 /* SchemaProperty+GetType.swift in Sources */,
+				458A803425220E2800546F7E /* ModelField.swift in Sources */,
+				458A802A25220D9F00546F7E /* ModelDefinition.swift in Sources */,
+				450EAEC2251BC4100064ABAA /* create_swift_package.swift in Sources */,
+				450E219224FC307D009EDD90 /* SwiftMethod.swift in Sources */,
+				450E219024FC307D009EDD90 /* SwiftProperty.swift in Sources */,
+				45F06EC42514D4BC00F9990B /* TypeType.swift in Sources */,
+				458A803A25220E9A00546F7E /* NetworkRequestFunctionResponseType.swift in Sources */,
+				45F06EC12514D49C00F9990B /* NetworkRequestFunction.swift in Sources */,
+				45C9CA7C24F8485D007D0BD1 /* main.swift in Sources */,
+				450E216F24FAEF1B009EDD90 /* Service.swift in Sources */,
+				45F06EBD2514D48300F9990B /* FunctionParameter.swift in Sources */,
+				458A803725220E3500546F7E /* ServiceField.swift in Sources */,
+				45F06ED32514DF7900F9990B /* parseOperation.swift in Sources */,
+				450E219324FC307D009EDD90 /* SwiftCodableStruct.swift in Sources */,
+				459394C12513620E002B9341 /* String+Utils.swift in Sources */,
+				4546695B2523A9CE001C0BF3 /* Interface.swift in Sources */,
+				450E217124FAEF3F009EDD90 /* SwaggerFileParser.swift in Sources */,
+				45F06EC82514DADA00F9990B /* ParameterType+ToString.swift in Sources */,
+				45F06ED92514DFCE00F9990B /* parseRequest.swift in Sources */,
+				45F06EDF2514E26300F9990B /* parseSwagger.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		45C9CA7D24F8485D007D0BD1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		45C9CA7E24F8485D007D0BD1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		45C9CA8024F8485D007D0BD1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 38TUZ92X4D;
+				ENABLE_HARDENED_RUNTIME = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		45C9CA8124F8485D007D0BD1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 38TUZ92X4D;
+				ENABLE_HARDENED_RUNTIME = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		45C9CA7324F8485D007D0BD1 /* Build configuration list for PBXProject "SwaggerSwift" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				45C9CA7D24F8485D007D0BD1 /* Debug */,
+				45C9CA7E24F8485D007D0BD1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		45C9CA7F24F8485D007D0BD1 /* Build configuration list for PBXNativeTarget "SwaggerSwift" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				45C9CA8024F8485D007D0BD1 /* Debug */,
+				45C9CA8124F8485D007D0BD1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		45C9CA8224F84904007D0BD1 /* XCRemoteSwiftPackageReference "SwaggerSwiftML" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/MadsBogeskov/SwaggerSwiftML";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		45C9CA8324F84904007D0BD1 /* SwaggerSwiftML */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 45C9CA8224F84904007D0BD1 /* XCRemoteSwiftPackageReference "SwaggerSwiftML" */;
+			productName = SwaggerSwiftML;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 45C9CA7024F8485D007D0BD1 /* Project object */;
+}
