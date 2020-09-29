@@ -195,7 +195,7 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
     case .dictionary(valueType: let valueType, keys: _):
         switch valueType {
         case .any:
-            return (.object(typeName: "[String: Any]"), [])
+            return (.object(typeName: "[String: String]"), [])
         case .reference(_):
             fatalError("not supported")
         case .schema(_):

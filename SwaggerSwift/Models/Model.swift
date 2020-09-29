@@ -1,4 +1,5 @@
 import Foundation
+import SwaggerSwiftML
 
 /// Represents some kind of network model. This could be a response type or a request type.
 struct Model {
@@ -7,6 +8,16 @@ struct Model {
     let typeName: String
     let fields: [ModelField]
     let inheritsFrom: [String]
+
+    func resolveInherits(_ definitions: [Model]) -> Model {
+        let inherits = inheritsFrom.map { inherit in definitions.first(where: { $0.typeName == inherit })! }
+        let inheritedFields = inherits.flatMap { $0.fields }
+        return Model(serviceName: serviceName,
+                     description: description,
+                     typeName: typeName,
+                     fields: fields + inheritedFields,
+                     inheritsFrom: [])
+    }
 }
 
 extension Model: Swiftable {

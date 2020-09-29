@@ -16,5 +16,16 @@ func parse(swagger: Swagger) -> ServiceDefinition {
         ServiceField(name: "baseUrl", typeName: "String")
     ]
 
-    return ServiceDefinition(typeName: swagger.serviceName, fields: defaultFields, functions: functions, innerTypes: definitions + builtinDefinitions)
+    let builtInModels = builtinDefinitions.compactMap { model -> Model? in
+        if case let ModelDefinition.model(model) = model {
+            return model
+        } else {
+            return nil
+        }
+    }
+
+    let resolvedBuiltinModels = builtinDefinitions.map { $0.resolveInherits(builtInModels) }
+    let resolvedDefinitions = definitions.map { $0.resolveInherits(builtInModels) }
+
+    return ServiceDefinition(typeName: swagger.serviceName, fields: defaultFields, functions: functions, innerTypes: resolvedBuiltinModels + resolvedDefinitions)
 }
