@@ -5,3 +5,17 @@ struct ModelField {
     let name: String
     let required: Bool
 }
+
+extension ModelField {
+    var toSwift: String {
+        let declaration = "let \(name): \(type.toString())\(required ? "" : "?")"
+        if let desc = description {
+            return """
+// \(desc)
+\(declaration)
+"""
+        } else {
+            return declaration
+        }
+    }
+}

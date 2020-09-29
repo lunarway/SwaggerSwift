@@ -18,7 +18,7 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, resp
     if headers.count > 0 {
         let typeName = "\(typeName)Headers"
         let model = Model(serviceName: swagger.serviceName, description: "A collection of the header fields required for the request", typeName: typeName, fields: headers.map { param, type in
-            let result = type.toType(typePrefix: typeName)
+            let result = type.toType(typePrefix: typeName, swagger: swagger)
             resolvedModelDefinitions.append(contentsOf: result.1)
 
             let name = param.name.replacingOccurrences(of: "X-", with: "").lowercasingFirst
@@ -37,7 +37,7 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, resp
 
     let pathParams: [FunctionParameter] = parameters.compactMap {
         if case let ParameterLocation.path(type) = $0.location {
-            let result = type.toType(typePrefix: typeName)
+            let result = type.toType(typePrefix: typeName, swagger: swagger)
             assert(result.1.count == 0, "A path param isnt expected to contain a special model definition inline, is it?")
             resolvedModelDefinitions.append(contentsOf: result.1)
             return FunctionParameter(description: $0.description, name: $0.name, typeName: result.0, required: $0.required)
@@ -52,7 +52,7 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, resp
 
     let queryParams: [FunctionParameter] = parameters.compactMap {
         if case let ParameterLocation.query(type, _) = $0.location {
-            let result = type.toType(typePrefix: typeName)
+            let result = type.toType(typePrefix: typeName, swagger: swagger)
             assert(result.1.count == 0, "A query param isnt expected to contain a special model definition inline, is it?")
             resolvedModelDefinitions.append(contentsOf: result.1)
             return FunctionParameter(description: $0.description, name: $0.name, typeName: result.0, required: $0.required)
@@ -81,9 +81,9 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, resp
 
     // CompletionHandler
 
-    let successTypeResult = createResultEnumType(types: responseTypes, failure: false, functionName: functionName)
+    let successTypeResult = createResultEnumType(types: responseTypes, failure: false, functionName: functionName, swagger: swagger)
     let successType = successTypeResult.0
-    let failureTypeResult = createResultEnumType(types: responseTypes, failure: true, functionName: functionName)
+    let failureTypeResult = createResultEnumType(types: responseTypes, failure: true, functionName: functionName, swagger: swagger)
     let failureType = failureTypeResult.0
     let completionHandler = FunctionParameter(description: "The completion handler of the function returns as soon as the request completes", name: "completionHandler", typeName: .object(typeName: "@escaping (Result<\(successType), ServiceError<\(failureType)>>) -> Void"), required: true)
 
@@ -94,7 +94,7 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, resp
     return (resolvedParameters, resolvedModelDefinitions)
 }
 
-private func createResultEnumType(types: [(HTTPStatusCodes, TypeType)], failure: Bool, functionName: String) -> (String, [ModelDefinition]) {
+private func createResultEnumType(types: [(HTTPStatusCodes, TypeType)], failure: Bool, functionName: String, swagger: Swagger) -> (String, [ModelDefinition]) {
     let filteredTypes: [(HTTPStatusCodes, TypeType)]
     if failure {
         filteredTypes = types.filter { !$0.0.isSuccess }
@@ -113,7 +113,7 @@ private func createResultEnumType(types: [(HTTPStatusCodes, TypeType)], failure:
             }
         }
 
-        let enumeration = ModelDefinition.enumeration(Enumeration(typeName: typeName, values: fields))
+        let enumeration = ModelDefinition.enumeration(Enumeration(serviceName: swagger.serviceName, description: "Result enum", typeName: typeName, values: fields))
 
         return (typeName, [enumeration])
     } else if filteredTypes.count == 1 {

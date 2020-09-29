@@ -1,7 +1,7 @@
 import SwaggerSwiftML
 
 extension ParameterType {
-    func toType(typePrefix: String) -> (TypeType, [ModelDefinition]) {
+    func toType(typePrefix: String, swagger: Swagger) -> (TypeType, [ModelDefinition]) {
         switch self {
         case .string(format: let format, enumValues: _, maxLength: _, minLength: _, pattern: _):
             switch format {
@@ -27,19 +27,19 @@ extension ParameterType {
         case .boolean:
             return (.boolean, [])
         case .array(let items, collectionFormat: _, maxItems: _, minItems: _, uniqueItems: _):
-            return typeOfItems(items.type, typePrefix: typePrefix)
+            return typeOfItems(items.type, typePrefix: typePrefix, swagger: swagger)
         case .file:
             return (.object(typeName: "Data"), [])
         }
     }
 }
 
-private func typeOfItems(_ itemsType: ItemsType, typePrefix: String) -> (TypeType, [ModelDefinition]) {
+private func typeOfItems(_ itemsType: ItemsType, typePrefix: String, swagger: Swagger) -> (TypeType, [ModelDefinition]) {
     switch itemsType {
     case .string(format: let format, let enumValues, _, _, _):
         let modelDefinitions: [ModelDefinition]
         if let enumValues = enumValues {
-            modelDefinitions = [.enumeration(Enumeration(typeName: "\(typePrefix)Enum", values: enumValues))]
+            modelDefinitions = [.enumeration(Enumeration(serviceName: swagger.serviceName, description: nil, typeName: "\(typePrefix)Enum", values: enumValues))]
         } else {
             modelDefinitions = []
         }
@@ -64,7 +64,7 @@ private func typeOfItems(_ itemsType: ItemsType, typePrefix: String) -> (TypeTyp
     case .boolean:
         return (.boolean, [])
     case .array(let itemsType, collectionFormat: _, maxItems: _, minItems: _, uniqueItems: _):
-        return typeOfItems(itemsType.type, typePrefix: typePrefix)
+        return typeOfItems(itemsType.type, typePrefix: typePrefix, swagger: swagger)
     }
 }
 

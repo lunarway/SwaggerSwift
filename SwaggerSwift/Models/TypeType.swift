@@ -43,8 +43,9 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
     switch schema.type {
     case .string(format: let format, let enumValues, _, _, _):
         if let enumValues = enumValues {
-            let def = ModelDefinition.enumeration(Enumeration(typeName: "\(typeNamePrefix)Options", values: enumValues))
-            return (.string, [def])
+            let enumTypename = typeNamePrefix
+            let def = ModelDefinition.enumeration(Enumeration(serviceName: swagger.serviceName, description: schema.description, typeName: enumTypename, values: enumValues))
+            return (.object(typeName: enumTypename), [def])
         }
 
         if let format = format {
@@ -134,16 +135,16 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
                             switch $0.value {
                             case .reference(let reference):
                                 let node = swagger.findSchema(node: .reference(reference))
+                                let typeName = reference.components(separatedBy: "/").last ?? ""
                                 if case SchemaType.object = node.type {
-                                    let typeName = reference.components(separatedBy: "/").last ?? ""
-                                    return (ModelField(description: nil, type: .object(typeName: typeName), name: $0.key, required: true), [])
+                                    return (ModelField(description: node.description, type: .object(typeName: typeName), name: $0.key, required: true), [])
                                 } else {
-                                    let type = getType(forSchema: node, typeNamePrefix: typeNamePrefix, swagger: swagger)
-                                    return (ModelField(description: nil, type: type.0, name: $0.key, required: true), type.1)
+                                    let type = getType(forSchema: node, typeNamePrefix: typeName, swagger: swagger)
+                                    return (ModelField(description: node.description, type: type.0, name: $0.key, required: true), type.1)
                                 }
                             case .node(let schema):
                                 let type = getType(forSchema: schema, typeNamePrefix: typeNamePrefix, swagger: swagger)
-                                return (ModelField(description: nil, type: type.0, name: $0.key, required: true), type.1)
+                                return (ModelField(description: schema.description, type: type.0, name: $0.key, required: true), type.1)
                             }
                         }
 
@@ -157,7 +158,7 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
             let inherits = result.compactMap { $0.0 }
 
             let model = Model(serviceName: swagger.serviceName,
-                              description: nil,
+                              description: schema.description,
                               typeName: typeNamePrefix,
                               fields: result.flatMap { $0.1 },
                               inheritsFrom: inherits)
@@ -171,23 +172,23 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
             switch $0.value {
             case .reference(let reference):
                 let node = swagger.findSchema(node: .reference(reference))
+                let typeName = reference.components(separatedBy: "/").last ?? ""
                 if case SchemaType.object = node.type {
-                    let typeName = reference.components(separatedBy: "/").last ?? ""
-                    return (ModelField(description: nil, type: .object(typeName: typeName), name: $0.key, required: true), [])
+                    return (ModelField(description: node.description, type: .object(typeName: typeName), name: $0.key, required: true), [])
                 } else {
-                    let type = getType(forSchema: node, typeNamePrefix: typeNamePrefix, swagger: swagger)
-                    return (ModelField(description: nil, type: type.0, name: $0.key, required: true), type.1)
+                    let type = getType(forSchema: node, typeNamePrefix: typeName, swagger: swagger)
+                    return (ModelField(description: node.description, type: type.0, name: $0.key, required: true), type.1)
                 }
             case .node(let schema):
-                let type = getType(forSchema: schema, typeNamePrefix: typeNamePrefix, swagger: swagger)
-                return (ModelField(description: nil, type: type.0, name: $0.key, required: true), type.1)
+                let type = getType(forSchema: schema, typeNamePrefix: "\(typeNamePrefix)Options", swagger: swagger)
+                return (ModelField(description: schema.description, type: type.0, name: $0.key, required: true), type.1)
             }
         }
 
         let fields = result.map { $0.0 }
         var inlineModels = result.flatMap { $0.1 }
 
-        let model = Model(serviceName: swagger.serviceName, description: nil, typeName: typeNamePrefix, fields: fields, inheritsFrom: [])
+        let model = Model(serviceName: swagger.serviceName, description: schema.description, typeName: typeNamePrefix, fields: fields, inheritsFrom: [])
         inlineModels.append(.model(model))
 
         return (.object(typeName: typeNamePrefix), inlineModels)

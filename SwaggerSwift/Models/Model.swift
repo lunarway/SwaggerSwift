@@ -1,3 +1,5 @@
+import Foundation
+
 /// Represents some kind of network model. This could be a response type or a request type.
 struct Model {
     let serviceName: String
@@ -21,6 +23,7 @@ extension Model: Swiftable {
         var dateParsing = ""
         if hasDate {
             dateParsing += """
+
 
 \(defaultSpacing)enum CodingKeys: String, CodingKey {
 \(defaultSpacing)\(defaultSpacing)\(fields.sorted(by: { $0.name < $1.name }).map { "case \($0.name)" }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n\(defaultSpacing)\(defaultSpacing)"))
@@ -48,13 +51,14 @@ extension Model: Swiftable {
 """
         }
 
+        let comment = description != nil && description!.count > 0 ? "\n\(defaultSpacing)// \(description ?? "")" : ""
+
         return """
 import Foundation
 
-extension \(serviceName) {
+extension \(serviceName) {\(comment)
     struct \(typeName): \((inheritsFrom + ["Codable"]).joined(separator: ", ")) {
-        \(fields.sorted(by: { $0.name < $1.name }).map { "let \($0.name): \($0.type.toString())\($0.required ? "" : "?")" }.joined(separator: "\n        "))
-        \(dateParsing)
+\(fields.sorted(by: { $0.name < $1.name }).map { $0.toSwift.split(separator: "\n") }.flatMap { Array($0) }.map { "\(defaultSpacing)\(defaultSpacing)\($0)" }.joined(separator: "\n"))\(dateParsing)
     }
 }
 """
