@@ -12,7 +12,7 @@ extension Enumeration: Swiftable {
 
         return """
 extension \(serviceName) {\(comment)
-    enum \(self.typeName): String, Codable {
+    public enum \(self.typeName): String, Codable {
 \(defaultSpacing)\(defaultSpacing)\(values.map { "case \($0)" }.joined(separator: "\n\(defaultSpacing)\(defaultSpacing)"))
     }
 }

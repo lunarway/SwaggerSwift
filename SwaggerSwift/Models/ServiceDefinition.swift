@@ -11,8 +11,8 @@ extension ServiceDefinition: Swiftable {
         return """
 import Foundation
 
-struct \(typeName) {
-    \(fields.map { "let \($0.name): \($0.typeName)" }.joined(separator: "\n    "))
+public struct \(typeName) {
+    \(fields.map { "public let \($0.name): \($0.typeName)" }.joined(separator: "\n    "))
 
     \(self.functions
         .sorted(by: { $0.functionName < $1.functionName })

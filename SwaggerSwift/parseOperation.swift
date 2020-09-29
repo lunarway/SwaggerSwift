@@ -19,6 +19,9 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
             .replacingOccurrences(of: "{", with: "")
             .replacingOccurrences(of: "}", with: "")
             .replacingOccurrences(of: "/", with: "_")
+            .split(separator: "_")
+            .map { String($0).uppercasingFirst }
+            .joined()
     }
 
     let responseTypes: [(HTTPStatusCodes, TypeType, [ModelDefinition])] = operation.responses.map {
@@ -78,7 +81,7 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
     return (NetworkRequestFunction(description: operation.description,
                                    functionName: functionName,
                                    parameters: functionParameters,
-                                   throws: true,
+                                   throws: false,
                                    returnType: "URLSessionDataTask",
                                    httpMethod: httpMethod.rawValue.capitalized,
                                    servicePath: servicePath,

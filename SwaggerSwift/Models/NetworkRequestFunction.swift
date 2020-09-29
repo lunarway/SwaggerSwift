@@ -30,7 +30,7 @@ extension NetworkRequestFunction: Swiftable {
 
         let declaration = """
 @discardableResult
-func \(functionName)(\(arguments)) throws \(returnStatement) {
+public func \(functionName)(\(arguments)) \(`throws` ? "throws" : "") \(returnStatement) {
 """
 
         let servicePath = self.servicePath
@@ -64,21 +64,25 @@ if let \($0.0) = headers.\($0.0) {
     let path = "\(servicePath)"
     let urlString = "\\(baseUrl)\\(path)"
 
-    guard \(queryStatement.count > 0 ? "var" : "let") urlComponents = URLComponents(string: urlString) else { throw ServiceError<Void>.clientError(reason: "Failed to create URL components") }
+    \(queryStatement.count > 0 ? "var" : "let") urlComponents = URLComponents(string: urlString)!
     \(queryStatement)
-    guard let url = urlComponents.url else { throw ServiceError<Void>.clientError(reason: "Failed to create URL") }
+    let url = urlComponents.url!
     var request = URLRequest(url: url)
     request.httpMethod = "\(httpMethod.uppercased())"
     \(headerStatements)
 
+    request = interceptor?.networkWillPerformRequest(request) ?? request
     let task = urlSession.dataTask(with: request) { (data, response, error) in
         if let error = error {
+            self.interceptor?.networkDidPerformRequest(.failed(error))
             completionHandler(.failure(.requestFailed(error: error)))
         } else if let data = data {
             guard let httpResponse = response as? HTTPURLResponse else {
                 completionHandler(.failure(ServiceError.clientError(reason: "Returned response object wasnt a HTTP URL Response as expected, but was instead a \\(String(describing: response))")))
                 return
             }
+
+            self.interceptor?.networkDidPerformRequest(.success(httpResponse, data))
 
             switch httpResponse.statusCode {
             \(responseTypes)

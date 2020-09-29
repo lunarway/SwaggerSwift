@@ -10,10 +10,6 @@
 		450E216D24FAEEEB009EDD90 /* SwaggerFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450E216C24FAEEEB009EDD90 /* SwaggerFile.swift */; };
 		450E216F24FAEF1B009EDD90 /* Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450E216E24FAEF1B009EDD90 /* Service.swift */; };
 		450E217124FAEF3F009EDD90 /* SwaggerFileParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450E217024FAEF3F009EDD90 /* SwaggerFileParser.swift */; };
-		450E218724FC307D009EDD90 /* SchemaProperty+GetType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450E217424FC307C009EDD90 /* SchemaProperty+GetType.swift */; };
-		450E219024FC307D009EDD90 /* SwiftProperty.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450E218224FC307C009EDD90 /* SwiftProperty.swift */; };
-		450E219224FC307D009EDD90 /* SwiftMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450E218424FC307C009EDD90 /* SwiftMethod.swift */; };
-		450E219324FC307D009EDD90 /* SwiftCodableStruct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450E218524FC307C009EDD90 /* SwiftCodableStruct.swift */; };
 		450E219524FC33A4009EDD90 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450E217D24FC307C009EDD90 /* Constants.swift */; };
 		450EAEC2251BC4100064ABAA /* create_swift_package.swift in Sources */ = {isa = PBXBuildFile; fileRef = 450EAEC1251BC40F0064ABAA /* create_swift_package.swift */; };
 		4546695B2523A9CE001C0BF3 /* Interface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4546695A2523A9CE001C0BF3 /* Interface.swift */; };
@@ -58,11 +54,7 @@
 		450E216C24FAEEEB009EDD90 /* SwaggerFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwaggerFile.swift; sourceTree = "<group>"; };
 		450E216E24FAEF1B009EDD90 /* Service.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service.swift; sourceTree = "<group>"; };
 		450E217024FAEF3F009EDD90 /* SwaggerFileParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwaggerFileParser.swift; sourceTree = "<group>"; };
-		450E217424FC307C009EDD90 /* SchemaProperty+GetType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "SchemaProperty+GetType.swift"; sourceTree = "<group>"; };
 		450E217D24FC307C009EDD90 /* Constants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
-		450E218224FC307C009EDD90 /* SwiftProperty.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftProperty.swift; sourceTree = "<group>"; };
-		450E218424FC307C009EDD90 /* SwiftMethod.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftMethod.swift; sourceTree = "<group>"; };
-		450E218524FC307C009EDD90 /* SwiftCodableStruct.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftCodableStruct.swift; sourceTree = "<group>"; };
 		450EAEC1251BC40F0064ABAA /* create_swift_package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = create_swift_package.swift; sourceTree = "<group>"; };
 		4546695A2523A9CE001C0BF3 /* Interface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Interface.swift; sourceTree = "<group>"; };
 		458A801D2521FFF900546F7E /* HttpStatusCodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HttpStatusCodes.swift; sourceTree = "<group>"; };
@@ -120,35 +112,6 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
-		450E217224FC305E009EDD90 /* SwaggerToSwift */ = {
-			isa = PBXGroup;
-			children = (
-				450E217324FC307C009EDD90 /* Extensions */,
-				450E218124FC307C009EDD90 /* Models */,
-			);
-			path = SwaggerToSwift;
-			sourceTree = "<group>";
-		};
-		450E217324FC307C009EDD90 /* Extensions */ = {
-			isa = PBXGroup;
-			children = (
-				450E217424FC307C009EDD90 /* SchemaProperty+GetType.swift */,
-				459394C02513620E002B9341 /* String+Utils.swift */,
-			);
-			path = Extensions;
-			sourceTree = "<group>";
-		};
-		450E218124FC307C009EDD90 /* Models */ = {
-			isa = PBXGroup;
-			children = (
-				450E217D24FC307C009EDD90 /* Constants.swift */,
-				450E218224FC307C009EDD90 /* SwiftProperty.swift */,
-				450E218424FC307C009EDD90 /* SwiftMethod.swift */,
-				450E218524FC307C009EDD90 /* SwiftCodableStruct.swift */,
-			);
-			path = Models;
-			sourceTree = "<group>";
-		};
 		450EAEC0251BC3E70064ABAA /* Swift Package */ = {
 			isa = PBXGroup;
 			children = (
@@ -179,7 +142,6 @@
 				450EAEC0251BC3E70064ABAA /* Swift Package */,
 				45F06ECD2514DF4900F9990B /* Utilities */,
 				45F06EBB2514D47800F9990B /* Models */,
-				450E217224FC305E009EDD90 /* SwaggerToSwift */,
 				450E216A24FAEED3009EDD90 /* SwaggerFileParser */,
 				45F06ECE2514DF5F00F9990B /* parsePath.swift */,
 				45F06ED22514DF7900F9990B /* parseOperation.swift */,
@@ -213,6 +175,8 @@
 		45F06ECD2514DF4900F9990B /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				450E217D24FC307C009EDD90 /* Constants.swift */,
+				459394C02513620E002B9341 /* String+Utils.swift */,
 				45B36E242514AE6D009CF73A /* Swagger+Extensions.swift */,
 				45F06EC72514DADA00F9990B /* ParameterType+ToString.swift */,
 				45F06ECA2514DAEF00F9990B /* DataFormat+ToString.swift */,
@@ -295,12 +259,9 @@
 				45F06ECB2514DAEF00F9990B /* DataFormat+ToString.swift in Sources */,
 				458A801E2521FFF900546F7E /* HttpStatusCodes.swift in Sources */,
 				45F06ECF2514DF5F00F9990B /* parsePath.swift in Sources */,
-				450E218724FC307D009EDD90 /* SchemaProperty+GetType.swift in Sources */,
 				458A803425220E2800546F7E /* ModelField.swift in Sources */,
 				458A802A25220D9F00546F7E /* ModelDefinition.swift in Sources */,
 				450EAEC2251BC4100064ABAA /* create_swift_package.swift in Sources */,
-				450E219224FC307D009EDD90 /* SwiftMethod.swift in Sources */,
-				450E219024FC307D009EDD90 /* SwiftProperty.swift in Sources */,
 				45F06EC42514D4BC00F9990B /* TypeType.swift in Sources */,
 				458A803A25220E9A00546F7E /* NetworkRequestFunctionResponseType.swift in Sources */,
 				45F06EC12514D49C00F9990B /* NetworkRequestFunction.swift in Sources */,
@@ -309,7 +270,6 @@
 				45F06EBD2514D48300F9990B /* FunctionParameter.swift in Sources */,
 				458A803725220E3500546F7E /* ServiceField.swift in Sources */,
 				45F06ED32514DF7900F9990B /* parseOperation.swift in Sources */,
-				450E219324FC307D009EDD90 /* SwiftCodableStruct.swift in Sources */,
 				459394C12513620E002B9341 /* String+Utils.swift in Sources */,
 				4546695B2523A9CE001C0BF3 /* Interface.swift in Sources */,
 				450E217124FAEF3F009EDD90 /* SwaggerFileParser.swift in Sources */,

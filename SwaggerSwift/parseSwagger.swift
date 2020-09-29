@@ -13,7 +13,8 @@ func parse(swagger: Swagger) -> ServiceDefinition {
 
     let defaultFields = [
         ServiceField(name: "urlSession", typeName: "URLSession"),
-        ServiceField(name: "baseUrl", typeName: "String")
+        ServiceField(name: "baseUrl", typeName: "String"),
+        ServiceField(name: "interceptor", typeName: "NetworkInterceptor?"),
     ]
 
     let builtInModels = builtinDefinitions.compactMap { model -> Model? in

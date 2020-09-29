@@ -36,7 +36,7 @@ extension Model: Swiftable {
             dateParsing += """
 
 
-\(defaultSpacing)enum CodingKeys: String, CodingKey {
+\(defaultSpacing)public enum CodingKeys: String, CodingKey {
 \(defaultSpacing)\(defaultSpacing)\(fields.sorted(by: { $0.name < $1.name }).map { "case \($0.name)" }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n\(defaultSpacing)\(defaultSpacing)"))
 \(defaultSpacing)}
 
@@ -44,7 +44,7 @@ extension Model: Swiftable {
 
             dateParsing += """
 
-\(defaultSpacing)\(defaultSpacing)init(from decoder: Decoder) throws {
+\(defaultSpacing)\(defaultSpacing)public init(from decoder: Decoder) throws {
 \(defaultSpacing)\(defaultSpacing)\(defaultSpacing)let iso8601DateFormatter = ISO8601DateFormatter()
 \(defaultSpacing)\(defaultSpacing)\(defaultSpacing)let container = try decoder.container(keyedBy: CodingKeys.self)
 \(defaultSpacing)\(fields.sorted(by: { $0.name < $1.name }).map { $0.decoderLine(typeName: self.typeName, indentationLevel: 2) }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n\(defaultSpacing)"))
@@ -54,7 +54,7 @@ extension Model: Swiftable {
 
             dateParsing += """
 
-\(defaultSpacing)\(defaultSpacing)func encode(to encoder: Encoder) throws {
+\(defaultSpacing)\(defaultSpacing)public func encode(to encoder: Encoder) throws {
 \(defaultSpacing)\(defaultSpacing)\(defaultSpacing)let iso8601DateFormatter = ISO8601DateFormatter()
 \(defaultSpacing)\(defaultSpacing)\(defaultSpacing)var container = encoder.container(keyedBy: CodingKeys.self)
 \(defaultSpacing)\(fields.sorted(by: { $0.name < $1.name }).map { $0.encoderLine(typeName: self.typeName, indentationLevel: 2) }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n\(defaultSpacing)"))
@@ -68,7 +68,7 @@ extension Model: Swiftable {
 import Foundation
 
 extension \(serviceName) {\(comment)
-    struct \(typeName): \((inheritsFrom + ["Codable"]).joined(separator: ", ")) {
+    public struct \(typeName): \((inheritsFrom + ["Codable"]).joined(separator: ", ")) {
 \(fields.sorted(by: { $0.name < $1.name }).map { $0.toSwift.split(separator: "\n") }.flatMap { Array($0) }.map { "\(defaultSpacing)\(defaultSpacing)\($0)" }.joined(separator: "\n"))\(dateParsing)
     }
 }
