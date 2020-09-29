@@ -26,6 +26,14 @@ extension URLQueryItem {
 }
 """
 
+let parsingErrorExtension = """
+import Foundation
+
+enum JSONParsingError: Error {
+    case invalidDate(String)
+}
+"""
+
 let path = "/Users/madsbogeskov/Developer/SwaggerFile.yml"
 let swaggers = try SwaggerFileParser.parse(path: path, authToken: "d9545c1fa435fccacbb5e6fd2339e38c6b3e7936")
 
@@ -33,6 +41,7 @@ let sourceDirectory = try! createSwiftProject(at: "~/TestProject", named: "Servi
 
 try! serviceError.write(toFile: "\(sourceDirectory)/ServiceError.swift", atomically: true, encoding: .utf8)
 try! urlQueryItemExtension.write(toFile: "\(sourceDirectory)/URLQueryExtension.swift", atomically: true, encoding: .utf8)
+try! parsingErrorExtension.write(toFile: "\(sourceDirectory)/ParsingError.swift", atomically: true, encoding: .utf8)
 
 for swagger in swaggers {
     let serviceDirectory = "\(sourceDirectory)/\(swagger.serviceName)"

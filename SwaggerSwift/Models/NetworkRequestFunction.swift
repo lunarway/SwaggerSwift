@@ -28,7 +28,10 @@ extension NetworkRequestFunction: Swiftable {
             returnStatement = ""
         }
 
-        let declaration = "func \(functionName)(\(arguments)) throws \(returnStatement) {"
+        let declaration = """
+@discardableResult
+func \(functionName)(\(arguments)) throws \(returnStatement) {
+"""
 
         let servicePath = self.servicePath
             .replacingOccurrences(of: "{", with: "\\(")
@@ -59,7 +62,7 @@ if let \($0.0) = headers.\($0.0) {
         return """
 \(declaration)
     let path = "\(servicePath)"
-    let urlString = "\\(baseUrl)/\\(path)"
+    let urlString = "\\(baseUrl)\\(path)"
 
     guard \(queryStatement.count > 0 ? "var" : "let") urlComponents = URLComponents(string: urlString) else { throw ServiceError<Void>.clientError(reason: "Failed to create URL components") }
     \(queryStatement)

@@ -159,7 +159,7 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
             let model = Model(serviceName: swagger.serviceName,
                               description: nil,
                               typeName: typeNamePrefix,
-                              field: result.flatMap { $0.1 },
+                              fields: result.flatMap { $0.1 },
                               inheritsFrom: inherits)
 
             let models = result.flatMap { $0.2 } + [.model(model)]
@@ -187,7 +187,7 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
         let fields = result.map { $0.0 }
         var inlineModels = result.flatMap { $0.1 }
 
-        let model = Model(serviceName: swagger.serviceName, description: nil, typeName: typeNamePrefix, field: fields, inheritsFrom: [])
+        let model = Model(serviceName: swagger.serviceName, description: nil, typeName: typeNamePrefix, fields: fields, inheritsFrom: [])
         inlineModels.append(.model(model))
 
         return (.object(typeName: typeNamePrefix), inlineModels)

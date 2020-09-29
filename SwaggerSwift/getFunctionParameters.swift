@@ -17,7 +17,7 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, resp
 
     if headers.count > 0 {
         let typeName = "\(typeName)Headers"
-        let model = Model(serviceName: swagger.serviceName, description: "A collection of the header fields required for the request", typeName: typeName, field: headers.map { param, type in
+        let model = Model(serviceName: swagger.serviceName, description: "A collection of the header fields required for the request", typeName: typeName, fields: headers.map { param, type in
             let result = type.toType(typePrefix: typeName)
             resolvedModelDefinitions.append(contentsOf: result.1)
 
