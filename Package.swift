@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "SwaggerSwift",
     platforms: [.macOS(.v10_15)],
-    products: [.executable(name: "SwaggerSwift", targets: ["SwaggerSwift"])],
+    products: [.executable(name: "swaggerswift", targets: ["SwaggerSwift"])],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "0.3.0"),
         .package(url: "https://github.com/MadsBogeskov/SwaggerSwiftML", .branch("main")),
