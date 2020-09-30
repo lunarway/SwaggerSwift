@@ -64,12 +64,20 @@ extension Model: Swiftable {
 
         let comment = description != nil && description!.count > 0 ? "\n\(defaultSpacing)// \(description ?? "")" : ""
 
+        let initMethod = """
+public init(\(fields.map { "\($0.name): \($0.type.toString())" }.joined(separator: ", "))) {
+    \(fields.map { "self.\($0.name) = \($0.name)" }.joined(separator: "\n    "))
+}
+"""
+
         return """
 import Foundation
 
 extension \(serviceName) {\(comment)
     public struct \(typeName): \((inheritsFrom + ["Codable"]).joined(separator: ", ")) {
 \(fields.sorted(by: { $0.name < $1.name }).map { $0.toSwift.split(separator: "\n") }.flatMap { Array($0) }.map { "\(defaultSpacing)\(defaultSpacing)\($0)" }.joined(separator: "\n"))\(dateParsing)
+
+        \(initMethod.replacingOccurrences(of: "\n", with: "\n        "))
     }
 }
 """

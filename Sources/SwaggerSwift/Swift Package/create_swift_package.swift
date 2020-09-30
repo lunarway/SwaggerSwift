@@ -23,6 +23,7 @@ func createSwiftProject(at path: String, named name: String, fileManager: FileMa
     let package = Package(
         name: "PROJECT_NAME",
         platforms: [.iOS(.v11)],
+        products: [.library(name: "PROJECT_NAME", targets: ["PROJECT_NAME"])],
         dependencies: [],
         targets: [
             // Targets are the basic building blocks of a package. A target can define a module or a test suite.
