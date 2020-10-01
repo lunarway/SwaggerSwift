@@ -1,5 +1,5 @@
 import XCTest
-@testable import SwaggerSwift
+@testable import swaggerswift
 
 final class SwaggerSwiftTests: XCTestCase {
     func testExample() {

@@ -40,7 +40,7 @@ func createSwiftProject(at path: String, named name: String, fileManager: FileMa
 
     try packageFile
         .replacingOccurrences(of: "PROJECT_NAME", with: name)
-        .write(toFile: path + "/Package.swift", atomically: true, encoding: .utf8)
+        .write(toFile: expandPath + "/Package.swift", atomically: true, encoding: .utf8)
 
     return sourceDirectory
 }

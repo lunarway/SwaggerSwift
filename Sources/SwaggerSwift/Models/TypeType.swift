@@ -180,7 +180,8 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
                     return (ModelField(description: node.description, type: type.0, name: $0.key, required: schema.required.contains($0.key)), type.1)
                 }
             case .node(let innerSchema):
-                let type = getType(forSchema: innerSchema, typeNamePrefix: "\(typeNamePrefix)Options", swagger: swagger)
+                let typeName = "\(typeNamePrefix)\($0.key.capitalized)Options"
+                let type = getType(forSchema: innerSchema, typeNamePrefix: typeName, swagger: swagger)
                 return (ModelField(description: innerSchema.description, type: type.0, name: $0.key, required: schema.required.contains($0.key)), type.1)
             }
         }
