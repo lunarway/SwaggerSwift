@@ -113,86 +113,10 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
     case .boolean:
         return (.boolean, [])
     case .array(let items, _, _, _, _):
-        let type = typeOfItems(items: items, typeNamePrefix: typeNamePrefix, swagger: swagger)
+        let type = typeOfItems(schema: schema, items: items, typeNamePrefix: typeNamePrefix, swagger: swagger)
         return (.array(typeName: type.0), type.1)
     case .object(let properties, allOf: let allOf):
-        if let allOf = allOf {
-            let result: [(String?, [ModelField], [ModelDefinition])] = allOf.map {
-                switch $0 {
-                case .reference(let reference):
-                    let node = swagger.findSchema(node: .reference(reference))
-                    if case SchemaType.object = node.type {
-                        let typeName = reference.components(separatedBy: "/").last ?? ""
-                        return (typeName, [], [])
-                    } else {
-                        let result = getType(forSchema: node, typeNamePrefix: typeNamePrefix, swagger: swagger)
-                        return (nil, [], result.1)
-                    }
-                case .node(let innerSchema):
-                    if case let SchemaType.object(properties, allOf) = innerSchema.type {
-                        assert(allOf == nil, "Not implemented")
-                        let result: [(ModelField, [ModelDefinition])] = properties.map {
-                            switch $0.value {
-                            case .reference(let reference):
-                                let node = swagger.findSchema(node: .reference(reference))
-                                let typeName = reference.components(separatedBy: "/").last ?? ""
-                                if case SchemaType.object = node.type {
-                                    return (ModelField(description: node.description, type: .object(typeName: typeName), name: $0.key, required: innerSchema.required.contains($0.key)), [])
-                                } else {
-                                    let type = getType(forSchema: node, typeNamePrefix: typeName, swagger: swagger)
-                                    return (ModelField(description: node.description, type: type.0, name: $0.key, required: innerSchema.required.contains($0.key)), type.1)
-                                }
-                            case .node(let schema):
-                                let type = getType(forSchema: schema, typeNamePrefix: typeNamePrefix, swagger: swagger)
-                                return (ModelField(description: schema.description, type: type.0, name: $0.key, required: innerSchema.required.contains($0.key)), type.1)
-                            }
-                        }
-
-                        return (nil, result.map { $0.0 }, result.flatMap { $0.1 })
-                    } else {
-                        fatalError("Not implemented")
-                    }
-                }
-            }
-
-            let inherits = result.compactMap { $0.0 }
-
-            let model = Model(serviceName: swagger.serviceName,
-                              description: schema.description,
-                              typeName: typeNamePrefix,
-                              fields: result.flatMap { $0.1 },
-                              inheritsFrom: inherits)
-
-            let models = result.flatMap { $0.2 } + [.model(model)]
-
-            return (.object(typeName: typeNamePrefix), models)
-        }
-
-        let result: [(ModelField, [ModelDefinition])] = properties.map {
-            switch $0.value {
-            case .reference(let reference):
-                let node = swagger.findSchema(node: .reference(reference))
-                let typeName = reference.components(separatedBy: "/").last ?? ""
-                if case SchemaType.object = node.type {
-                    return (ModelField(description: node.description, type: .object(typeName: typeName), name: $0.key, required: schema.required.contains($0.key)), [])
-                } else {
-                    let type = getType(forSchema: node, typeNamePrefix: typeName, swagger: swagger)
-                    return (ModelField(description: node.description, type: type.0, name: $0.key, required: schema.required.contains($0.key)), type.1)
-                }
-            case .node(let innerSchema):
-                let typeName = "\(typeNamePrefix)\($0.key.capitalized)Options"
-                let type = getType(forSchema: innerSchema, typeNamePrefix: typeName, swagger: swagger)
-                return (ModelField(description: innerSchema.description, type: type.0, name: $0.key, required: schema.required.contains($0.key)), type.1)
-            }
-        }
-
-        let fields = result.map { $0.0 }
-        var inlineModels = result.flatMap { $0.1 }
-
-        let model = Model(serviceName: swagger.serviceName, description: schema.description, typeName: typeNamePrefix, fields: fields, inheritsFrom: [])
-        inlineModels.append(.model(model))
-
-        return (.object(typeName: typeNamePrefix), inlineModels)
+        return parseObject(properties: properties, allOf: allOf, swagger: swagger, typeNamePrefix: typeNamePrefix, schema: schema)
     case .dictionary(valueType: let valueType, keys: _):
         switch valueType {
         case .any:
@@ -205,7 +129,7 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
     }
 }
 
-private func typeOfItems(items: Node<Items>, typeNamePrefix: String, swagger: Swagger) -> (TypeType, [ModelDefinition]) {
+private func typeOfItems(schema: Schema, items: Node<Items>, typeNamePrefix: String, swagger: Swagger) -> (TypeType, [ModelDefinition]) {
     switch items {
     case .reference(let ref):
         let schema = swagger.findSchema(node: .reference(ref))
@@ -225,7 +149,89 @@ private func typeOfItems(items: Node<Items>, typeNamePrefix: String, swagger: Sw
         case .boolean:
             return (.boolean, [])
         case .array(let items, collectionFormat: _, maxItems: _, minItems: _, uniqueItems: _):
-            return typeOfItems(items: Node.node(items), typeNamePrefix: typeNamePrefix, swagger: swagger)
+            return typeOfItems(schema: schema, items: Node.node(items), typeNamePrefix: typeNamePrefix, swagger: swagger)
+        case .object(properties: let properties, allOf: let allOf):
+            return parseObject(properties: properties, allOf: allOf, swagger: swagger, typeNamePrefix: typeNamePrefix, schema: schema)
         }
     }
+}
+
+func parseObject(properties: [String: Node<Schema>], allOf: [Node<Schema>]?, swagger: Swagger, typeNamePrefix: String, schema: Schema) -> (TypeType, [ModelDefinition]) {
+    if let allOf = allOf {
+        let result: [(String?, [ModelField], [ModelDefinition])] = allOf.map {
+            switch $0 {
+            case .reference(let reference):
+                let node = swagger.findSchema(node: .reference(reference))
+                if case SchemaType.object = node.type {
+                    let typeName = reference.components(separatedBy: "/").last ?? ""
+                    return (typeName, [], [])
+                } else {
+                    let result = getType(forSchema: node, typeNamePrefix: typeNamePrefix, swagger: swagger)
+                    return (nil, [], result.1)
+                }
+            case .node(let innerSchema):
+                if case let SchemaType.object(properties, allOf) = innerSchema.type {
+                    assert(allOf == nil, "Not implemented")
+                    let result: [(ModelField, [ModelDefinition])] = properties.map {
+                        switch $0.value {
+                        case .reference(let reference):
+                            let node = swagger.findSchema(node: .reference(reference))
+                            let typeName = reference.components(separatedBy: "/").last ?? ""
+                            if case SchemaType.object = node.type {
+                                return (ModelField(description: node.description, type: .object(typeName: typeName), name: $0.key, required: innerSchema.required.contains($0.key)), [])
+                            } else {
+                                let type = getType(forSchema: node, typeNamePrefix: typeName, swagger: swagger)
+                                return (ModelField(description: node.description, type: type.0, name: $0.key, required: innerSchema.required.contains($0.key)), type.1)
+                            }
+                        case .node(let schema):
+                            let type = getType(forSchema: schema, typeNamePrefix: typeNamePrefix, swagger: swagger)
+                            return (ModelField(description: schema.description, type: type.0, name: $0.key, required: innerSchema.required.contains($0.key)), type.1)
+                        }
+                    }
+
+                    return (nil, result.map { $0.0 }, result.flatMap { $0.1 })
+                } else {
+                    fatalError("Not implemented")
+                }
+            }
+        }
+
+        let inherits = result.compactMap { $0.0 }
+
+        let model = Model(serviceName: swagger.serviceName,
+                          description: schema.description,
+                          typeName: typeNamePrefix,
+                          fields: result.flatMap { $0.1 },
+                          inheritsFrom: inherits)
+
+        let models = result.flatMap { $0.2 } + [.model(model)]
+
+        return (.object(typeName: typeNamePrefix), models)
+    }
+
+    let result: [(ModelField, [ModelDefinition])] = properties.map {
+        switch $0.value {
+        case .reference(let reference):
+            let node = swagger.findSchema(node: .reference(reference))
+            let typeName = reference.components(separatedBy: "/").last ?? ""
+            if case SchemaType.object = node.type {
+                return (ModelField(description: node.description, type: .object(typeName: typeName), name: $0.key, required: schema.required.contains($0.key)), [])
+            } else {
+                let type = getType(forSchema: node, typeNamePrefix: typeName, swagger: swagger)
+                return (ModelField(description: node.description, type: type.0, name: $0.key, required: schema.required.contains($0.key)), type.1)
+            }
+        case .node(let innerSchema):
+            let typeName = "\(typeNamePrefix)\($0.key.capitalized)Options"
+            let type = getType(forSchema: innerSchema, typeNamePrefix: typeName, swagger: swagger)
+            return (ModelField(description: innerSchema.description, type: type.0, name: $0.key, required: schema.required.contains($0.key)), type.1)
+        }
+    }
+
+    let fields = result.map { $0.0 }
+    var inlineModels = result.flatMap { $0.1 }
+
+    let model = Model(serviceName: swagger.serviceName, description: schema.description, typeName: typeNamePrefix, fields: fields, inheritsFrom: [])
+    inlineModels.append(.model(model))
+
+    return (.object(typeName: typeNamePrefix), inlineModels)
 }
