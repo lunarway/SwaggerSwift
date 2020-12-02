@@ -230,7 +230,7 @@ func parseObject(properties: [String: Node<Schema>], allOf: [Node<Schema>]?, swa
     let fields = result.map { $0.0 }
     var inlineModels = result.flatMap { $0.1 }
 
-    let model = Model(serviceName: swagger.serviceName, description: schema.description, typeName: typeNamePrefix, fields: fields, inheritsFrom: [])
+    let model = Model(serviceName: swagger.serviceName, description: schema.description, typeName: typeNamePrefix, fields: fields.sorted(by: { $0.name < $1.name }), inheritsFrom: [])
     inlineModels.append(.model(model))
 
     return (.object(typeName: typeNamePrefix), inlineModels)

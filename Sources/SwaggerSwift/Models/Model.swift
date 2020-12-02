@@ -15,7 +15,7 @@ struct Model {
         return Model(serviceName: serviceName,
                      description: description,
                      typeName: typeName,
-                     fields: fields + inheritedFields,
+                     fields: (fields + inheritedFields).sorted(by: { $0.name < $1.name }),
                      inheritsFrom: [])
     }
 }

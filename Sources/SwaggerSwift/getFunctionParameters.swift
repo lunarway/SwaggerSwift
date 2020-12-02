@@ -27,7 +27,7 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, resp
                               type: result.0,
                               name: name,
                               required: param.required)
-        }, inheritsFrom: [])
+        }.sorted(by: { $0.name < $1.name }), inheritsFrom: [])
 
         resolvedModelDefinitions.append(.model(model))
         resolvedParameters.append(FunctionParameter(description: nil, name: "headers", typeName: .object(typeName: typeName), required: false))
