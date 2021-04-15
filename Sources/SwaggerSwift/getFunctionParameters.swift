@@ -30,7 +30,7 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, resp
         }.sorted(by: { $0.name < $1.name }), inheritsFrom: [])
 
         resolvedModelDefinitions.append(.model(model))
-        resolvedParameters.append(FunctionParameter(description: nil, name: "headers", typeName: .object(typeName: typeName), required: false))
+        resolvedParameters.append(FunctionParameter(description: nil, name: "headers", typeName: .object(typeName: typeName), required: true))
     }
 
     // Path

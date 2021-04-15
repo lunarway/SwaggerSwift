@@ -76,7 +76,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "-s /Users/madsbogeskov/Developer/lunar/ios-app/SwaggerFile.yml -p LunarServices -d LunarServices -v true a78b790f371c8a88b602a49588104af2b268379f"
+            argument = "-s /Users/madsbogeskov/Developer/lunar/ios-app/SwaggerFile.yml -p LunarServices -d LunarServices -v true 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"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
