@@ -8,7 +8,7 @@ struct ModelField {
 
 extension ModelField {
     var toSwift: String {
-        let declaration = "public let \(name): \(type.toString())\(required ? "" : "?")"
+        let declaration = "public let \(name): \(type.toString(required: required))"
         if let desc = description {
             return """
 // \(desc)

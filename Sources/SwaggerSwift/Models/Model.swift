@@ -65,7 +65,7 @@ extension Model: Swiftable {
         let comment = description != nil && description!.count > 0 ? "\n\(defaultSpacing)// \(description ?? "")" : ""
 
         let initMethod = """
-public init(\(fields.map { "\($0.name): \($0.type.toString())" }.joined(separator: ", "))) {
+public init(\(fields.map { "\($0.name): \($0.type.toString(required: $0.required))" }.joined(separator: ", "))) {
     \(fields.map { "self.\($0.name) = \($0.name)" }.joined(separator: "\n    "))
 }
 """
@@ -88,7 +88,7 @@ extension ModelField {
     func decoderLine(typeName: String, indentationLevel: Int) -> String {
         if case TypeType.date = self.type {
             if required {
-                return decoderRequiredDate(fieldName: self.name, typeName: self.type.toString(), indentationLevel: indentationLevel)
+                return decoderRequiredDate(fieldName: self.name, typeName: self.type.toString(required: self.required), indentationLevel: indentationLevel)
             } else {
                 return decoderOptionalDate(fieldName: self.name, indentationLevel: indentationLevel)
             }
@@ -96,10 +96,10 @@ extension ModelField {
             let indentation = String(repeating: defaultSpacing, count: indentationLevel)
 
             if required {
-                return "\(indentation)self.\(self.name) = try container.decode(\(self.type.toString()).self, forKey: .\(self.name))"
+                return "\(indentation)self.\(self.name) = try container.decode(\(self.type.toString(required: self.required)).self, forKey: .\(self.name))"
             } else {
                 return """
-                \(indentation)self.\(self.name) = try container.decodeIfPresent(\(self.type.toString()).self, forKey: .\(self.name))
+                \(indentation)self.\(self.name) = try container.decodeIfPresent(\(self.type.toString(required: self.required)).self, forKey: .\(self.name))
                 """
             }
         }

@@ -13,29 +13,31 @@ indirect enum TypeType {
     case date
     case void
 
-    func toString() -> String {
-        switch self {
-        case .string:
-            return "String"
-        case .int:
-            return "Int"
-        case .double:
-            return "Double"
-        case .array(typeName: let typeName):
-            return "[\(typeName.toString())]"
-        case .object(typeName: let typeName):
-            return typeName
-        case .void:
-            return "Void"
-        case .boolean:
-            return "Bool"
-        case .float:
-            return "Float"
-        case .int64:
-            return "Int64"
-        case .date:
-            return "Date"
-        }
+    func toString(required: Bool) -> String {
+        return { obj -> String in
+            switch obj {
+            case .string:
+                return "String"
+            case .int:
+                return "Int"
+            case .double:
+                return "Double"
+            case .array(typeName: let typeName):
+                return "[\(typeName.toString(required: true))]"
+            case .object(typeName: let typeName):
+                return typeName
+            case .void:
+                return "Void"
+            case .boolean:
+                return "Bool"
+            case .float:
+                return "Float"
+            case .int64:
+                return "Int64"
+            case .date:
+                return "Date"
+            }
+        }(self) + (required ? "" : "?")
     }
 }
 

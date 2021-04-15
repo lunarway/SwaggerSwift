@@ -20,7 +20,7 @@ extension NetworkRequestFunction: Swiftable {
     }
 
     func toSwift() -> String {
-        let arguments = parameters.map { "\($0.name): \($0.typeName.toString())" }.joined(separator: ", ")
+        let arguments = parameters.map { "\($0.name): \($0.typeName.toString(required: $0.required))" }.joined(separator: ", ")
         let returnStatement: String
         if let returnType = returnType {
             returnStatement = " -> \(returnType)"

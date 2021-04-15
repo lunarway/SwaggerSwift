@@ -109,7 +109,7 @@ private func createResultEnumType(types: [(HTTPStatusCodes, TypeType)], failure:
             if case TypeType.void = type {
                 return statusCode.name
             } else {
-                return "\(statusCode.name)(\(type.toString())"
+                return "\(statusCode.name)(\(type.toString(required: true))"
             }
         }
 
@@ -117,7 +117,7 @@ private func createResultEnumType(types: [(HTTPStatusCodes, TypeType)], failure:
 
         return (typeName, [enumeration])
     } else if filteredTypes.count == 1 {
-        return (filteredTypes[0].1.toString(), [])
+        return (filteredTypes[0].1.toString(required: true), [])
     } else {
         return ("Void", [])
     }
