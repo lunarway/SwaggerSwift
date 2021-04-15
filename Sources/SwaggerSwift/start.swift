@@ -49,16 +49,27 @@ public protocol NetworkInterceptor {
     func networkDidPerformRequest(_ result: NetworkResult)
 }
 """
+
+let dummyTest = """
+import XCTest
+
+public struct DummyTest {
+    func testNetwork() {
+        XCTAssertTrue(true)
+    }
+}
+"""
 // token
 func start(swaggerFilePath: String, token: String, destinationPath: String, projectName: String = "Services", verbose: Bool = false) throws {
     let swaggers = try SwaggerFileParser.parse(path: swaggerFilePath, authToken: token)
 
-    let sourceDirectory = try! createSwiftProject(at: destinationPath, named: projectName)
+    let (sourceDirectory, testDirectory) = try! createSwiftProject(at: destinationPath, named: projectName)
 
     try! serviceError.write(toFile: "\(sourceDirectory)/ServiceError.swift", atomically: true, encoding: .utf8)
     try! urlQueryItemExtension.write(toFile: "\(sourceDirectory)/URLQueryExtension.swift", atomically: true, encoding: .utf8)
     try! parsingErrorExtension.write(toFile: "\(sourceDirectory)/ParsingError.swift", atomically: true, encoding: .utf8)
     try! networkInterceptor.write(toFile: "\(sourceDirectory)/NetworkInterceptor.swift", atomically: true, encoding: .utf8)
+    try! dummyTest.write(toFile: "\(testDirectory)/DummyTest.swift", atomically: true, encoding: .utf8)
 
     for swagger in swaggers {
         let serviceDirectory = "\(sourceDirectory)/\(swagger.serviceName)"

@@ -1,6 +1,6 @@
 import Foundation
 
-func createSwiftProject(at path: String, named name: String, fileManager: FileManager = FileManager.default) throws -> String {
+func createSwiftProject(at path: String, named name: String, fileManager: FileManager = FileManager.default) throws -> (String, String) {
     let expandPath = path.replacingOccurrences(of: "~", with: NSHomeDirectory())
     let sourceDirectory = expandPath + "/Sources/\(name)"
     let testsDirectory = expandPath + "/Tests/\(name)Tests"
@@ -42,5 +42,5 @@ func createSwiftProject(at path: String, named name: String, fileManager: FileMa
         .replacingOccurrences(of: "PROJECT_NAME", with: name)
         .write(toFile: expandPath + "/Package.swift", atomically: true, encoding: .utf8)
 
-    return sourceDirectory
+    return (sourceDirectory, testsDirectory)
 }
