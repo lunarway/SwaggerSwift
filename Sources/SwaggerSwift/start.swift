@@ -61,8 +61,15 @@ public struct DummyTest {
 """
 // token
 func start(swaggerFilePath: String, token: String, destinationPath: String, projectName: String = "Services", verbose: Bool = false) throws {
-    let swaggers = try SwaggerFileParser.parse(path: swaggerFilePath, authToken: token)
+    if verbose {
+        print("Parsing swagger at \(swaggerFilePath)")
+    }
 
+    let swaggers = try SwaggerFileParser.parse(path: swaggerFilePath, authToken: token, verbose: verbose)
+
+    if verbose {
+        print("Creating Swift Project at \(destinationPath) named \(projectName)")
+    }
     let (sourceDirectory, testDirectory) = try! createSwiftProject(at: destinationPath, named: projectName)
 
     try! serviceError.write(toFile: "\(sourceDirectory)/ServiceError.swift", atomically: true, encoding: .utf8)
@@ -72,6 +79,10 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
     try! dummyTest.write(toFile: "\(testDirectory)/DummyTest.swift", atomically: true, encoding: .utf8)
 
     for swagger in swaggers {
+        if verbose {
+            print("Parsing contents of Swagger: \(swagger.serviceName)")
+        }
+
         let serviceDirectory = "\(sourceDirectory)/\(swagger.serviceName)"
         let modelDirectory = "\(serviceDirectory)/Models"
         try! FileManager.default.createDirectory(atPath: serviceDirectory, withIntermediateDirectories: true, attributes: nil)
