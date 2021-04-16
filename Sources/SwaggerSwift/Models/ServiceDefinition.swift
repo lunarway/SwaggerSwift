@@ -7,9 +7,9 @@ struct ServiceDefinition {
 }
 
 extension ServiceDefinition: Swiftable {
-    func toSwift() -> String {
+    func toSwift(swaggerFile: SwaggerFile) -> String {
         let initMethod = """
-public init(\(fields.map { "\($0.name): \($0.typeName)" }.joined(separator: ", "))) {
+public init(\(fields.map { "\($0.name): \($0.typeIsBlock ? "@escaping " : "")\($0.typeName)" }.joined(separator: ", "))) {
     \(fields.map { "self.\($0.name) = \($0.name)" }.joined(separator: "\n    "))
 }
 """
@@ -24,7 +24,7 @@ public struct \(typeName) {
 
     \(self.functions
         .sorted(by: { $0.functionName < $1.functionName })
-        .map { $0.toSwift().replacingOccurrences(of: "\n", with: "\n    ") }
+        .map { $0.toSwift(swaggerFile: swaggerFile).replacingOccurrences(of: "\n", with: "\n    ") }
         .joined(separator: "\n\n    "))
 }
 """

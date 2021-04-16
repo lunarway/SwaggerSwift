@@ -9,9 +9,25 @@ struct NetworkRequestFunction {
     let httpMethod: String
     let servicePath: String
 
+    /// URLQueryItems
     let queries: [QueryElement]
-    let headers: [(String, String, Bool)]
+    let headers: [NetworkRequestFunctionHeaderField]
     let responseTypes: [NetworkRequestFunctionResponseType]
+}
+
+struct NetworkRequestFunctionHeaderField {
+    /// is the field required
+    let required: Bool
+    /// The name of the field on the Swift type containing the object, e.g. xos
+    let headerModelName: String
+    /// The actual name of the header, e.g. x-OS
+    let fieldName: String
+
+    init(headerName: String, required: Bool) {
+        self.headerModelName = makeHeaderFieldName(headerName: headerName)
+        self.fieldName = headerName
+        self.required = required
+    }
 }
 
 extension NetworkRequestFunction: Swiftable {
@@ -19,7 +35,7 @@ extension NetworkRequestFunction: Swiftable {
         return ""
     }
 
-    func toSwift() -> String {
+    func toSwift(swaggerFile: SwaggerFile) -> String {
         let arguments = parameters.map { "\($0.name): \($0.typeName.toString(required: $0.required))" }.joined(separator: ", ")
         let returnStatement: String
         if let returnType = returnType {
@@ -45,17 +61,34 @@ public func \(functionName)(\(arguments)) \(`throws` ? "throws" : "") \(returnSt
             queryStatement = ""
         }
 
-        let headerStatements = headers.map {
-            if $0.2 {
-                return "request.addValue(headers.\($0.0), forHTTPHeaderField: \"\($0.1)\")"
-            } else {
-                return """
-if let \($0.0) = headers.\($0.0) {
-    request.addValue(\($0.0), forHTTPHeaderField: \"\($0.1)\")
+        let swaggerGlobalHeaders = swaggerFile.globalHeaders ?? []
+
+        var globalHeaders = swaggerGlobalHeaders
+            .map { NetworkRequestFunctionHeaderField(headerName: $0, required: true) }
+            .map { """
+request.addValue(globalHeaders.\($0.headerModelName), forHTTPHeaderField: \"\($0.fieldName)\")
+"""
+            }.joined(separator: "\n")
+
+        if globalHeaders.count > 0 {
+            globalHeaders = "let globalHeaders = self.headerProvider()\n" + globalHeaders
+        }
+
+        let globalHeaderInitialisation = globalHeaders.replacingOccurrences(of: "\n", with: "\n    ")
+
+        let headerStatements = headers
+            .filter { !swaggerGlobalHeaders.map { $0.lowercased() }.contains($0.fieldName.lowercased()) }
+            .map {
+                if $0.required {
+                    return "request.addValue(headers.\($0.headerModelName), forHTTPHeaderField: \"\($0.fieldName)\")"
+                } else {
+                    return """
+if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
+    request.addValue(\(($0.headerModelName)), forHTTPHeaderField: \"\($0.fieldName)\")
 }
 """
-            }
-        }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n    ")
+                }
+            }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n    ")
 
         let responseTypes = self.responseTypes.map { $0.print() }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n            ")
 
@@ -69,8 +102,8 @@ if let \($0.0) = headers.\($0.0) {
     let url = urlComponents.url!
     var request = URLRequest(url: url)
     request.httpMethod = "\(httpMethod.uppercased())"
+    \(globalHeaderInitialisation)
     \(headerStatements)
-
     request = interceptor?.networkWillPerformRequest(request) ?? request
     let task = urlSession.dataTask(with: request) { (data, response, error) in
         if let error = error {

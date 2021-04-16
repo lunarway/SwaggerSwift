@@ -65,7 +65,7 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
         print("Parsing swagger at \(swaggerFilePath)")
     }
 
-    let swaggers = try SwaggerFileParser.parse(path: swaggerFilePath, authToken: token, verbose: verbose)
+    let (swaggers, swaggerFile) = try SwaggerFileParser.parse(path: swaggerFilePath, authToken: token, verbose: verbose)
 
     if verbose {
         print("Creating Swift Project at \(destinationPath) named \(projectName)")
@@ -78,6 +78,22 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
     try! networkInterceptor.write(toFile: "\(sourceDirectory)/NetworkInterceptor.swift", atomically: true, encoding: .utf8)
     try! dummyTest.write(toFile: "\(testDirectory)/DummyTest.swift", atomically: true, encoding: .utf8)
 
+    if let globalHeaderFields = swaggerFile.globalHeaders?.map({
+        ModelField(description: nil,
+                   type: .string,
+                   name: makeHeaderFieldName(headerName: $0),
+                   required: true)
+    }) {
+        let globalHeaders = Model(serviceName: nil,
+                                  description: nil,
+                                  typeName: "GlobalHeaders",
+                                  fields: globalHeaderFields,
+                                  inheritsFrom: [])
+
+        try! globalHeaders.toSwift(swaggerFile: swaggerFile)
+            .write(toFile: "\(sourceDirectory)/GlobalHeaders.swift", atomically: true, encoding: .utf8)
+    }
+
     for swagger in swaggers {
         if verbose {
             print("Parsing contents of Swagger: \(swagger.serviceName)")
@@ -88,18 +104,19 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
         try! FileManager.default.createDirectory(atPath: serviceDirectory, withIntermediateDirectories: true, attributes: nil)
         try! FileManager.default.createDirectory(atPath: modelDirectory, withIntermediateDirectories: true, attributes: nil)
 
-        let serviceDefinition = parse(swagger: swagger)
+        let filePrefix = "\(swagger.serviceName.filter { !$0.unicodeScalars.map(CharacterSet.uppercaseLetters.contains).contains(false) })_"
 
-        try! serviceDefinition.toSwift()
+
+        let serviceDefinition = parse(swagger: swagger, swaggerFile: swaggerFile)
+
+        try! serviceDefinition.toSwift(swaggerFile: swaggerFile)
             .write(toFile: "\(serviceDirectory)/\(serviceDefinition.typeName).swift", atomically: true, encoding: .utf8)
 
         for type in serviceDefinition.innerTypes {
-            let file = type.toSwift()
-            let prefix = swagger.serviceName.filter { !$0.unicodeScalars.map(CharacterSet.uppercaseLetters.contains).contains(false) }
-            let filename = "\(modelDirectory)/\(prefix)_\(type.typeName).swift"
+            let file = type.toSwift(swaggerFile: swaggerFile)
+            let filename = "\(modelDirectory)/\(filePrefix)\(type.typeName).swift"
             try! file.write(toFile: filename, atomically: true, encoding: .utf8)
             if verbose {
-//                os_log("Wrote %s", log: .default, type: .info, filename)
                 print("Wrote \(filename)")
             }
         }

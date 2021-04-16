@@ -3,7 +3,7 @@ import Yams
 import SwaggerSwiftML
 
 struct SwaggerFileParser {
-    static func parse(path: String, authToken: String, verbose: Bool) throws -> [Swagger] {
+    static func parse(path: String, authToken: String, verbose: Bool) throws -> ([Swagger], SwaggerFile) {
         guard let data = FileManager.default.contents(atPath: path) else {
             throw NSError(domain: "SwaggerFileParser", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to load SwaggerFile at \(path)"])
         }
@@ -42,13 +42,13 @@ struct SwaggerFileParser {
         }
         dispatchGroup.wait()
 
-        return try files.map {
+        return (try files.map {
             if verbose {
                 print("Swagger File:")
                 print($0)
             }
 
             return try SwaggerReader.read(text: $0)
-        }
+        }, swaggerFile)
     }
 }

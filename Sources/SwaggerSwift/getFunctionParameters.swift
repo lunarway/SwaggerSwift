@@ -1,6 +1,15 @@
 import SwaggerSwiftML
 
-func getFunctionParameters(_ parameters: [Parameter], functionName: String, responseTypes: [(HTTPStatusCodes, TypeType)], swagger: Swagger) -> ([FunctionParameter], [ModelDefinition]) {
+/// Convert the Header name, e.g. `X-AppDeviceVersion` to the field name that is used on the object in the Swift code, e.g. `appDeviceVersion`
+/// - Parameter headerName:
+/// - Returns: the field name to use in the Swift struct
+func makeHeaderFieldName(headerName: String) -> String {
+    headerName.replacingOccurrences(of: "X-", with: "")
+        .replacingOccurrences(of: "x-", with: "")
+        .lowercasingFirst
+}
+
+func getFunctionParameters(_ parameters: [Parameter], functionName: String, responseTypes: [(HTTPStatusCodes, TypeType)], swagger: Swagger, swaggerFile: SwaggerFile) -> ([FunctionParameter], [ModelDefinition]) {
     var resolvedParameters = [FunctionParameter]()
     var resolvedModelDefinitions = [ModelDefinition]()
     let typeName = functionName.components(separatedBy: "_").map { $0.capitalizingFirstLetter() }.joined(separator: "")
@@ -17,20 +26,31 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, resp
 
     if headers.count > 0 {
         let typeName = "\(typeName)Headers"
-        let model = Model(serviceName: swagger.serviceName, description: "A collection of the header fields required for the request", typeName: typeName, fields: headers.map { param, type in
-            let result = type.toType(typePrefix: typeName, swagger: swagger)
-            resolvedModelDefinitions.append(contentsOf: result.1)
 
-            let name = param.name.replacingOccurrences(of: "X-", with: "").lowercasingFirst
+        let globalHeaderFieldNames = (swaggerFile.globalHeaders ?? []).map { makeHeaderFieldName(headerName: $0) }
+
+        let model = Model(serviceName: swagger.serviceName, description: "A collection of the header fields required for the request", typeName: typeName, fields: headers.compactMap { param, type in
+            let resultType = type.toType(typePrefix: typeName, swagger: swagger)
+            let name = makeHeaderFieldName(headerName: param.name)
+
+            // we should not add fields for the global headers
+            if globalHeaderFieldNames.contains(name) {
+                return nil
+            }
+
+            resolvedModelDefinitions.append(contentsOf: resultType.1)
+
 
             return ModelField(description: nil,
-                              type: result.0,
+                              type: resultType.0,
                               name: name,
                               required: param.required)
         }.sorted(by: { $0.name < $1.name }), inheritsFrom: [])
 
-        resolvedModelDefinitions.append(.model(model))
-        resolvedParameters.append(FunctionParameter(description: nil, name: "headers", typeName: .object(typeName: typeName), required: true))
+        if model.fields.count > 0 {
+            resolvedModelDefinitions.append(.model(model))
+            resolvedParameters.append(FunctionParameter(description: nil, name: "headers", typeName: .object(typeName: typeName), required: true))
+        }
     }
 
     // Path

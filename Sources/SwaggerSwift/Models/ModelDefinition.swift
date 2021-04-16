@@ -17,14 +17,14 @@ extension ModelDefinition: Swiftable {
         }
     }
 
-    func toSwift() -> String {
+    func toSwift(swaggerFile: SwaggerFile) -> String {
         switch self {
         case .enumeration(let enumeration):
-            return enumeration.toSwift()
+            return enumeration.toSwift(swaggerFile: swaggerFile)
         case .model(let model):
-            return model.toSwift()
+            return model.toSwift(swaggerFile: swaggerFile)
         case .interface(let interface):
-            return interface.toSwift()
+            return interface.toSwift(swaggerFile: swaggerFile)
         }
     }
 

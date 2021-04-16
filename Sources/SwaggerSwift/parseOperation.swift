@@ -8,7 +8,7 @@ func isErrorHttpCode(code: Int) -> Bool {
     return code < 199 || code > 299
 }
 
-func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, servicePath: String, parameters: [Parameter], swagger: Swagger) -> (NetworkRequestFunction, [ModelDefinition]) {
+func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, servicePath: String, parameters: [Parameter], swagger: Swagger, swaggerFile: SwaggerFile) -> (NetworkRequestFunction, [ModelDefinition]) {
     print("-> Creating function for request: \(httpMethod.rawValue.uppercased()) \(servicePath)")
 
     let functionName: String
@@ -38,7 +38,7 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
         swagger.findParameter(node: $0)
     } + parameters
 
-    let functionParametersResult = getFunctionParameters(operationParameters, functionName: functionName, responseTypes: resTypes, swagger: swagger)
+    let functionParametersResult = getFunctionParameters(operationParameters, functionName: functionName, responseTypes: resTypes, swagger: swagger, swaggerFile: swaggerFile)
     let functionParameters = functionParametersResult.0
     definitions.append(contentsOf: functionParametersResult.1)
 
@@ -50,9 +50,9 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
         }
     }
 
-    let headers: [(String, String, Bool)] = operationParameters.compactMap {
+    let headers: [NetworkRequestFunctionHeaderField] = operationParameters.compactMap {
         if case ParameterLocation.header = $0.location {
-            return ($0.name.replacingOccurrences(of: "X-", with: "").lowercasingFirst, $0.name, $0.required)
+            return .init(headerName: $0.name, required: $0.required)
         } else {
             return nil
         }

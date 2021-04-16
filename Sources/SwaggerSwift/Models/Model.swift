@@ -3,25 +3,28 @@ import SwaggerSwiftML
 
 /// Represents some kind of network model. This could be a response type or a request type.
 struct Model {
-    let serviceName: String
+    let serviceName: String?
     let description: String?
     let typeName: String
     let fields: [ModelField]
     let inheritsFrom: [String]
 
     func resolveInherits(_ definitions: [Model]) -> Model {
-        let inherits = inheritsFrom.map { inherit in definitions.first(where: { $0.typeName == inherit })! }
+        let inherits = inheritsFrom.compactMap { inherit in
+            definitions.first(where: { $0.typeName == inherit })
+        }
+
         let inheritedFields = inherits.flatMap { $0.fields }
         return Model(serviceName: serviceName,
                      description: description,
                      typeName: typeName,
                      fields: (fields + inheritedFields).sorted(by: { $0.name < $1.name }),
-                     inheritsFrom: [])
+                     inheritsFrom: inheritsFrom)
     }
 }
 
 extension Model: Swiftable {
-    func toSwift() -> String {
+    func toSwift(swaggerFile: SwaggerFile) -> String {
         let hasDate = fields.contains(where: {
             if case TypeType.date = $0.type {
                 return true
@@ -62,25 +65,64 @@ extension Model: Swiftable {
 """
         }
 
-        let comment = description != nil && description!.count > 0 ? "\n\(defaultSpacing)// \(description ?? "")" : ""
-
         let initMethod = """
 public init(\(fields.map { "\($0.name): \($0.type.toString(required: $0.required))" }.joined(separator: ", "))) {
     \(fields.map { "self.\($0.name) = \($0.name)" }.joined(separator: "\n    "))
 }
 """
+        let readyFields = fields.sorted(by: { $0.name < $1.name }).flatMap { $0.toSwift.split(separator: "\n") }
 
-        return """
-import Foundation
 
-extension \(serviceName) {\(comment)
-    public struct \(typeName): \((inheritsFrom + ["Codable"]).joined(separator: ", ")) {
-\(fields.sorted(by: { $0.name < $1.name }).map { $0.toSwift.split(separator: "\n") }.flatMap { Array($0) }.map { "\(defaultSpacing)\(defaultSpacing)\($0)" }.joined(separator: "\n"))\(dateParsing)
+        var indentLevel = 0
+        let indentation = { String(repeating: defaultSpacing, count: indentLevel) }
 
-        \(initMethod.replacingOccurrences(of: "\n", with: "\n        "))
-    }
-}
-"""
+        let comment: String?
+        if let description = description {
+            comment = description.split(separator: "\n").map {
+                "// \($0)"
+            }.joined(separator: "\n")
+        } else {
+            comment = nil
+        }
+
+        var model = "\(indentation())import Foundation\n\n"
+
+        if let serviceName = serviceName {
+            model += "\(indentation())extension \(serviceName) {\n"
+            indentLevel += 1
+        }
+
+        if let comment = comment {
+            model += indentation() + comment.replacingOccurrences(of: "\n", with: "\(indentation())\n") + "\n"
+        }
+
+        model += "\(indentation())public struct \(typeName)\(inheritsFrom.count > 0 ? ": \(inheritsFrom.joined(separator: ", "))" : "") {\n"
+        indentLevel += 1
+
+        for field in readyFields {
+            model += indentation() + field + "\n"
+        }
+
+        if readyFields.count > 0 {
+            model += "\n"
+        }
+
+        if dateParsing.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).count > 0 {
+            model += indentation() + dateParsing
+        }
+
+        model += indentation() + initMethod.replacingOccurrences(of: "\n", with: "\n\(indentation())") + "\n"
+
+        indentLevel -= 1
+
+        model += "\(indentation())}\n"
+        indentLevel -= 1
+
+        if let _ = serviceName {
+            model += "\(indentation())}\n"
+        }
+
+        return model
     }
 }
 
