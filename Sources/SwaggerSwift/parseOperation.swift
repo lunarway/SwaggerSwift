@@ -58,6 +58,21 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
         }
     }
 
+    let consumes: NetworkRequestFunctionConsumes
+    if let consume = operation.consumes?.first ?? swagger.consumes?.first {
+        switch consume {
+        case "application/json":
+            consumes = .json
+        case "multipart/form-data":
+            consumes = .multiPartFormData
+        default:
+            fatalError("[ERROR] Does not support consume type: \(consume)")
+        }
+    } else {
+        fatalError("[ERROR] No provided consumer for function \(httpMethod.rawValue) \(servicePath)")
+    }
+
+
     let errorResponses = responseTypes.filter { !$0.0.isSuccess }
     let successResponses = responseTypes.filter { $0.0.isSuccess }
 
@@ -83,6 +98,7 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
                                    parameters: functionParameters,
                                    throws: false,
                                    returnType: "URLSessionDataTask",
+                                   consumes: consumes,
                                    httpMethod: httpMethod.rawValue.capitalized,
                                    servicePath: servicePath,
                                    queries: queries,

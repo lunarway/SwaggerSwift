@@ -1,3 +1,8 @@
+enum NetworkRequestFunctionConsumes {
+    case json
+    case multiPartFormData
+}
+
 // describes a single network request function
 struct NetworkRequestFunction {
     let description: String?
@@ -5,6 +10,7 @@ struct NetworkRequestFunction {
     let parameters: [FunctionParameter]
     let `throws`: Bool
     let returnType: String?
+    let consumes: NetworkRequestFunctionConsumes
 
     let httpMethod: String
     let servicePath: String
@@ -76,7 +82,7 @@ request.addValue(globalHeaders.\($0.headerModelName), forHTTPHeaderField: \"\($0
 
         let globalHeaderInitialisation = globalHeaders.replacingOccurrences(of: "\n", with: "\n    ")
 
-        let headerStatements = headers
+        var headerStatements = headers
             .filter { !swaggerGlobalHeaders.map { $0.lowercased() }.contains($0.fieldName.lowercased()) }
             .map {
                 if $0.required {
@@ -88,7 +94,22 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
 }
 """
                 }
-            }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n    ")
+            }.joined(separator: "\n\(defaultSpacing)")
+
+        let bodyInjection: String?
+        switch consumes {
+        case .json:
+            headerStatements = "request.addValue(\"application/json\", forHTTPHeaderField: \"Content-Type\")"
+            if parameters.contains(where: { $0.name == "body" }) {
+                bodyInjection = "request.httpBody = try? JSONEncoder().encode(body)"
+            } else {
+                bodyInjection = ""
+            }
+        case .multiPartFormData:
+            headerStatements = "request.addValue(\"multipart/form-data\", forHTTPHeaderField: \"Content-Type\")"
+            bodyInjection = ""
+        }
+
 
         let responseTypes = self.responseTypes.map { $0.print() }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n            ")
 
@@ -104,6 +125,9 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
     request.httpMethod = "\(httpMethod.uppercased())"
     \(globalHeaderInitialisation)
     \(headerStatements)
+
+    \(bodyInjection ?? "")
+
     request = interceptor?.networkWillPerformRequest(request) ?? request
     let task = urlSession.dataTask(with: request) { (data, response, error) in
         if let error = error {
