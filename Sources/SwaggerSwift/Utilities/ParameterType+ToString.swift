@@ -29,7 +29,7 @@ extension ParameterType {
         case .array(let items, collectionFormat: _, maxItems: _, minItems: _, uniqueItems: _):
             return typeOfItems(items.type, typePrefix: typePrefix, swagger: swagger)
         case .file:
-            return (.object(typeName: "Data"), [])
+            return (.object(typeName: "FormData"), [])
         }
     }
 }

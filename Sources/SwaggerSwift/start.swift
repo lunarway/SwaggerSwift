@@ -59,6 +59,48 @@ public struct DummyTest {
     }
 }
 """
+
+let formData = """
+import Foundation
+
+public struct FormData {
+    /// the data representation of the object
+    public let data: Data
+    /// the mime type for the data, e.g. `image/png`
+    public let mimeType: String
+    /// a filename representing the input - e.g. `image.png`
+    public let filename: String
+
+    /// Creates the data part of a multi part request
+    /// - Parameters:
+    ///   - data: the piece of data being sent
+    ///   - mimeType: the mime type for the data, e.g. `image/png`
+    ///   - fileName: a filename representing the input - e.g. `image.png`
+    public init(data: Data, mimeType: String, fileName: String) {
+        self.data = data
+        self.mimeType = mimeType
+        self.filename = fileName
+    }
+
+    internal func toRequestData(named fieldName: String, using boundary: String) -> Data {
+        func append(string: String, toData data: NSMutableData) {
+            guard let strData = string.data(using: .utf8) else { return }
+            data.append(strData)
+        }
+
+        let mutableData = NSMutableData()
+
+        append(string: "--\\(boundary)\\r\\n", toData: mutableData)
+        append(string: "Content-Disposition: form-data; name=\\"\\(fieldName)\\"; filename=\\"\\(filename)\\"\\r\\n", toData: mutableData)
+        append(string: "Content-Type: \\(mimeType)\\r\\n\\r\\n", toData: mutableData)
+        mutableData.append(data)
+        append(string: "\\r\\n", toData: mutableData)
+
+        return mutableData as Data
+    }
+}
+"""
+
 // token
 func start(swaggerFilePath: String, token: String, destinationPath: String, projectName: String = "Services", verbose: Bool = false) throws {
     if verbose {
@@ -76,6 +118,7 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
     try! urlQueryItemExtension.write(toFile: "\(sourceDirectory)/URLQueryExtension.swift", atomically: true, encoding: .utf8)
     try! parsingErrorExtension.write(toFile: "\(sourceDirectory)/ParsingError.swift", atomically: true, encoding: .utf8)
     try! networkInterceptor.write(toFile: "\(sourceDirectory)/NetworkInterceptor.swift", atomically: true, encoding: .utf8)
+    try! formData.write(toFile: "\(sourceDirectory)/FormData.swift", atomically: true, encoding: .utf8)
     try! dummyTest.write(toFile: "\(testDirectory)/DummyTest.swift", atomically: true, encoding: .utf8)
 
     if let globalHeaderFields = swaggerFile.globalHeaders?.map({

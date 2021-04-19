@@ -99,6 +99,9 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
                                    throws: false,
                                    returnType: "URLSessionDataTask",
                                    consumes: consumes,
+                                   // TODO: Temporary solution until SwaggerSwiftML parses x- flags
+                                   isInternalOnly: functionName.lowercased().contains("debug"),
+                                   isDeprecated: operation.deprecated,
                                    httpMethod: httpMethod.rawValue.capitalized,
                                    servicePath: servicePath,
                                    queries: queries,

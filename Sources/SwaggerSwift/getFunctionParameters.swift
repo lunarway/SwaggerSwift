@@ -86,14 +86,19 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, resp
     // Body
 
     let bodyParams: [(FunctionParameter, [ModelDefinition])] = parameters.map {
-        if case let ParameterLocation.body(schemaNode) = $0.location {
+        switch $0.location {
+        case .body(schema: let schemaNode):
             let schema = swagger.findSchema(node: schemaNode.value)
             let type = getType(forSchema: schema, typeNamePrefix: typeName, swagger: swagger)
             let param = FunctionParameter(description: $0.description, name: "body", typeName: type.0, required: $0.required)
             return (param, type.1)
-        } else {
-            return nil
+        case .formData(type: let paramType, allowEmptyValue: let allowEmpty):
+            let typeName = paramType.toType(typePrefix: typeName, swagger: swagger)
+            let param = FunctionParameter(description: $0.description, name: $0.name, typeName: typeName.0, required: !allowEmpty)
+            return (param, [])
+        default: return nil
         }
+
     }.compactMap { $0 }
 
     resolvedParameters.append(contentsOf: bodyParams.map { $0.0 })
@@ -105,7 +110,7 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, resp
     let successType = successTypeResult.0
     let failureTypeResult = createResultEnumType(types: responseTypes, failure: true, functionName: functionName, swagger: swagger)
     let failureType = failureTypeResult.0
-    let completionHandler = FunctionParameter(description: "The completion handler of the function returns as soon as the request completes", name: "completionHandler", typeName: .object(typeName: "@escaping (Result<\(successType), ServiceError<\(failureType)>>) -> Void"), required: true)
+    let completionHandler = FunctionParameter(description: "The completion handler of the function returns as soon as the request completes", name: "completionHandler", typeName: .object(typeName: "@escaping (Result<\(successType), ServiceError<\(failureType)>>) -> Void = { _ in }"), required: true)
 
     resolvedParameters.append(completionHandler)
     resolvedModelDefinitions.append(contentsOf: successTypeResult.1)

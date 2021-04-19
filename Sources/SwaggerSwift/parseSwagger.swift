@@ -1,3 +1,4 @@
+import Foundation
 import SwaggerSwiftML
 
 func parse(swagger: Swagger, swaggerFile: SwaggerFile) -> ServiceDefinition {
@@ -14,15 +15,35 @@ func parse(swagger: Swagger, swaggerFile: SwaggerFile) -> ServiceDefinition {
     let hasGlobalHeaders = (swaggerFile.globalHeaders ?? []).count > 0
 
     var serviceFields = [
-        ServiceField(name: "urlSession", typeName: "URLSession", typeIsBlock: false),
-        ServiceField(name: "baseUrl", typeName: "String", typeIsBlock: false),
+        ServiceField(name: "urlSession",
+                     description: "the underlying URLSession. This defaults to the standard `.shared` is none is specified",
+                     typeName: "URLSession",
+                     required: true,
+                     typeIsBlock: false,
+                     defaultValue: ".shared"),
+        ServiceField(name: "baseUrl",
+                     description: "the block provider for the baseUrl of the service. The reason this is a block is that this enables automatically updating the network layer on backend environment change.",
+                     typeName: "() -> URL",
+                     required: true,
+                     typeIsBlock: true,
+                     defaultValue: nil),
     ]
 
     if hasGlobalHeaders {
-        serviceFields.append(ServiceField(name: "headerProvider", typeName: "() -> GlobalHeaders", typeIsBlock: true))
+        serviceFields.append(ServiceField(name: "headerProvider",
+                                          description: "a block provider for the set of globally defined headers",
+                                          typeName: "() -> GlobalHeaders",
+                                          required: true,
+                                          typeIsBlock: true,
+                                          defaultValue: nil))
     }
 
-    serviceFields.append(ServiceField(name: "interceptor", typeName: "NetworkInterceptor?", typeIsBlock: false))
+    serviceFields.append(ServiceField(name: "interceptor",
+                                      description: "use this if you need to intercept overall requests",
+                                      typeName: "NetworkInterceptor",
+                                      required: false,
+                                      typeIsBlock: false,
+                                      defaultValue: "nil"))
 
     let builtInModels = builtinDefinitions.compactMap { model -> Model? in
         if case let ModelDefinition.model(model) = model {
@@ -35,5 +56,9 @@ func parse(swagger: Swagger, swaggerFile: SwaggerFile) -> ServiceDefinition {
     let resolvedBuiltinModels = builtinDefinitions.map { $0.resolveInherits(builtInModels) }
     let resolvedDefinitions = definitions.map { $0.resolveInherits(builtInModels) }
 
-    return ServiceDefinition(typeName: swagger.serviceName, fields: serviceFields, functions: functions, innerTypes: resolvedBuiltinModels + resolvedDefinitions)
+    return ServiceDefinition(typeName: swagger.serviceName,
+                             description: swagger.info.description?.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines),
+                             fields: serviceFields,
+                             functions: functions,
+                             innerTypes: resolvedBuiltinModels + resolvedDefinitions)
 }

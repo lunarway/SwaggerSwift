@@ -1,6 +1,7 @@
 /// Represent the overall service definition with all the network request methods and the primary initialiser
 struct ServiceDefinition {
     let typeName: String
+    let description: String?
     let fields: [ServiceField]
     let functions: [NetworkRequestFunction]
     let innerTypes: [ModelDefinition]
@@ -9,16 +10,23 @@ struct ServiceDefinition {
 extension ServiceDefinition: Swiftable {
     func toSwift(swaggerFile: SwaggerFile) -> String {
         let initMethod = """
-public init(\(fields.map { "\($0.name): \($0.typeIsBlock ? "@escaping " : "")\($0.typeName)" }.joined(separator: ", "))) {
+/// Initialises the service
+/// - Parameters:
+\(fields.map { "///   - \($0.name): \($0.description ?? "")" }.joined(separator: "\n"))
+public init(\(fields.map { "\($0.name): \($0.typeIsBlock ? "@escaping " : "")\($0.typeName)\($0.required ? "" : "?")\($0.defaultValue != nil ? " = \($0.defaultValue!)" : "")" }.joined(separator: ", "))) {
     \(fields.map { "self.\($0.name) = \($0.name)" }.joined(separator: "\n    "))
 }
 """
 
-        return """
-import Foundation
+        var serviceDefinition = "import Foundation\n\n"
 
+        if let description = description {
+            serviceDefinition.append("// \(description)\n")
+        }
+
+        serviceDefinition += """
 public struct \(typeName) {
-    \(fields.map { "public let \($0.name): \($0.typeName)" }.joined(separator: "\n    "))
+    \(fields.map { "private let \($0.name): \($0.typeName)\($0.required ? "" : "?")" }.joined(separator: "\n    "))
 
     \(initMethod.replacingOccurrences(of: "\n", with: "\n    "))
 
@@ -27,6 +35,8 @@ public struct \(typeName) {
         .map { $0.toSwift(swaggerFile: swaggerFile).replacingOccurrences(of: "\n", with: "\n    ") }
         .joined(separator: "\n\n    "))
 }
+
 """
+        return serviceDefinition
     }
 }

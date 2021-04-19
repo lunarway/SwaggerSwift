@@ -11,6 +11,8 @@ struct NetworkRequestFunction {
     let `throws`: Bool
     let returnType: String?
     let consumes: NetworkRequestFunctionConsumes
+    let isInternalOnly: Bool
+    let isDeprecated: Bool
 
     let httpMethod: String
     let servicePath: String
@@ -50,10 +52,17 @@ extension NetworkRequestFunction: Swiftable {
             returnStatement = ""
         }
 
-        let declaration = """
-@discardableResult
-public func \(functionName)(\(arguments)) \(`throws` ? "throws" : "") \(returnStatement) {
-"""
+        var declaration = ""
+        if isDeprecated {
+            declaration += "@available(*, deprecated)\n"
+        }
+
+        if isInternalOnly {
+            declaration += "#if !PRODUCTION\n"
+        }
+
+        declaration += "@discardableResult\n"
+        declaration += "public func \(functionName)(\(arguments)) \(`throws` ? "throws" : "") \(returnStatement) {"
 
         let servicePath = self.servicePath
             .replacingOccurrences(of: "{", with: "\\(")
@@ -106,27 +115,40 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
                 bodyInjection = ""
             }
         case .multiPartFormData:
-            headerStatements = "request.addValue(\"multipart/form-data\", forHTTPHeaderField: \"Content-Type\")"
-            bodyInjection = ""
-        }
+            headerStatements = ""
+            bodyInjection = """
+let boundary = "Boundary-\\(UUID().uuidString)"
+request.setValue("multipart/form-data; boundary=\\(boundary)", forHTTPHeaderField: "Content-Type")
 
+let httpBody = NSMutableData()
+
+""" + parameters.filter { $0.typeName.toString(required: $0.required) == "FormData" }.map {
+    "httpBody.append(\($0.name).toRequestData(named: \"\($0.name)\", using: boundary))"
+}.joined(separator: "\n") + """
+
+if let endBoundaryData = "--\\(boundary)--".data(using: .utf8) {
+    httpBody.append(endBoundaryData)
+}
+
+request.httpBody = httpBody as Data
+"""
+        }
 
         let responseTypes = self.responseTypes.map { $0.print() }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n            ")
 
-        return """
+        var body = """
 \(declaration)
-    let path = "\(servicePath)"
-    let urlString = "\\(baseUrl)\\(path)"
+    let endpointUrl = self.baseUrl().appendingPathComponent("\(servicePath)")
 
-    \(queryStatement.count > 0 ? "var" : "let") urlComponents = URLComponents(string: urlString)!
+    \(queryStatement.count > 0 ? "var" : "let") urlComponents = URLComponents(url: endpointUrl, resolvingAgainstBaseURL: true)!
     \(queryStatement)
-    let url = urlComponents.url!
-    var request = URLRequest(url: url)
+    let requestUrl = urlComponents.url!
+    var request = URLRequest(url: requestUrl)
     request.httpMethod = "\(httpMethod.uppercased())"
     \(globalHeaderInitialisation)
     \(headerStatements)
 
-    \(bodyInjection ?? "")
+    \(bodyInjection?.replacingOccurrences(of: "\n", with: "\n\(defaultSpacing)") ?? "")
 
     request = interceptor?.networkWillPerformRequest(request) ?? request
     let task = urlSession.dataTask(with: request) { (data, response, error) in
@@ -155,6 +177,12 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
 
     return task
 }
+
 """
+        if isInternalOnly {
+            body += "#endif\n"
+        }
+
+        return body
     }
 }
