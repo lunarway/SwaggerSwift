@@ -8,6 +8,7 @@ struct Model {
     let typeName: String
     let fields: [ModelField]
     let inheritsFrom: [String]
+    let isInternalOnly: Bool
 
     func resolveInherits(_ definitions: [Model]) -> Model {
         let inherits = inheritsFrom.compactMap { inherit in
@@ -19,7 +20,8 @@ struct Model {
                      description: description,
                      typeName: typeName,
                      fields: (fields + inheritedFields).sorted(by: { $0.name < $1.name }),
-                     inheritsFrom: inheritsFrom)
+                     inheritsFrom: inheritsFrom,
+                     isInternalOnly: isInternalOnly)
     }
 }
 
@@ -87,6 +89,10 @@ public init(\(fields.map { "\($0.name): \($0.type.toString(required: $0.required
 
         var model = "\(indentation())import Foundation\n\n"
 
+        if isInternalOnly {
+            model += "#if DEBUG\n"
+        }
+
         if let serviceName = serviceName {
             model += "\(indentation())extension \(serviceName) {\n"
             indentLevel += 1
@@ -120,6 +126,10 @@ public init(\(fields.map { "\($0.name): \($0.type.toString(required: $0.required
 
         if let _ = serviceName {
             model += "\(indentation())}\n"
+        }
+
+        if isInternalOnly {
+            model += "#endif\n"
         }
 
         return model

@@ -131,7 +131,8 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
                                   description: nil,
                                   typeName: "GlobalHeaders",
                                   fields: globalHeaderFields,
-                                  inheritsFrom: [])
+                                  inheritsFrom: [],
+                                  isInternalOnly: false)
 
         try! globalHeaders.toSwift(swaggerFile: swaggerFile)
             .write(toFile: "\(sourceDirectory)/GlobalHeaders.swift", atomically: true, encoding: .utf8)

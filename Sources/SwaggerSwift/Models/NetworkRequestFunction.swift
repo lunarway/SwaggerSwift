@@ -58,7 +58,7 @@ extension NetworkRequestFunction: Swiftable {
         }
 
         if isInternalOnly {
-            declaration += "#if !PRODUCTION\n"
+            declaration += "#if DEBUG\n"
         }
 
         declaration += "@discardableResult\n"

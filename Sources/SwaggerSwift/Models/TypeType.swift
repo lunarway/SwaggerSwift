@@ -158,6 +158,26 @@ private func typeOfItems(schema: Schema, items: Node<Items>, typeNamePrefix: Str
     }
 }
 
+extension Schema {
+    var isInternalOnly: Bool {
+        if let value = self.customFields["x-internal"] {
+            return value == "true"
+        } else {
+            return false
+        }
+    }
+}
+
+extension Operation {
+    var isInternalOnly: Bool {
+        if let value = self.customFields["x-internal"] {
+            return value == "true"
+        } else {
+            return false
+        }
+    }
+}
+
 func parseObject(properties: [String: Node<Schema>], allOf: [Node<Schema>]?, swagger: Swagger, typeNamePrefix: String, schema: Schema) -> (TypeType, [ModelDefinition]) {
     if let allOf = allOf {
         let result: [(String?, [ModelField], [ModelDefinition])] = allOf.map {
@@ -204,7 +224,8 @@ func parseObject(properties: [String: Node<Schema>], allOf: [Node<Schema>]?, swa
                           description: schema.description,
                           typeName: typeNamePrefix,
                           fields: result.flatMap { $0.1 },
-                          inheritsFrom: inherits)
+                          inheritsFrom: inherits,
+                          isInternalOnly: schema.isInternalOnly)
 
         let models = result.flatMap { $0.2 } + [.model(model)]
 
@@ -236,7 +257,8 @@ func parseObject(properties: [String: Node<Schema>], allOf: [Node<Schema>]?, swa
                       description: schema.description, typeName:
                         typeNamePrefix,
                       fields: fields.sorted(by: { $0.name < $1.name }),
-                      inheritsFrom: ["Codable"])
+                      inheritsFrom: ["Codable"],
+                      isInternalOnly: schema.isInternalOnly)
 
     inlineModels.append(.model(model))
 

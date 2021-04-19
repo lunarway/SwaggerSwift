@@ -9,7 +9,7 @@ func makeHeaderFieldName(headerName: String) -> String {
         .lowercasingFirst
 }
 
-func getFunctionParameters(_ parameters: [Parameter], functionName: String, responseTypes: [(HTTPStatusCodes, TypeType)], swagger: Swagger, swaggerFile: SwaggerFile) -> ([FunctionParameter], [ModelDefinition]) {
+func getFunctionParameters(_ parameters: [Parameter], functionName: String, isInternalOnly: Bool, responseTypes: [(HTTPStatusCodes, TypeType)], swagger: Swagger, swaggerFile: SwaggerFile) -> ([FunctionParameter], [ModelDefinition]) {
     var resolvedParameters = [FunctionParameter]()
     var resolvedModelDefinitions = [ModelDefinition]()
     let typeName = functionName.components(separatedBy: "_").map { $0.capitalizingFirstLetter() }.joined(separator: "")
@@ -29,7 +29,7 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, resp
 
         let globalHeaderFieldNames = (swaggerFile.globalHeaders ?? []).map { makeHeaderFieldName(headerName: $0) }
 
-        let model = Model(serviceName: swagger.serviceName, description: "A collection of the header fields required for the request", typeName: typeName, fields: headers.compactMap { param, type in
+        let fields: [ModelField] = headers.compactMap { param, type in
             let resultType = type.toType(typePrefix: typeName, swagger: swagger)
             let name = makeHeaderFieldName(headerName: param.name)
 
@@ -45,7 +45,14 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, resp
                               type: resultType.0,
                               name: name,
                               required: param.required)
-        }.sorted(by: { $0.name < $1.name }), inheritsFrom: [])
+        }.sorted(by: { $0.name < $1.name })
+
+        let model = Model(serviceName: swagger.serviceName,
+                          description: "A collection of the header fields required for the request",
+                          typeName: typeName,
+                          fields: fields,
+                          inheritsFrom: [],
+                          isInternalOnly: isInternalOnly)
 
         if model.fields.count > 0 {
             resolvedModelDefinitions.append(.model(model))

@@ -38,7 +38,13 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
         swagger.findParameter(node: $0)
     } + parameters
 
-    let functionParametersResult = getFunctionParameters(operationParameters, functionName: functionName, responseTypes: resTypes, swagger: swagger, swaggerFile: swaggerFile)
+    let functionParametersResult = getFunctionParameters(operationParameters,
+                                                         functionName: functionName,
+                                                         isInternalOnly: operation.isInternalOnly,
+                                                         responseTypes: resTypes,
+                                                         swagger: swagger,
+                                                         swaggerFile: swaggerFile)
+    
     let functionParameters = functionParametersResult.0
     definitions.append(contentsOf: functionParametersResult.1)
 
@@ -99,8 +105,7 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
                                    throws: false,
                                    returnType: "URLSessionDataTask",
                                    consumes: consumes,
-                                   // TODO: Temporary solution until SwaggerSwiftML parses x- flags
-                                   isInternalOnly: functionName.lowercased().contains("debug"),
+                                   isInternalOnly: operation.isInternalOnly,
                                    isDeprecated: operation.deprecated,
                                    httpMethod: httpMethod.rawValue.capitalized,
                                    servicePath: servicePath,
