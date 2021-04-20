@@ -99,8 +99,8 @@ request.addValue(globalHeaders.\($0.headerModelName), forHTTPHeaderField: \"\($0
                 } else {
                     return """
 if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
-    request.addValue(\(($0.headerModelName)), forHTTPHeaderField: \"\($0.fieldName)\")
-}
+        request.addValue(\(($0.headerModelName)), forHTTPHeaderField: \"\($0.fieldName)\")
+    }
 """
                 }
             }.joined(separator: "\n\(defaultSpacing)")
@@ -108,14 +108,13 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
         let bodyInjection: String?
         switch consumes {
         case .json:
-            headerStatements = "request.addValue(\"application/json\", forHTTPHeaderField: \"Content-Type\")"
+            headerStatements += "\n    request.addValue(\"application/json\", forHTTPHeaderField: \"Content-Type\")"
             if parameters.contains(where: { $0.name == "body" }) {
                 bodyInjection = "request.httpBody = try? JSONEncoder().encode(body)"
             } else {
                 bodyInjection = ""
             }
         case .multiPartFormData:
-            headerStatements = ""
             bodyInjection = """
 let boundary = "Boundary-\\(UUID().uuidString)"
 request.setValue("multipart/form-data; boundary=\\(boundary)", forHTTPHeaderField: "Content-Type")

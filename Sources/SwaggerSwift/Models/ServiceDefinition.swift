@@ -13,7 +13,7 @@ extension ServiceDefinition: Swiftable {
 /// Initialises the service
 /// - Parameters:
 \(fields.map { "///   - \($0.name): \($0.description ?? "")" }.joined(separator: "\n"))
-public init(\(fields.map { "\($0.name): \($0.typeIsBlock ? "@escaping " : "")\($0.typeName)\($0.required ? "" : "?")\($0.defaultValue != nil ? " = \($0.defaultValue!)" : "")" }.joined(separator: ", "))) {
+public init(\(fields.map { "\($0.name): \($0.typeIsAutoclosure ? "@autoclosure " : "")\($0.typeIsBlock ? "@escaping " : "")\($0.typeName)\($0.required ? "" : "?")\($0.defaultValue != nil ? " = \($0.defaultValue!)" : "")" }.joined(separator: ", "))) {
     \(fields.map { "self.\($0.name) = \($0.name)" }.joined(separator: "\n    "))
 }
 """

@@ -19,12 +19,14 @@ func parse(swagger: Swagger, swaggerFile: SwaggerFile) -> ServiceDefinition {
                      description: "the underlying URLSession. This defaults to the standard `.shared` is none is specified",
                      typeName: "URLSession",
                      required: true,
+                     typeIsAutoclosure: false,
                      typeIsBlock: false,
                      defaultValue: ".shared"),
         ServiceField(name: "baseUrl",
                      description: "the block provider for the baseUrl of the service. The reason this is a block is that this enables automatically updating the network layer on backend environment change.",
                      typeName: "() -> URL",
                      required: true,
+                     typeIsAutoclosure: true,
                      typeIsBlock: true,
                      defaultValue: nil),
     ]
@@ -34,6 +36,7 @@ func parse(swagger: Swagger, swaggerFile: SwaggerFile) -> ServiceDefinition {
                                           description: "a block provider for the set of globally defined headers",
                                           typeName: "() -> GlobalHeaders",
                                           required: true,
+                                          typeIsAutoclosure: false,
                                           typeIsBlock: true,
                                           defaultValue: nil))
     }
@@ -42,6 +45,7 @@ func parse(swagger: Swagger, swaggerFile: SwaggerFile) -> ServiceDefinition {
                                       description: "use this if you need to intercept overall requests",
                                       typeName: "NetworkInterceptor",
                                       required: false,
+                                      typeIsAutoclosure: false,
                                       typeIsBlock: false,
                                       defaultValue: "nil"))
 
