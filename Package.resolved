@@ -6,7 +6,7 @@
         "repositoryURL": "https://github.com/MadsBogeskov/SwaggerSwiftML",
         "state": {
           "branch": "main",
-          "revision": "4206e49b6ba887a1b0afd85d5800ae993768c008",
+          "revision": "c85a64a463fd58f944c31b73798d168bf36b68d4",
           "version": null
         }
       },
@@ -15,8 +15,8 @@
         "repositoryURL": "https://github.com/apple/swift-argument-parser",
         "state": {
           "branch": null,
-          "revision": "831ed5e860a70e745bc1337830af4786b2576881",
-          "version": "0.4.1"
+          "revision": "986d191f94cec88f6350056da59c2e59e83d1229",
+          "version": "0.4.3"
         }
       },
       {

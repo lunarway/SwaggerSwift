@@ -65,7 +65,7 @@ private func typeOfItems(_ itemsType: ItemsType, typePrefix: String, swagger: Sw
         return (.boolean, [])
     case .array(let itemsType, collectionFormat: _, maxItems: _, minItems: _, uniqueItems: _):
         return typeOfItems(itemsType.type, typePrefix: typePrefix, swagger: swagger)
-    case .object(properties: _, allOf: _):
+    case .object(required: _, properties: _, allOf: _):
         fatalError("I dont think this can happen")
     }
 }

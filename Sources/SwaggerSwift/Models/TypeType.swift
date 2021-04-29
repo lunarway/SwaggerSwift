@@ -8,7 +8,7 @@ indirect enum TypeType {
     case float
     case boolean
     case int64
-    case array( typeName: TypeType)
+    case array(typeName: TypeType)
     case object(typeName: String)
     case date
     case void
@@ -118,7 +118,7 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
         let type = typeOfItems(schema: schema, items: items, typeNamePrefix: typeNamePrefix, swagger: swagger)
         return (.array(typeName: type.0), type.1)
     case .object(let properties, allOf: let allOf):
-        return parseObject(properties: properties, allOf: allOf, swagger: swagger, typeNamePrefix: typeNamePrefix, schema: schema)
+        return parseObject(required: [], properties: properties, allOf: allOf, swagger: swagger, typeNamePrefix: typeNamePrefix, schema: schema)
     case .dictionary(valueType: let valueType, keys: _):
         switch valueType {
         case .any:
@@ -152,8 +152,8 @@ private func typeOfItems(schema: Schema, items: Node<Items>, typeNamePrefix: Str
             return (.boolean, [])
         case .array(let items, collectionFormat: _, maxItems: _, minItems: _, uniqueItems: _):
             return typeOfItems(schema: schema, items: Node.node(items), typeNamePrefix: typeNamePrefix, swagger: swagger)
-        case .object(properties: let properties, allOf: let allOf):
-            return parseObject(properties: properties, allOf: allOf, swagger: swagger, typeNamePrefix: typeNamePrefix, schema: schema)
+        case .object(required: let required, properties: let properties, allOf: let allOf):
+            return parseObject(required: required, properties: properties, allOf: allOf, swagger: swagger, typeNamePrefix: typeNamePrefix, schema: schema)
         }
     }
 }
@@ -178,7 +178,7 @@ extension Operation {
     }
 }
 
-func parseObject(properties: [String: Node<Schema>], allOf: [Node<Schema>]?, swagger: Swagger, typeNamePrefix: String, schema: Schema) -> (TypeType, [ModelDefinition]) {
+func parseObject(required: [String], properties: [String: Node<Schema>], allOf: [Node<Schema>]?, swagger: Swagger, typeNamePrefix: String, schema: Schema) -> (TypeType, [ModelDefinition]) {
     if let allOf = allOf {
         let result: [(String?, [ModelField], [ModelDefinition])] = allOf.map {
             switch $0 {
@@ -246,7 +246,8 @@ func parseObject(properties: [String: Node<Schema>], allOf: [Node<Schema>]?, swa
         case .node(let innerSchema):
             let typeName = "\(typeNamePrefix)\($0.key.capitalized)Options"
             let type = getType(forSchema: innerSchema, typeNamePrefix: typeName, swagger: swagger)
-            return (ModelField(description: innerSchema.description, type: type.0, name: $0.key, required: schema.required.contains($0.key)), type.1)
+            let modelField = ModelField(description: innerSchema.description, type: type.0, name: $0.key, required: required.contains($0.key) || schema.required.contains($0.key))
+            return (modelField, type.1)
         }
     }
 
