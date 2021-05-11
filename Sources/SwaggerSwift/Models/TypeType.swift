@@ -62,11 +62,12 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
                 return (.string, [])
             case .email:
                 return (.string, [])
+            case .binary:
+                return (.object(typeName: "Data"), [])
             case .long: fallthrough
             case .float: fallthrough
             case .double: fallthrough
             case .byte: fallthrough
-            case .binary: fallthrough
             case .boolean: fallthrough
             case .int32:
                 fatalError("Found unsupported field")

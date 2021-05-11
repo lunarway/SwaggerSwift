@@ -45,24 +45,6 @@ extension NetworkRequestFunction: Swiftable {
 
     func toSwift(swaggerFile: SwaggerFile) -> String {
         let arguments = parameters.map { "\($0.name): \($0.typeName.toString(required: $0.required))" }.joined(separator: ", ")
-        let returnStatement: String
-        if let returnType = returnType {
-            returnStatement = " -> \(returnType)"
-        } else {
-            returnStatement = ""
-        }
-
-        var declaration = ""
-        if isDeprecated {
-            declaration += "@available(*, deprecated)\n"
-        }
-
-        if isInternalOnly {
-            declaration += "#if DEBUG\n"
-        }
-
-        declaration += "@discardableResult\n"
-        declaration += "public func \(functionName)(\(arguments)) \(`throws` ? "throws" : "") \(returnStatement) {"
 
         let servicePath = self.servicePath
             .replacingOccurrences(of: "{", with: "\\(")
@@ -70,7 +52,7 @@ extension NetworkRequestFunction: Swiftable {
 
         let queryStatement: String
         if queries.count > 0 {
-            let queryElements = "[" + queries.map { "URLQueryItem(name: \"\($0.fieldName)\", value: \($0.fieldName))" }.joined(separator: ", ") + "]"
+            let queryElements = "[" + queries.map { "URLQueryItem(name: \"\($0.fieldName)\", value: \($0.fieldValue))" }.joined(separator: ", ") + "]"
             queryStatement = "\n    urlComponents.queryItems = \(queryElements)\n"
         } else {
             queryStatement = ""
@@ -105,9 +87,13 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
                 }
             }.joined(separator: "\n\(defaultSpacing)")
 
+        let returnStatement: String
+        let urlSessionMethodName: String
         let bodyInjection: String?
         switch consumes {
         case .json:
+            urlSessionMethodName = "dataTask(with: request)"
+            returnStatement = " -> URLSessionDataTask"
             headerStatements += "\n    request.addValue(\"application/json\", forHTTPHeaderField: \"Content-Type\")"
             if parameters.contains(where: { $0.name == "body" }) {
                 bodyInjection = "request.httpBody = try? JSONEncoder().encode(body)"
@@ -115,23 +101,35 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
                 bodyInjection = ""
             }
         case .multiPartFormData:
+            urlSessionMethodName = "uploadTask(with: request, from: requestData as Data)"
+            returnStatement = " -> URLSessionUploadTask"
             bodyInjection = """
 let boundary = "Boundary-\\(UUID().uuidString)"
 request.setValue("multipart/form-data; boundary=\\(boundary)", forHTTPHeaderField: "Content-Type")
 
-let httpBody = NSMutableData()
+let requestData = NSMutableData()
 
 """ + parameters.filter { $0.typeName.toString(required: $0.required) == "FormData" }.map {
-    "httpBody.append(\($0.name).toRequestData(named: \"\($0.name)\", using: boundary))"
+    "requestData.append(\($0.name).toRequestData(named: \"\($0.name)\", using: boundary))"
 }.joined(separator: "\n") + """
 
 if let endBoundaryData = "--\\(boundary)--".data(using: .utf8) {
-    httpBody.append(endBoundaryData)
+    requestData.append(endBoundaryData)
 }
-
-request.httpBody = httpBody as Data
 """
         }
+
+        var declaration = ""
+        if isDeprecated {
+            declaration += "@available(*, deprecated)\n"
+        }
+
+        if isInternalOnly {
+            declaration += "#if DEBUG\n"
+        }
+
+        declaration += "@discardableResult\n"
+        declaration += "public func \(functionName)(\(arguments)) \(`throws` ? "throws" : "") \(returnStatement) {"
 
         let responseTypes = self.responseTypes.map { $0.print() }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n            ")
 
@@ -150,7 +148,7 @@ request.httpBody = httpBody as Data
     \(bodyInjection?.replacingOccurrences(of: "\n", with: "\n\(defaultSpacing)") ?? "")
 
     request = interceptor?.networkWillPerformRequest(request) ?? request
-    let task = urlSession.dataTask(with: request) { (data, response, error) in
+    let task = urlSession.\(urlSessionMethodName) { (data, response, error) in
         if let error = error {
             self.interceptor?.networkDidPerformRequest(.failed(error))
             completionHandler(.failure(.requestFailed(error: error)))

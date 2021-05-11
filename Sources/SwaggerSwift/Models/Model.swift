@@ -27,45 +27,7 @@ struct Model {
 
 extension Model: Swiftable {
     func toSwift(swaggerFile: SwaggerFile) -> String {
-        let hasDate = fields.contains(where: {
-            if case TypeType.date = $0.type {
-                return true
-            } else {
-                return false
-            }
-        })
-
         let defaultSpacing = "    "
-        var dateParsing = ""
-        if hasDate {
-            dateParsing += """
-
-
-\(defaultSpacing)public enum CodingKeys: String, CodingKey {
-\(defaultSpacing)\(defaultSpacing)\(fields.sorted(by: { $0.name < $1.name }).map { "case \($0.name)" }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n\(defaultSpacing)\(defaultSpacing)"))
-\(defaultSpacing)}
-
-""".replacingOccurrences(of: "\n", with: "\n    ")
-
-            dateParsing += """
-
-\(defaultSpacing)\(defaultSpacing)public init(from decoder: Decoder) throws {
-\(defaultSpacing)\(defaultSpacing)\(defaultSpacing)let iso8601DateFormatter = ISO8601DateFormatter()
-\(defaultSpacing)\(defaultSpacing)\(defaultSpacing)let container = try decoder.container(keyedBy: CodingKeys.self)
-\(defaultSpacing)\(fields.sorted(by: { $0.name < $1.name }).map { $0.decoderLine(typeName: self.typeName, indentationLevel: 2) }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n\(defaultSpacing)"))
-\(defaultSpacing)\(defaultSpacing)}
-
-"""
-
-            dateParsing += """
-
-\(defaultSpacing)\(defaultSpacing)public func encode(to encoder: Encoder) throws {
-\(defaultSpacing)\(defaultSpacing)\(defaultSpacing)let iso8601DateFormatter = ISO8601DateFormatter()
-\(defaultSpacing)\(defaultSpacing)\(defaultSpacing)var container = encoder.container(keyedBy: CodingKeys.self)
-\(defaultSpacing)\(fields.sorted(by: { $0.name < $1.name }).map { $0.encoderLine(typeName: self.typeName, indentationLevel: 2) }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n\(defaultSpacing)"))
-\(defaultSpacing)\(defaultSpacing)}
-"""
-        }
 
         let initMethod = """
 public init(\(fields.map { "\($0.name): \($0.type.toString(required: $0.required))" }.joined(separator: ", "))) {
@@ -111,10 +73,6 @@ public init(\(fields.map { "\($0.name): \($0.type.toString(required: $0.required
 
         if readyFields.count > 0 {
             model += "\n"
-        }
-
-        if dateParsing.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).count > 0 {
-            model += indentation() + dateParsing
         }
 
         model += indentation() + initMethod.replacingOccurrences(of: "\n", with: "\n\(indentation())") + "\n"

@@ -2,6 +2,7 @@ import SwaggerSwiftML
 
 struct QueryElement {
     let fieldName: String
+    let fieldValue: String
 }
 
 func isErrorHttpCode(code: Int) -> Bool {
@@ -50,10 +51,65 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
 
     let queries: [QueryElement] = operationParameters.compactMap {
         if case ParameterLocation.query = $0.location {
-            return QueryElement(fieldName: $0.name)
+            switch $0.location {
+            case .query(type: let type, allowEmptyValue: _):
+                switch type {
+                case .string(format: let format, enumValues: _, maxLength: _, minLength: _, pattern: _):
+                    if let format = format {
+                        switch format {
+                        case .int32:
+                            return QueryElement(fieldName: $0.name, fieldValue: $0.name)
+                        case .long:
+                            return QueryElement(fieldName: $0.name, fieldValue: $0.name)
+                        case .float:
+                            return QueryElement(fieldName: $0.name, fieldValue: $0.name)
+                        case .double:
+                            return QueryElement(fieldName: $0.name, fieldValue: $0.name)
+                        case .string:
+                            return QueryElement(fieldName: $0.name, fieldValue: $0.name)
+                        case .byte:
+                            return QueryElement(fieldName: $0.name, fieldValue: $0.name)
+                        case .binary:
+                            return QueryElement(fieldName: $0.name, fieldValue: $0.name)
+                        case .boolean:
+                            return QueryElement(fieldName: $0.name, fieldValue: $0.name)
+                        case .date:
+                            return QueryElement(fieldName: $0.name, fieldValue: "ISO8601DateFormatter().string(from: \($0.name))")
+                        case .dateTime:
+                            return QueryElement(fieldName: $0.name, fieldValue: "ISO8601DateFormatter().string(from: \($0.name))")
+                        case .password:
+                            return QueryElement(fieldName: $0.name, fieldValue: $0.name)
+                        case .email:
+                            return QueryElement(fieldName: $0.name, fieldValue: $0.name)
+                        case .unsupported(_):
+                            return QueryElement(fieldName: $0.name, fieldValue: $0.name)
+                        }
+                    }
+                case .number(format: _, maximum: _, exclusiveMaximum: _, minimum: _, exclusiveMinimum: _, multipleOf: _):
+                    return QueryElement(fieldName: $0.name, fieldValue: $0.name)
+                case .integer(format: _, maximum: _, exclusiveMaximum: _, minimum: _, exclusiveMinimum: _, multipleOf: _):
+                    return QueryElement(fieldName: $0.name, fieldValue: $0.name)
+                case .boolean:
+                    return QueryElement(fieldName: $0.name, fieldValue: $0.name)
+                case .array(_, collectionFormat: _, maxItems: _, minItems: _, uniqueItems: _):
+                    return QueryElement(fieldName: $0.name, fieldValue: $0.name)
+                case .file:
+                    return QueryElement(fieldName: $0.name, fieldValue: $0.name)
+                }
+            case .header(type: _):
+                return QueryElement(fieldName: $0.name, fieldValue: $0.name)
+            case .path(type: _):
+                return QueryElement(fieldName: $0.name, fieldValue: $0.name)
+            case .formData(type: _, allowEmptyValue: _):
+                return QueryElement(fieldName: $0.name, fieldValue: $0.name)
+            case .body(schema: _):
+                return QueryElement(fieldName: $0.name, fieldValue: $0.name)
+            }
         } else {
             return nil
         }
+
+        return QueryElement(fieldName: $0.name, fieldValue: $0.name)
     }
 
     let headers: [NetworkRequestFunctionHeaderField] = operationParameters.compactMap {

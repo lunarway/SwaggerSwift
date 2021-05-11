@@ -42,7 +42,10 @@ case \(statusCode.rawValue):
             return """
 case \(statusCode.rawValue):
     do {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
         let result = try JSONDecoder().decode(\(responseType).self, from: data)
+
         completionHandler(.\(swiftResult)(\(resultType("result", resultIsEnum))))
     } catch let error {
         completionHandler(.failure(.requestFailed(error: error)))

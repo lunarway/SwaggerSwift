@@ -5,9 +5,9 @@
         "package": "SwaggerSwiftML",
         "repositoryURL": "https://github.com/MadsBogeskov/SwaggerSwiftML",
         "state": {
-          "branch": "main",
-          "revision": "c85a64a463fd58f944c31b73798d168bf36b68d4",
-          "version": null
+          "branch": null,
+          "revision": "3c154e73fd60a9d292156957862e06bc2c226c39",
+          "version": "1.0.0"
         }
       },
       {

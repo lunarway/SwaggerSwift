@@ -96,7 +96,12 @@ private func typeOfDataFormat(_ dataFormat: DataFormat) -> TypeType {
         return .string
     case .email:
         return .string
-    case .unsupported(_):
-        fatalError("not supported")
+    case .unsupported(let typeName):
+        switch typeName {
+        case "date-time":
+            return .object(typeName: "String")
+        default:
+            fatalError("not supported")
+        }
     }
 }
