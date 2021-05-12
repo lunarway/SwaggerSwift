@@ -98,8 +98,8 @@ private func typeOfDataFormat(_ dataFormat: DataFormat) -> TypeType {
         return .string
     case .unsupported(let typeName):
         switch typeName {
-        case "date-time":
-            return .object(typeName: "String")
+        case "int64":
+            return .double
         default:
             fatalError("not supported")
         }
