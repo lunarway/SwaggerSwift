@@ -1,4 +1,5 @@
 import SwaggerSwiftML
+import Foundation
 
 struct QueryElement {
     let fieldName: String
@@ -12,7 +13,7 @@ func isErrorHttpCode(code: Int) -> Bool {
 func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, servicePath: String, parameters: [Parameter], swagger: Swagger, swaggerFile: SwaggerFile) -> (NetworkRequestFunction, [ModelDefinition]) {
     print("-> Creating function for request: \(httpMethod.rawValue.uppercased()) \(servicePath)")
 
-    let functionName: String
+    var functionName: String
     if let overrideName = operation.operationId {
         functionName = overrideName
     } else {
@@ -20,9 +21,13 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
             .replacingOccurrences(of: "{", with: "")
             .replacingOccurrences(of: "}", with: "")
             .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "-", with: "_")
             .split(separator: "_")
             .map { String($0).uppercasingFirst }
             .joined()
+
+        functionName.unicodeScalars.removeAll(where: { !CharacterSet.alphanumerics.contains($0) })
     }
 
     let responseTypes: [(HTTPStatusCodes, TypeType, [ModelDefinition])] = operation.responses.map {
@@ -159,7 +164,6 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
                                    functionName: functionName,
                                    parameters: functionParameters,
                                    throws: false,
-                                   returnType: "URLSessionDataTask",
                                    consumes: consumes,
                                    isInternalOnly: operation.isInternalOnly,
                                    isDeprecated: operation.deprecated,

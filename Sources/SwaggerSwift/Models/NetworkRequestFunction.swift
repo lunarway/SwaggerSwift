@@ -9,7 +9,6 @@ struct NetworkRequestFunction {
     let functionName: String
     let parameters: [FunctionParameter]
     let `throws`: Bool
-    let returnType: String?
     let consumes: NetworkRequestFunctionConsumes
     let isInternalOnly: Bool
     let isDeprecated: Bool
