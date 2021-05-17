@@ -55,7 +55,7 @@ extension NetworkRequestFunction: Swiftable {
                 if $0.isOptional {
                     return """
                         if let \($0.fieldValue) = \($0.fieldValue) {
-                            queryItems.append(URLQueryItem(name: \"\($0.fieldName)\", value: \($0.fieldValue))
+                            queryItems.append(URLQueryItem(name: \"\($0.fieldName)\", value: \($0.fieldValue)))
                         }
                         """
                 } else {
