@@ -51,8 +51,23 @@ extension NetworkRequestFunction: Swiftable {
 
         let queryStatement: String
         if queries.count > 0 {
-            let queryElements = "[" + queries.map { "URLQueryItem(name: \"\($0.fieldName)\", value: \($0.fieldValue))" }.joined(separator: ", ") + "]"
-            queryStatement = "\n    urlComponents.queryItems = \(queryElements)\n"
+            let queryItems = queries.map {
+                if $0.isOptional {
+                    return """
+                        if let $0.fieldValue = \($0.fieldValue) {
+                            queryItems.append(URLQueryItem(name: \"\($0.fieldName)\", value: \($0.fieldValue))
+                        }
+                        """
+                } else {
+                    return "queryItems.append(URLQueryItem(name: \"\($0.fieldName)\", value: \($0.fieldValue)))"
+                }
+            }.joined(separator: "\n")
+
+            queryStatement = """
+                var queryItems = [URLQueryItem]()
+                \(queryItems)
+                urlComponents.queryItems = queryItems\n
+                """
         } else {
             queryStatement = ""
         }
