@@ -99,7 +99,7 @@ private func typeOfDataFormat(_ dataFormat: DataFormat) -> TypeType {
     case .unsupported(let typeName):
         switch typeName {
         case "int64":
-            return .double
+            return .int64
         default:
             fatalError("not supported")
         }
