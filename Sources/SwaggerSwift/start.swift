@@ -49,7 +49,7 @@ import Foundation
 
 public enum NetworkResult {
     case failed(Error)
-    case success(HTTPURLResponse, Data)
+    case success(URLRequest, HTTPURLResponse, Data)
 }
 
 public protocol NetworkInterceptor {

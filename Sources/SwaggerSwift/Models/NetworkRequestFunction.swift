@@ -172,7 +172,7 @@ if let endBoundaryData = "--\\(boundary)--".data(using: .utf8) {
                 return
             }
 
-            self.interceptor?.networkDidPerformRequest(.success(httpResponse, data))
+            self.interceptor?.networkDidPerformRequest(.success(request, httpResponse, data))
 
             switch httpResponse.statusCode {
             \(responseTypes)
