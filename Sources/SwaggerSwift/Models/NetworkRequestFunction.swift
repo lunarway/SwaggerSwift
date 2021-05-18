@@ -163,16 +163,14 @@ if let endBoundaryData = "--\\(boundary)--".data(using: .utf8) {
 
     request = interceptor?.networkWillPerformRequest(request) ?? request
     let task = urlSession.\(urlSessionMethodName) { (data, response, error) in
+        self.interceptor?.networkDidPerformRequest(urlRequest: request, urlResponse: response, data: data, error: error)
         if let error = error {
-            self.interceptor?.networkDidPerformRequest(.failed(error))
             completionHandler(.failure(.requestFailed(error: error)))
         } else if let data = data {
             guard let httpResponse = response as? HTTPURLResponse else {
                 completionHandler(.failure(ServiceError.clientError(reason: "Returned response object wasnt a HTTP URL Response as expected, but was instead a \\(String(describing: response))")))
                 return
             }
-
-            self.interceptor?.networkDidPerformRequest(.success(request, httpResponse, data))
 
             switch httpResponse.statusCode {
             \(responseTypes)

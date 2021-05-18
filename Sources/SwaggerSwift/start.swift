@@ -47,14 +47,9 @@ public enum JSONParsingError: Error {
 let networkInterceptor = """
 import Foundation
 
-public enum NetworkResult {
-    case failed(Error)
-    case success(URLRequest, HTTPURLResponse, Data)
-}
-
 public protocol NetworkInterceptor {
     func networkWillPerformRequest(_ request: URLRequest) -> URLRequest
-    func networkDidPerformRequest(_ result: NetworkResult)
+    func networkDidPerformRequest(urlRequest: URLRequest, response: urlResponse?, data: Data?, error: Error?)
 }
 """
 
