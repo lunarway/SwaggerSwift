@@ -222,13 +222,13 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
             }
         }
 
-        let inherits = result.compactMap { $0.0 }
+//        let inherits = result.compactMap { $0.0 }
 
         let model = Model(serviceName: swagger.serviceName,
                           description: schema.description,
                           typeName: typeNamePrefix,
                           fields: result.flatMap { $0.1 },
-                          inheritsFrom: inherits,
+                          inheritsFrom: [],//inherits,
                           isInternalOnly: schema.isInternalOnly)
 
         let models = result.flatMap { $0.2 } + [.model(model)]

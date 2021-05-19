@@ -64,7 +64,7 @@ public init(\(fields.map { "\($0.name): \($0.type.toString(required: $0.required
             model += indentation() + comment.replacingOccurrences(of: "\n", with: "\(indentation())\n") + "\n"
         }
 
-        model += "\(indentation())public struct \(typeName): Codable {\n"
+        model += "\(indentation())public struct \(typeName)\(inheritsFrom.count > 0 ? ": \(inheritsFrom.joined(separator: ", "))" : "") {\n"
         indentLevel += 1
 
         for field in readyFields {
