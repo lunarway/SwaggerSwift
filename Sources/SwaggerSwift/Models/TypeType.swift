@@ -228,7 +228,7 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
                           description: schema.description,
                           typeName: typeNamePrefix,
                           fields: result.flatMap { $0.1 },
-                          inheritsFrom: [],//inherits,
+                          inheritsFrom: ["Codable"],//inherits,
                           isInternalOnly: schema.isInternalOnly)
 
         let models = result.flatMap { $0.2 } + [.model(model)]
