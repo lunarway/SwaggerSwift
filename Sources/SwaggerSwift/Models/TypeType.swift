@@ -77,7 +77,7 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
                 case "ISO8601":
                 return (.date, [])
                 case "uuid":
-                    return (.object(typeName: "UUID"), [])
+                    return (.object(typeName: "String"), [])
                 default:
                     fatalError("Found unsupported field: \(unsupported)")
                 }

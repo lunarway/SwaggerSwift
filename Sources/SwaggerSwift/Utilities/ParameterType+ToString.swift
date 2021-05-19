@@ -100,8 +100,10 @@ private func typeOfDataFormat(_ dataFormat: DataFormat) -> TypeType {
         switch typeName {
         case "int64":
             return .int64
+        case "uuid":
+            return .object(typeName: "String")
         default:
-            fatalError("not supported")
+            fatalError("not supported: \(typeName)")
         }
     }
 }
