@@ -1,3 +1,4 @@
+import Foundation
 import SwaggerSwiftML
 
 /// Describes the types that can be returned from a function
@@ -75,6 +76,8 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
                 switch unsupported {
                 case "ISO8601":
                 return (.date, [])
+                case "uuid":
+                    return (.object(typeName: "UUID"), [])
                 default:
                     fatalError("Found unsupported field: \(unsupported)")
                 }
@@ -169,7 +172,7 @@ extension Schema {
     }
 }
 
-extension Operation {
+extension SwaggerSwiftML.Operation {
     var isInternalOnly: Bool {
         if let value = self.customFields["x-internal"] {
             return value == "true"

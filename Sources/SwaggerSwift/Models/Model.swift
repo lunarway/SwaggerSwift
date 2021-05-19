@@ -11,8 +11,8 @@ struct Model {
     let isInternalOnly: Bool
 
     func resolveInherits(_ definitions: [Model]) -> Model {
-        let inherits = inheritsFrom.compactMap { inherit in
-            definitions.first(where: { $0.typeName == inherit })
+        let inherits = inheritsFrom.compactMap { definitionName in
+            definitions.first(where: { $0.typeName == definitionName })
         }
 
         let inheritedFields = inherits.flatMap { $0.fields }
@@ -64,7 +64,7 @@ public init(\(fields.map { "\($0.name): \($0.type.toString(required: $0.required
             model += indentation() + comment.replacingOccurrences(of: "\n", with: "\(indentation())\n") + "\n"
         }
 
-        model += "\(indentation())public struct \(typeName)\(inheritsFrom.count > 0 ? ": \(inheritsFrom.joined(separator: ", "))" : "") {\n"
+        model += "\(indentation())public struct \(typeName): Codable {\n"
         indentLevel += 1
 
         for field in readyFields {
