@@ -82,7 +82,10 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, isIn
             let result = type.toType(typePrefix: typeName, swagger: swagger)
             assert(result.1.count == 0, "A query param isnt expected to contain a special model definition inline, is it?")
             resolvedModelDefinitions.append(contentsOf: result.1)
-            return FunctionParameter(description: $0.description, name: $0.name, typeName: result.0, required: $0.required)
+            return FunctionParameter(description: $0.description,
+                                     name: $0.name.camelized,
+                                     typeName: result.0,
+                                     required: $0.required)
         } else {
             return nil
         }
