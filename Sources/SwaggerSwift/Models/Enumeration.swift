@@ -4,6 +4,7 @@ struct Enumeration {
     let description: String?
     let typeName: String
     let values: [String]
+    let isCodable: Bool
 }
 
 extension Enumeration: Swiftable {
@@ -12,7 +13,7 @@ extension Enumeration: Swiftable {
 
         return """
 extension \(serviceName) {\(comment)
-    public enum \(self.typeName): String, Codable {
+    public enum \(self.typeName)\(isCodable ? ": String, Codable" : "") {
 \(defaultSpacing)\(defaultSpacing)\(values.sorted(by: { $0 < $1 }).map { "case \($0)" }.joined(separator: "\n\(defaultSpacing)\(defaultSpacing)"))
     }
 }

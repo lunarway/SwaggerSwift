@@ -19,6 +19,13 @@ extension String {
         return prefix(1).lowercased() + dropFirst()
     }
 
+    var pascalCased: String {
+        return self.lowercased()
+            .split(separator: " ")
+            .map { $0.lowercased().capitalizingFirstLetter() }
+            .joined()
+    }
+
     var camelized: String {
         guard !isEmpty else {
             return ""

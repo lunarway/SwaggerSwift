@@ -39,7 +39,7 @@ private func typeOfItems(_ itemsType: ItemsType, typePrefix: String, swagger: Sw
     case .string(format: let format, let enumValues, _, _, _):
         let modelDefinitions: [ModelDefinition]
         if let enumValues = enumValues {
-            modelDefinitions = [.enumeration(Enumeration(serviceName: swagger.serviceName, description: nil, typeName: "\(typePrefix)Enum", values: enumValues))]
+            modelDefinitions = [.enumeration(Enumeration(serviceName: swagger.serviceName, description: nil, typeName: "\(typePrefix)Enum", values: enumValues, isCodable: true))]
         } else {
             modelDefinitions = []
         }

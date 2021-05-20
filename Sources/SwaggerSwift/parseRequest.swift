@@ -1,7 +1,7 @@
 import SwaggerSwiftML
 
 func parse(request: SwaggerSwiftML.RequestResponse, httpMethod: HTTPMethod, servicePath: String, statusCode: Int, swagger: Swagger) -> (TypeType, [ModelDefinition]) {
-    let prefix = "\(servicePath.replacingOccurrences(of: "{", with: "").replacingOccurrences(of: "}", with: "").components(separatedBy: "/").map { $0.capitalizingFirstLetter() }.joined().capitalizingFirstLetter())\(statusCode)"
+    let prefix = "\(servicePath.replacingOccurrences(of: "{", with: "").replacingOccurrences(of: "}", with: "").components(separatedBy: "/").map { $0.components(separatedBy: "-") }.flatMap { $0 }.map { $0.uppercasingFirst }.joined().capitalizingFirstLetter())\(statusCode)"
 
     if let schemaNode = request.schema {
         switch schemaNode.value {
