@@ -32,6 +32,13 @@ extension Swagger {
                 }
             }
 
+            for (key, value) in self.responses ?? [:] {
+                let searchName = "#/responses/\(key)"
+                if reference == searchName, let schemaNode = value.schema {
+                    return findSchema(node: schemaNode)
+                }
+            }
+
             fatalError("Failed to find definition named: \(reference)")
         case .node(let node):
             return node

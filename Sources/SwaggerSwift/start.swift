@@ -153,7 +153,6 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
 
         let filePrefix = "\(swagger.serviceName.filter { !$0.unicodeScalars.map(CharacterSet.uppercaseLetters.contains).contains(false) })_"
 
-
         let serviceDefinition = parse(swagger: swagger, swaggerFile: swaggerFile)
 
         try! serviceDefinition.toSwift(swaggerFile: swaggerFile)

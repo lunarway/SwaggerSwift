@@ -31,8 +31,10 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
         functionName.unicodeScalars.removeAll(where: { !CharacterSet.alphanumerics.contains($0) })
     }
 
-    let responseTypes: [(HTTPStatusCodes, TypeType, [ModelDefinition])] = operation.responses.map {
-        let type = parse(request: $0.value, httpMethod: httpMethod, servicePath: servicePath, statusCode: $0.key, swagger: swagger)
+    let responseTypes: [(HTTPStatusCodes, TypeType, [ModelDefinition])] = operation.responses.compactMap {
+        guard let requestResponse = $0.value else { return nil }
+
+        let type = parse(request: requestResponse, httpMethod: httpMethod, servicePath: servicePath, statusCode: $0.key, swagger: swagger)
         let statusCode = HTTPStatusCodes(rawValue: $0.key)!
         return (statusCode, type.0, type.1)
     }

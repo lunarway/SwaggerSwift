@@ -12,6 +12,19 @@ func parse(swagger: Swagger, swaggerFile: SwaggerFile) -> ServiceDefinition {
         getType(forSchema: $0.value, typeNamePrefix: $0.key, swagger: swagger).1
     }.flatMap { $0 }
 
+    let builtInResponses: [ModelDefinition] = swagger.responses?.map { response -> [ModelDefinition] in
+        switch response.value.schema! {
+        case .reference(let reference):
+            if let definition = swagger.definitions?.first(where: { reference == "#/definitions/\($0.key)" }) {
+                return getType(forSchema: definition.value, typeNamePrefix: response.key, swagger: swagger).1
+            } else {
+                fatalError("Failed to find definition with reference: \(reference)")
+            }
+        case .node(let schema):
+            return getType(forSchema: schema, typeNamePrefix: response.key, swagger: swagger).1
+        }
+    }.flatMap { $0 } ?? []
+
     let hasGlobalHeaders = (swaggerFile.globalHeaders ?? []).count > 0
 
     var serviceFields = [
@@ -64,5 +77,5 @@ func parse(swagger: Swagger, swaggerFile: SwaggerFile) -> ServiceDefinition {
                              description: swagger.info.description?.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines),
                              fields: serviceFields,
                              functions: functions,
-                             innerTypes: resolvedBuiltinModels + resolvedDefinitions)
+                             innerTypes: resolvedBuiltinModels + resolvedDefinitions + builtInResponses)
 }
