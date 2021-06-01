@@ -104,6 +104,58 @@ public struct FormData {
 }
 """
 
+let additionalPropertyUtil = """
+import Foundation
+
+public enum AdditionalProperty: Codable {
+    case string(String)
+    case integer(Int)
+    case double(Double)
+    case dictionary([String: AdditionalProperty])
+    case array([AdditionalProperty])
+    case null
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+
+        if let stringValue = try? container.decode(String.self) {
+            self = .string(stringValue)
+        } else if let intValue = try? container.decode(Int.self) {
+            self = .integer(intValue)
+        } else if let doubleValue = try? container.decode(Double.self) {
+            self = .double(doubleValue)
+        } else if let dictionaryValue = try? container.decode([String: AdditionalProperty].self) {
+            self = .dictionary(dictionaryValue)
+        } else if let arrayValue = try? container.decode([AdditionalProperty].self) {
+            self = .array(arrayValue)
+        } else if container.decodeNil() {
+            self = .null
+        } else {
+            throw DecodingError.typeMismatch(AdditionalProperty.self, DecodingError.Context(codingPath: container.codingPath,
+                                                                                            debugDescription: "AdditionalProperty contained un-supported value type"))
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+        case .string(let stringValue):
+            try container.encode(stringValue)
+        case .integer(let value):
+            try container.encode(value)
+        case .double(let value):
+            try container.encode(value)
+        case .dictionary(let value):
+            try container.encode(value)
+        case .array(let value):
+            try container.encode(value)
+        case .null:
+            try container.encodeNil()
+        }
+    }
+}
+"""
+
 // token
 func start(swaggerFilePath: String, token: String, destinationPath: String, projectName: String = "Services", verbose: Bool = false) throws {
     if verbose {
@@ -121,6 +173,7 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
     try! urlQueryItemExtension.write(toFile: "\(sourceDirectory)/URLQueryExtension.swift", atomically: true, encoding: .utf8)
     try! parsingErrorExtension.write(toFile: "\(sourceDirectory)/ParsingError.swift", atomically: true, encoding: .utf8)
     try! networkInterceptor.write(toFile: "\(sourceDirectory)/NetworkInterceptor.swift", atomically: true, encoding: .utf8)
+    try! additionalPropertyUtil.write(toFile: "\(sourceDirectory)/AdditionalProperty.swift", atomically: true, encoding: .utf8)
     try! formData.write(toFile: "\(sourceDirectory)/FormData.swift", atomically: true, encoding: .utf8)
     try! dummyTest.write(toFile: "\(testDirectory)/DummyTest.swift", atomically: true, encoding: .utf8)
 
