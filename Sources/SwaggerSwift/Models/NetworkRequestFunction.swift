@@ -163,7 +163,7 @@ if let endBoundaryData = "--\\(boundary)--".data(using: .utf8) {
 
     request = interceptor?.networkWillPerformRequest(request) ?? request
     let task = urlSession.\(urlSessionMethodName) { (data, response, error) in
-        self.interceptor?.networkDidPerformRequest(urlRequest: request, urlResponse: response, data: data, error: error)
+        guard self.interceptor?.networkDidPerformRequest(urlRequest: request, urlResponse: response, data: data, error: error) == true else { return }
         if let error = error {
             completionHandler(.failure(.requestFailed(error: error)))
         } else if let data = data {
