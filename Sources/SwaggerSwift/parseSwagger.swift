@@ -29,12 +29,12 @@ func parse(swagger: Swagger, swaggerFile: SwaggerFile) -> ServiceDefinition {
 
     var serviceFields = [
         ServiceField(name: "urlSession",
-                     description: "the underlying URLSession. This defaults to the standard `.shared` is none is specified",
-                     typeName: "URLSession",
+                     description: "the underlying URLSession. This is an autoclosure to allow updated instances to come into this instance.",
+                     typeName: "() -> URLSession",
                      required: true,
-                     typeIsAutoclosure: false,
-                     typeIsBlock: false,
-                     defaultValue: ".shared"),
+                     typeIsAutoclosure: true,
+                     typeIsBlock: true,
+                     defaultValue: nil),
         ServiceField(name: "baseUrl",
                      description: "the block provider for the baseUrl of the service. The reason this is a block is that this enables automatically updating the network layer on backend environment change.",
                      typeName: "() -> URL",
