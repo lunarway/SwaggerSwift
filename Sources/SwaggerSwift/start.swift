@@ -113,6 +113,7 @@ public enum AdditionalProperty: Codable {
     case double(Double)
     case dictionary([String: AdditionalProperty])
     case array([AdditionalProperty])
+    case bool(Bool)
     case null
 
     public init(from decoder: Decoder) throws {
@@ -128,11 +129,16 @@ public enum AdditionalProperty: Codable {
             self = .dictionary(dictionaryValue)
         } else if let arrayValue = try? container.decode([AdditionalProperty].self) {
             self = .array(arrayValue)
+        } else if let boolValue = try? container.decode(Bool.self) {
+            self = .bool(boolValue)
         } else if container.decodeNil() {
             self = .null
         } else {
-            throw DecodingError.typeMismatch(AdditionalProperty.self, DecodingError.Context(codingPath: container.codingPath,
-                                                                                            debugDescription: "AdditionalProperty contained un-supported value type"))
+            throw DecodingError.typeMismatch(
+                AdditionalProperty.self,
+                DecodingError.Context(codingPath: container.codingPath,
+                                      debugDescription: "AdditionalProperty contained un-supported value type")
+            )
         }
     }
 
@@ -149,11 +155,14 @@ public enum AdditionalProperty: Codable {
             try container.encode(value)
         case .array(let value):
             try container.encode(value)
+        case .bool(let value):
+            try container.encode(value)
         case .null:
             try container.encodeNil()
         }
     }
 }
+
 """
 
 // token
@@ -220,5 +229,4 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
             }
         }
     }
-
 }
