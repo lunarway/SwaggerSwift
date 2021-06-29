@@ -8,7 +8,7 @@ struct Interface {
 }
 
 extension Interface: Swiftable {
-    func toSwift(swaggerFile: SwaggerFile) -> String {
+    func toSwift(swaggerFile: SwaggerFile, embedded: Bool) -> String {
         let comment = description != nil && description!.count > 0 ? "\n\(defaultSpacing)// \(description ?? "")" : ""
 
         return """

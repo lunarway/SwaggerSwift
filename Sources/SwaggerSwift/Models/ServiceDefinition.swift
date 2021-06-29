@@ -8,7 +8,7 @@ struct ServiceDefinition {
 }
 
 extension ServiceDefinition: Swiftable {
-    func toSwift(swaggerFile: SwaggerFile) -> String {
+    func toSwift(swaggerFile: SwaggerFile, embedded: Bool) -> String {
         let initMethod = """
 /// Initialises the service
 /// - Parameters:
@@ -32,7 +32,7 @@ public struct \(typeName) {
 
     \(self.functions
         .sorted(by: { $0.functionName < $1.functionName })
-        .map { $0.toSwift(swaggerFile: swaggerFile).replacingOccurrences(of: "\n", with: "\n    ") }
+        .map { $0.toSwift(swaggerFile: swaggerFile, embedded: false).replacingOccurrences(of: "\n", with: "\n    ") }
         .joined(separator: "\n\n    "))
 }
 

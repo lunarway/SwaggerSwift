@@ -47,7 +47,11 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
     case .string(format: let format, let enumValues, _, _, _):
         if let enumValues = enumValues {
             let enumTypename = typeNamePrefix
-            let def = ModelDefinition.enumeration(Enumeration(serviceName: swagger.serviceName, description: schema.description, typeName: enumTypename, values: enumValues, isCodable: true))
+            let def = ModelDefinition.enumeration(Enumeration(serviceName: swagger.serviceName,
+                                                              description: schema.description,
+                                                              typeName: enumTypename,
+                                                              values: enumValues,
+                                                              isCodable: true))
             return (.object(typeName: enumTypename), [def])
         }
 
@@ -224,16 +228,17 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
 
 //        let inherits = result.compactMap { $0.0 }
 
+        let models = result.flatMap { $0.2 }
+
         let model = Model(serviceName: swagger.serviceName,
                           description: schema.description,
                           typeName: typeNamePrefix,
                           fields: result.flatMap { $0.1 },
                           inheritsFrom: ["Codable"],//inherits,
-                          isInternalOnly: schema.isInternalOnly)
+                          isInternalOnly: schema.isInternalOnly,
+                          embeddedDefinitions: models)
 
-        let models = result.flatMap { $0.2 } + [.model(model)]
-
-        return (.object(typeName: typeNamePrefix), models)
+        return (.object(typeName: typeNamePrefix), [.model(model)])
     }
 
     let result: [(ModelField, [ModelDefinition])] = properties.map {
@@ -248,7 +253,10 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
                 return (ModelField(description: node.description, type: type.0, name: $0.key, required: schema.required.contains($0.key)), type.1)
             }
         case .node(let innerSchema):
-            let typeName = "\(typeNamePrefix)\($0.key.capitalized)Options"
+            var typeName = "\($0.key.uppercasingFirst)"
+            if typeName == "Type" {
+                typeName = "\(typeNamePrefix)\($0.key.uppercasingFirst)"
+            }
             let type = getType(forSchema: innerSchema, typeNamePrefix: typeName, swagger: swagger)
             let modelField = ModelField(description: innerSchema.description, type: type.0, name: $0.key, required: required.contains($0.key) || schema.required.contains($0.key))
             return (modelField, type.1)
@@ -256,16 +264,15 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
     }
 
     let fields = result.map { $0.0 }
-    var inlineModels = result.flatMap { $0.1 }
+    let inlineModels = result.flatMap { $0.1 }
 
     let model = Model(serviceName: swagger.serviceName,
-                      description: schema.description, typeName:
-                        typeNamePrefix,
+                      description: schema.description,
+                      typeName: typeNamePrefix,
                       fields: fields.sorted(by: { $0.name < $1.name }),
                       inheritsFrom: ["Codable"],
-                      isInternalOnly: schema.isInternalOnly)
+                      isInternalOnly: schema.isInternalOnly,
+                      embeddedDefinitions: inlineModels)
 
-    inlineModels.append(.model(model))
-
-    return (.object(typeName: typeNamePrefix), inlineModels)
+    return (.object(typeName: typeNamePrefix), [.model(model)])
 }

@@ -31,6 +31,10 @@ extension String {
             return ""
         }
 
+        if count <= 2 {
+            return self
+        }
+
         let parts = self.components(separatedBy: badChars)
 
         let first = String(describing: parts.first!).lowercasingFirst
@@ -38,5 +42,4 @@ extension String {
 
         return ([first] + rest).joined(separator: "")
     }
-
 }

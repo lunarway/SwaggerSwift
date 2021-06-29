@@ -197,9 +197,10 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
                                   typeName: "GlobalHeaders",
                                   fields: globalHeaderFields,
                                   inheritsFrom: [],
-                                  isInternalOnly: false)
+                                  isInternalOnly: false,
+                                  embeddedDefinitions: [])
 
-        try! globalHeaders.toSwift(swaggerFile: swaggerFile)
+        try! globalHeaders.toSwift(swaggerFile: swaggerFile, embedded: false)
             .write(toFile: "\(sourceDirectory)/GlobalHeaders.swift", atomically: true, encoding: .utf8)
     }
 
@@ -217,11 +218,11 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
 
         let serviceDefinition = parse(swagger: swagger, swaggerFile: swaggerFile)
 
-        try! serviceDefinition.toSwift(swaggerFile: swaggerFile)
+        try! serviceDefinition.toSwift(swaggerFile: swaggerFile, embedded: false)
             .write(toFile: "\(serviceDirectory)/\(serviceDefinition.typeName).swift", atomically: true, encoding: .utf8)
 
         for type in serviceDefinition.innerTypes {
-            let file = type.toSwift(swaggerFile: swaggerFile)
+            let file = type.toSwift(swaggerFile: swaggerFile, embedded: false)
             let filename = "\(modelDirectory)/\(filePrefix)\(type.typeName).swift"
             try! file.write(toFile: filename, atomically: true, encoding: .utf8)
             if verbose {

@@ -52,7 +52,8 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, isIn
                           typeName: typeName,
                           fields: fields,
                           inheritsFrom: [],
-                          isInternalOnly: isInternalOnly)
+                          isInternalOnly: isInternalOnly,
+                          embeddedDefinitions: [])
 
         if model.fields.count > 0 {
             resolvedModelDefinitions.append(.model(model))

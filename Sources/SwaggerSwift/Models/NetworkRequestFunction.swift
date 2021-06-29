@@ -42,7 +42,7 @@ extension NetworkRequestFunction: Swiftable {
         return ""
     }
 
-    func toSwift(swaggerFile: SwaggerFile) -> String {
+    func toSwift(swaggerFile: SwaggerFile, embedded: Bool) -> String {
         let arguments = parameters.map { "\($0.name): \($0.typeName.toString(required: $0.required))" }.joined(separator: ", ")
 
         let servicePath = self.servicePath
