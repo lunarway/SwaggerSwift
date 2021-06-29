@@ -99,9 +99,9 @@ public var rawValue: String {
     }
 }
 """.indentLines(1)
-            model += "\n"
-
         }
+
+        model += "\n"
 
         model += "}"
 
