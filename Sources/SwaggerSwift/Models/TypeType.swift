@@ -182,6 +182,14 @@ extension Schema {
             return false
         }
     }
+
+    var overridesName: String? {
+        if let value = self.customFields["x-override-name"] {
+            return value
+        } else {
+            return nil
+        }
+    }
 }
 
 extension SwaggerSwiftML.Operation {
@@ -240,7 +248,7 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
 
         let model = Model(serviceName: swagger.serviceName,
                           description: schema.description,
-                          typeName: typeNamePrefix,
+                          typeName: schema.overridesName ?? typeNamePrefix,
                           fields: result.flatMap { $0.1 },
                           inheritsFrom: ["Codable"],//inherits,
                           isInternalOnly: schema.isInternalOnly,
@@ -276,7 +284,7 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
 
     let model = Model(serviceName: swagger.serviceName,
                       description: schema.description,
-                      typeName: typeNamePrefix,
+                      typeName: schema.overridesName ?? typeNamePrefix,
                       fields: fields.sorted(by: { $0.name < $1.name }),
                       inheritsFrom: ["Codable"],
                       isInternalOnly: schema.isInternalOnly,
