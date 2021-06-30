@@ -123,7 +123,10 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
     case .boolean:
         return (.boolean, [])
     case .array(let items, _, _, _, _):
-        let type = typeOfItems(schema: schema, items: items, typeNamePrefix: typeNamePrefix, swagger: swagger)
+        let type = typeOfItems(schema: schema,
+                               items: items,
+                               typeNamePrefix: "\(typeNamePrefix)Item",
+                               swagger: swagger)
         return (.array(typeName: type.0), type.1)
     case .object(let properties, allOf: let allOf):
         return parseObject(required: [], properties: properties, allOf: allOf, swagger: swagger, typeNamePrefix: typeNamePrefix, schema: schema)
@@ -161,7 +164,12 @@ private func typeOfItems(schema: Schema, items: Node<Items>, typeNamePrefix: Str
         case .array(let items, collectionFormat: _, maxItems: _, minItems: _, uniqueItems: _):
             return typeOfItems(schema: schema, items: Node.node(items), typeNamePrefix: typeNamePrefix, swagger: swagger)
         case .object(required: let required, properties: let properties, allOf: let allOf):
-            return parseObject(required: required, properties: properties, allOf: allOf, swagger: swagger, typeNamePrefix: typeNamePrefix, schema: schema)
+            return parseObject(required: required,
+                               properties: properties,
+                               allOf: allOf,
+                               swagger: swagger,
+                               typeNamePrefix: typeNamePrefix,
+                               schema: schema)
         }
     }
 }
