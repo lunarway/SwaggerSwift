@@ -60,7 +60,7 @@ public init(\(fields.map { "\($0.name): \($0.type.toString(required: $0.required
             model += "\n\n"
         }
 
-        model += embeddedDefinitions.map { $0.toSwift(swaggerFile: swaggerFile, embedded: true) }.joined(separator: "\n\n").indentLines(1)
+        model += embeddedDefinitions.sorted(by: { $0.typeName < $1.typeName }).map { $0.toSwift(swaggerFile: swaggerFile, embedded: true) }.joined(separator: "\n\n").indentLines(1)
 
         model += "\n}"
 
