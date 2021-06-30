@@ -80,11 +80,13 @@ extension Model: Swiftable {
             model += "#if DEBUG\n"
         }
 
+        let isInExtension = serviceName != nil
+
         if let serviceName = serviceName {
             model += "extension \(serviceName) {\n"
         }
 
-        model += modelDefinition(swaggerFile: swaggerFile).indentLines(1)
+        model += modelDefinition(swaggerFile: swaggerFile).indentLines(isInExtension ? 1 : 0)
 
         if let _ = serviceName {
             model += "\n}"
