@@ -129,7 +129,8 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
                                swagger: swagger)
         return (.array(typeName: type.0), type.1)
     case .object(let properties, allOf: let allOf):
-        return parseObject(required: [], properties: properties, allOf: allOf, swagger: swagger, typeNamePrefix: typeNamePrefix, schema: schema)
+        return parseObject(required: [],
+                           properties: properties, allOf: allOf, swagger: swagger, typeNamePrefix: typeNamePrefix, schema: schema, customFields: [:])
     case .dictionary(valueType: let valueType, keys: _):
         switch valueType {
         case .any:
@@ -169,7 +170,8 @@ private func typeOfItems(schema: Schema, items: Node<Items>, typeNamePrefix: Str
                                allOf: allOf,
                                swagger: swagger,
                                typeNamePrefix: typeNamePrefix,
-                               schema: schema)
+                               schema: schema,
+                               customFields: node.customFields)
         }
     }
 }
@@ -202,7 +204,9 @@ extension SwaggerSwiftML.Operation {
     }
 }
 
-func parseObject(required: [String], properties: [String: Node<Schema>], allOf: [Node<Schema>]?, swagger: Swagger, typeNamePrefix: String, schema: Schema) -> (TypeType, [ModelDefinition]) {
+func parseObject(required: [String], properties: [String: Node<Schema>], allOf: [Node<Schema>]?, swagger: Swagger, typeNamePrefix: String, schema: Schema, customFields: [String: String]) -> (TypeType, [ModelDefinition]) {
+    let typeName = (customFields["x-override-name"] ?? schema.overridesName ?? typeNamePrefix).uppercasingFirst
+
     if let allOf = allOf {
         let result: [(String?, [ModelField], [ModelDefinition])] = allOf.map {
             switch $0 {
@@ -212,7 +216,7 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
                     let typeName = reference.components(separatedBy: "/").last ?? ""
                     return (typeName, [], [])
                 } else {
-                    let result = getType(forSchema: node, typeNamePrefix: typeNamePrefix, swagger: swagger)
+                    let result = getType(forSchema: node, typeNamePrefix: typeName, swagger: swagger)
                     return (nil, [], result.1)
                 }
             case .node(let innerSchema):
@@ -230,7 +234,7 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
                                 return (ModelField(description: node.description, type: type.0, name: $0.key, required: innerSchema.required.contains($0.key)), type.1)
                             }
                         case .node(let schema):
-                            let type = getType(forSchema: schema, typeNamePrefix: typeNamePrefix, swagger: swagger)
+                            let type = getType(forSchema: schema, typeNamePrefix: typeName, swagger: swagger)
                             return (ModelField(description: schema.description, type: type.0, name: $0.key, required: innerSchema.required.contains($0.key)), type.1)
                         }
                     }
@@ -248,13 +252,13 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
 
         let model = Model(serviceName: swagger.serviceName,
                           description: schema.description,
-                          typeName: schema.overridesName ?? typeNamePrefix,
+                          typeName: typeName,
                           fields: result.flatMap { $0.1 },
                           inheritsFrom: ["Codable"],//inherits,
                           isInternalOnly: schema.isInternalOnly,
                           embeddedDefinitions: models)
 
-        return (.object(typeName: typeNamePrefix), [.model(model)])
+        return (.object(typeName: typeName), [.model(model)])
     }
 
     let result: [(ModelField, [ModelDefinition])] = properties.map {
@@ -271,7 +275,7 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
         case .node(let innerSchema):
             var typeName = "\($0.key.uppercasingFirst)"
             if typeName == "Type" {
-                typeName = "\(typeNamePrefix)\($0.key.uppercasingFirst)"
+                typeName = "\(typeName)\($0.key.uppercasingFirst)"
             }
             let type = getType(forSchema: innerSchema, typeNamePrefix: typeName, swagger: swagger)
             let modelField = ModelField(description: innerSchema.description, type: type.0, name: $0.key, required: required.contains($0.key) || schema.required.contains($0.key))
@@ -284,11 +288,11 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
 
     let model = Model(serviceName: swagger.serviceName,
                       description: schema.description,
-                      typeName: schema.overridesName ?? typeNamePrefix,
+                      typeName: typeName,
                       fields: fields.sorted(by: { $0.name < $1.name }),
                       inheritsFrom: ["Codable"],
                       isInternalOnly: schema.isInternalOnly,
                       embeddedDefinitions: inlineModels)
 
-    return (.object(typeName: typeNamePrefix), [.model(model)])
+    return (.object(typeName: typeName), [.model(model)])
 }
