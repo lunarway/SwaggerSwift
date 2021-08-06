@@ -34,7 +34,12 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
     let responseTypes: [(HTTPStatusCodes, TypeType, [ModelDefinition])] = operation.responses.compactMap {
         guard let requestResponse = $0.value else { return nil }
 
-        let type = parse(request: requestResponse, httpMethod: httpMethod, servicePath: servicePath, statusCode: $0.key, swagger: swagger)
+        let type = parse(request: requestResponse,
+                         httpMethod: httpMethod,
+                         servicePath: servicePath,
+                         statusCode: $0.key,
+                         swagger: swagger)
+        
         let statusCode = HTTPStatusCodes(rawValue: $0.key)!
         return (statusCode, type.0, type.1)
     }
