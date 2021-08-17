@@ -13,7 +13,10 @@ func parse(swagger: Swagger, swaggerFile: SwaggerFile) -> ServiceDefinition {
     }.flatMap { $0 }
 
     let builtInResponses: [ModelDefinition] = swagger.responses?.map { response -> [ModelDefinition] in
-        switch response.value.schema! {
+        guard let schema = response.value.schema else {
+            return []
+        }
+        switch schema {
         case .reference(let reference):
             if let definition = swagger.definitions?.first(where: { reference == "#/definitions/\($0.key)" }) {
                 return getType(forSchema: definition.value, typeNamePrefix: response.key, swagger: swagger).1
