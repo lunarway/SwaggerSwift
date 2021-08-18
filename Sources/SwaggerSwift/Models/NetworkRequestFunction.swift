@@ -43,7 +43,7 @@ extension NetworkRequestFunction: Swiftable {
     }
 
     func toSwift(swaggerFile: SwaggerFile, embedded: Bool) -> String {
-        let arguments = parameters.map { "\($0.name): \($0.typeName.toString(required: $0.required))" }.joined(separator: ", ")
+        let arguments = parameters.map { "\($0.name.variableNameFormatted): \($0.typeName.toString(required: $0.required))" }.joined(separator: ", ")
 
         let servicePath = self.servicePath
             .replacingOccurrences(of: "{", with: "\\(")
@@ -101,89 +101,96 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
                 }
             }.joined(separator: "\n\(defaultSpacing)")
 
-        let returnStatement: String
-        let urlSessionMethodName: String
-        let bodyInjection: String?
-        switch consumes {
-        case .json:
-            urlSessionMethodName = "dataTask(with: request)"
-            returnStatement = " -> URLSessionDataTask"
-            headerStatements += "\n    request.addValue(\"application/json\", forHTTPHeaderField: \"Content-Type\")"
-            if parameters.contains(where: { $0.name == "body" }) {
-                bodyInjection = "request.httpBody = try? JSONEncoder().encode(body)"
-            } else {
-                bodyInjection = ""
-            }
-        case .multiPartFormData:
-            urlSessionMethodName = "uploadTask(with: request, from: requestData as Data)"
-            returnStatement = " -> URLSessionUploadTask"
-            bodyInjection = """
-let boundary = "Boundary-\\(UUID().uuidString)"
-request.setValue("multipart/form-data; boundary=\\(boundary)", forHTTPHeaderField: "Content-Type")
+        var bodyInjection: String = ""
+        if let body = parameters.first(where: { $0.in == .body }) {
+            bodyInjection += "request.httpBody = try? JSONEncoder().encode(\(body.name))\n"
+        }
 
-var requestData = Data()
+        if parameters.contains(where: { $0.in == .formData }) {
+            bodyInjection += """
+                let boundary = "Boundary-\\(UUID().uuidString)"
+                request.setValue("multipart/form-data; boundary=\\(boundary)", forHTTPHeaderField: "Content-Type")
 
-""" + parameters.filter { $0.in == .formData }.compactMap {
-    switch $0.typeName {
-    case .string:
-        return """
-            if let data = \($0.name).data(using: .utf8) {
+                var requestData = Data()
+
+                """
+
+            bodyInjection += parameters.filter { $0.in == .formData }.compactMap {
+                switch $0.typeName {
+                case .string:
+                    return """
+            if let data = \($0.variableName).data(using: .utf8) {
                 requestData.append(FormData(data: data).toRequestData(named: "\($0.name)", using: boundary))
             }
+
             """
-    case .int:
-        fatalError("not implemented")
-    case .double:
-        fatalError("not implemented")
-    case .float:
-        fatalError("not implemented")
-    case .boolean:
-        fatalError("not implemented")
-    case .int64:
-        fatalError("not implemented")
-    case .array:
-        fatalError("not implemented")
-    case .object(typeName: let typeName):
-        if typeName == "FormData" {
-            return "requestData.append(\($0.name).toRequestData(named: \"\($0.name)\", using: boundary))"
-        } else if $0.isEnum {
-            return """
+                case .int:
+                    fatalError("not implemented")
+                case .double:
+                    fatalError("not implemented")
+                case .float:
+                    fatalError("not implemented")
+                case .boolean:
+                    fatalError("not implemented")
+                case .int64:
+                    fatalError("not implemented")
+                case .array:
+                    fatalError("not implemented")
+                case .object(typeName: let typeName):
+                    if typeName == "FormData" {
+                        return "requestData.append(\($0.name).toRequestData(named: \"\($0.name)\", using: boundary))"
+                    } else if $0.isEnum {
+                        return """
             if let data = \($0.name).rawValue.data(using: .utf8) {
                 requestData.append(FormData(data: data).toRequestData(named: "\($0.name)", using: boundary))
             }
             """
-        } else {
-            fatalError("not implemented")
-        }
-    case .date:
-        fatalError("not implemented")
-    case .void:
-        fatalError("not implemented")
-    }
-}.joined(separator: "\n") + """
+                    } else {
+                        fatalError("not implemented")
+                    }
+                case .date:
+                    fatalError("not implemented")
+                case .void:
+                    fatalError("not implemented")
+                }
+            }.joined(separator: "\n")
 
-if let endBoundaryData = "--\\(boundary)--".data(using: .utf8) {
-    requestData.append(endBoundaryData)
-}
-"""
-}
-
-            var declaration = ""
-            if isDeprecated {
-                declaration += "@available(*, deprecated)\n"
-            }
-
-            if isInternalOnly {
-                declaration += "#if DEBUG\n"
-            }
-
-            declaration += "@discardableResult\n"
-            declaration += "public func \(functionName)(\(arguments)) \(`throws` ? "throws" : "") \(returnStatement) {"
-
-            let responseTypes = self.responseTypes.map { $0.print() }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n            ")
-
-            var body =
+            bodyInjection += """
+                if let endBoundaryData = "--\\(boundary)--".data(using: .utf8) {
+                    requestData.append(endBoundaryData)
+                }
                 """
+        }
+
+        let returnStatement: String
+        let urlSessionMethodName: String
+        switch consumes {
+        case .json:
+            urlSessionMethodName = "dataTask(with: request)"
+            headerStatements += "\n    request.addValue(\"application/json\", forHTTPHeaderField: \"Content-Type\")"
+            returnStatement = " -> URLSessionDataTask"
+
+        case .multiPartFormData:
+            urlSessionMethodName = "uploadTask(with: request, from: requestData as Data)"
+            returnStatement = " -> URLSessionUploadTask"
+        }
+
+        var declaration = ""
+        if isDeprecated {
+            declaration += "@available(*, deprecated)\n"
+        }
+
+        if isInternalOnly {
+            declaration += "#if DEBUG\n"
+        }
+
+        declaration += "@discardableResult\n"
+        declaration += "public func \(functionName)(\(arguments)) \(`throws` ? "throws" : "") \(returnStatement) {"
+
+        let responseTypes = self.responseTypes.map { $0.print() }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n            ")
+
+        var body =
+            """
 \(declaration)
     let endpointUrl = self.baseUrl().appendingPathComponent("\(servicePath)")
 
@@ -195,7 +202,7 @@ if let endBoundaryData = "--\\(boundary)--".data(using: .utf8) {
     \(globalHeaderInitialisation)
     \(headerStatements)
 
-    \(bodyInjection?.replacingOccurrences(of: "\n", with: "\n\(defaultSpacing)") ?? "")
+    \(bodyInjection.replacingOccurrences(of: "\n", with: "\n\(defaultSpacing)"))
 
     request = interceptor?.networkWillPerformRequest(request) ?? request
     let task = urlSession().\(urlSessionMethodName) { (data, response, error) in
@@ -227,10 +234,10 @@ if let endBoundaryData = "--\\(boundary)--".data(using: .utf8) {
 }
 
 """
-            if isInternalOnly {
-                body += "#endif\n"
-            }
-
-            return body
+        if isInternalOnly {
+            body += "#endif\n"
         }
+
+        return body
     }
+}
