@@ -57,7 +57,12 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, isIn
 
         if model.fields.count > 0 {
             resolvedModelDefinitions.append(.model(model))
-            resolvedParameters.append(FunctionParameter(description: nil, name: "headers", typeName: .object(typeName: typeName), required: true))
+            resolvedParameters.append(FunctionParameter(description: nil,
+                                                        name: "headers",
+                                                        typeName: .object(typeName: typeName),
+                                                        required: true,
+                                                        in: .headers,
+                                                        isEnum: false))
         }
     }
 
@@ -68,7 +73,12 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, isIn
             let result = type.toType(typePrefix: typeName, swagger: swagger)
             assert(result.1.count == 0, "A path param isnt expected to contain a special model definition inline, is it?")
             resolvedModelDefinitions.append(contentsOf: result.1)
-            return FunctionParameter(description: $0.description, name: $0.name, typeName: result.0, required: $0.required)
+            return FunctionParameter(description: $0.description,
+                                     name: $0.name,
+                                     typeName: result.0,
+                                     required: $0.required,
+                                     in: .path,
+                                     isEnum: false)
         } else {
             return nil
         }
@@ -86,7 +96,9 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, isIn
             return FunctionParameter(description: $0.description,
                                      name: $0.name.camelized,
                                      typeName: result.0,
-                                     required: $0.required)
+                                     required: $0.required,
+                                     in: .query,
+                                     isEnum: false)
         } else {
             return nil
         }
@@ -96,21 +108,67 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, isIn
 
     // Body
 
-    let bodyParams: [(FunctionParameter, [ModelDefinition])] = parameters.map {
+    let bodyParams: [(FunctionParameter, [ModelDefinition])] = parameters.compactMap {
         switch $0.location {
         case .body(schema: let schemaNode):
             let schema = swagger.findSchema(node: schemaNode.value)
             let type = getType(forSchema: schema, typeNamePrefix: typeName, swagger: swagger)
-            let param = FunctionParameter(description: $0.description, name: "body", typeName: type.0, required: $0.required)
+            let param = FunctionParameter(description: $0.description, name: "body", typeName: type.0, required: $0.required, in: .body, isEnum: false)
             return (param, type.1)
         case .formData(type: let paramType, allowEmptyValue: let allowEmpty):
-            let typeName = paramType.toType(typePrefix: typeName, swagger: swagger)
-            let param = FunctionParameter(description: $0.description, name: $0.name, typeName: typeName.0, required: !allowEmpty)
-            return (param, [])
+            var modelDefinitions = [ModelDefinition]()
+            switch paramType {
+            case .string(format: _, enumValues: let enumValues, maxLength: _, minLength: _, pattern: _):
+                if let enumValues = enumValues {
+                    let typeName = "\(typeName)\($0.name.camelized.capitalizingFirstLetter())"
+                    modelDefinitions.append(.enumeration(.init(serviceName: swagger.serviceName,
+                                                               description: $0.description,
+                                                               typeName: typeName,
+                                                               values: enumValues,
+                                                               isCodable: true)))
+
+                    let param = FunctionParameter(description: $0.description,
+                                                  name: $0.name,
+                                                  typeName: .object(typeName: typeName),
+                                                  required: !allowEmpty,
+                                                  in: .formData,
+                                                  isEnum: true)
+
+                    return (param, modelDefinitions)
+                } else {
+                    let typeName = paramType.toType(typePrefix: typeName, swagger: swagger)
+                    let param = FunctionParameter(description: $0.description,
+                                                  name: $0.name,
+                                                  typeName: typeName.0,
+                                                  required: !allowEmpty,
+                                                  in: .formData,
+                                                  isEnum: false)
+
+                    return (param, modelDefinitions)
+                }
+            case .number(format: _, maximum: _, exclusiveMaximum: _, minimum: _, exclusiveMinimum: _, multipleOf: _):
+                fatalError("Not implemented")
+            case .integer(format: _, maximum: _, exclusiveMaximum: _, minimum: _, exclusiveMinimum: _, multipleOf: _):
+                fatalError("Not implemented")
+            case .boolean:
+                fatalError("Not implemented")
+            case .array(_, collectionFormat: _, maxItems: _, minItems: _, uniqueItems: _):
+                fatalError("Not implemented")
+            case .file:
+                let typeName = paramType.toType(typePrefix: typeName, swagger: swagger)
+                let param = FunctionParameter(description: $0.description,
+                                              name: $0.name,
+                                              typeName: typeName.0,
+                                              required: !allowEmpty,
+                                              in: .formData,
+                                              isEnum: false)
+
+                return (param, modelDefinitions)
+            }
+
         default: return nil
         }
-
-    }.compactMap { $0 }
+    }
 
     resolvedParameters.append(contentsOf: bodyParams.map { $0.0 })
     resolvedModelDefinitions.append(contentsOf: bodyParams.flatMap { $0.1 })
@@ -121,7 +179,7 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, isIn
     let successType = successTypeResult.0
     let failureTypeResult = createResultEnumType(types: responseTypes, failure: true, functionName: functionName, swagger: swagger)
     let failureType = failureTypeResult.0
-    let completionHandler = FunctionParameter(description: "The completion handler of the function returns as soon as the request completes", name: "completionHandler", typeName: .object(typeName: "@escaping (Result<\(successType), ServiceError<\(failureType)>>) -> Void = { _ in }"), required: true)
+    let completionHandler = FunctionParameter(description: "The completion handler of the function returns as soon as the request completes", name: "completionHandler", typeName: .object(typeName: "@escaping (Result<\(successType), ServiceError<\(failureType)>>) -> Void = { _ in }"), required: true, in: .nowhere, isEnum: false)
 
     resolvedParameters.append(completionHandler)
     resolvedModelDefinitions.append(contentsOf: successTypeResult.1)

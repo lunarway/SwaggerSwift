@@ -121,33 +121,69 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
 let boundary = "Boundary-\\(UUID().uuidString)"
 request.setValue("multipart/form-data; boundary=\\(boundary)", forHTTPHeaderField: "Content-Type")
 
-let requestData = NSMutableData()
+var requestData = Data()
 
-""" + parameters.filter { $0.typeName.toString(required: $0.required) == "FormData" }.map {
-    "requestData.append(\($0.name).toRequestData(named: \"\($0.name)\", using: boundary))"
+""" + parameters.filter { $0.in == .formData }.compactMap {
+    switch $0.typeName {
+    case .string:
+        return """
+            if let data = \($0.name).data(using: .utf8) {
+                requestData.append(FormData(data: data).toRequestData(named: "\($0.name)", using: boundary))
+            }
+            """
+    case .int:
+        fatalError("not implemented")
+    case .double:
+        fatalError("not implemented")
+    case .float:
+        fatalError("not implemented")
+    case .boolean:
+        fatalError("not implemented")
+    case .int64:
+        fatalError("not implemented")
+    case .array:
+        fatalError("not implemented")
+    case .object(typeName: let typeName):
+        if typeName == "FormData" {
+            return "requestData.append(\($0.name).toRequestData(named: \"\($0.name)\", using: boundary))"
+        } else if $0.isEnum {
+            return """
+            if let data = \($0.name).rawValue.data(using: .utf8) {
+                requestData.append(FormData(data: data).toRequestData(named: "\($0.name)", using: boundary))
+            }
+            """
+        } else {
+            fatalError("not implemented")
+        }
+    case .date:
+        fatalError("not implemented")
+    case .void:
+        fatalError("not implemented")
+    }
 }.joined(separator: "\n") + """
 
 if let endBoundaryData = "--\\(boundary)--".data(using: .utf8) {
     requestData.append(endBoundaryData)
 }
 """
-        }
+}
 
-        var declaration = ""
-        if isDeprecated {
-            declaration += "@available(*, deprecated)\n"
-        }
+            var declaration = ""
+            if isDeprecated {
+                declaration += "@available(*, deprecated)\n"
+            }
 
-        if isInternalOnly {
-            declaration += "#if DEBUG\n"
-        }
+            if isInternalOnly {
+                declaration += "#if DEBUG\n"
+            }
 
-        declaration += "@discardableResult\n"
-        declaration += "public func \(functionName)(\(arguments)) \(`throws` ? "throws" : "") \(returnStatement) {"
+            declaration += "@discardableResult\n"
+            declaration += "public func \(functionName)(\(arguments)) \(`throws` ? "throws" : "") \(returnStatement) {"
 
-        let responseTypes = self.responseTypes.map { $0.print() }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n            ")
+            let responseTypes = self.responseTypes.map { $0.print() }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n            ")
 
-        var body = """
+            var body =
+                """
 \(declaration)
     let endpointUrl = self.baseUrl().appendingPathComponent("\(servicePath)")
 
@@ -191,10 +227,10 @@ if let endBoundaryData = "--\\(boundary)--".data(using: .utf8) {
 }
 
 """
-        if isInternalOnly {
-            body += "#endif\n"
-        }
+            if isInternalOnly {
+                body += "#endif\n"
+            }
 
-        return body
+            return body
+        }
     }
-}
