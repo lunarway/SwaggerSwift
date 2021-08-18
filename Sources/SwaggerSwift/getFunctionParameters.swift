@@ -77,7 +77,8 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, isIn
                                      name: $0.name,
                                      typeName: result.0,
                                      required: $0.required,
-                                     in: .path, isEnum: false)
+                                     in: .path,
+                                     isEnum: false)
         } else {
             return nil
         }
@@ -95,7 +96,9 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, isIn
             return FunctionParameter(description: $0.description,
                                      name: $0.name.camelized,
                                      typeName: result.0,
-                                     required: $0.required, in: .query, isEnum: false)
+                                     required: $0.required,
+                                     in: .query,
+                                     isEnum: false)
         } else {
             return nil
         }
@@ -128,7 +131,8 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, isIn
                                                   name: $0.name,
                                                   typeName: .object(typeName: typeName),
                                                   required: !allowEmpty,
-                                                  in: .formData, isEnum: true)
+                                                  in: .formData,
+                                                  isEnum: true)
 
                     return (param, modelDefinitions)
                 } else {
@@ -137,7 +141,8 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, isIn
                                                   name: $0.name,
                                                   typeName: typeName.0,
                                                   required: !allowEmpty,
-                                                  in: .formData, isEnum: false)
+                                                  in: .formData,
+                                                  isEnum: false)
 
                     return (param, modelDefinitions)
                 }
@@ -155,7 +160,8 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, isIn
                                               name: $0.name,
                                               typeName: typeName.0,
                                               required: !allowEmpty,
-                                              in: .formData, isEnum: false)
+                                              in: .formData,
+                                              isEnum: false)
 
                 return (param, modelDefinitions)
             }
