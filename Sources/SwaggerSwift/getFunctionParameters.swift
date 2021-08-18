@@ -4,9 +4,10 @@ import SwaggerSwiftML
 /// - Parameter headerName:
 /// - Returns: the field name to use in the Swift struct
 func makeHeaderFieldName(headerName: String) -> String {
-    headerName.replacingOccurrences(of: "X-", with: "")
+    headerName
+        .replacingOccurrences(of: "X-", with: "")
         .replacingOccurrences(of: "x-", with: "")
-        .lowercasingFirst
+        .variableNameFormatted
 }
 
 func getFunctionParameters(_ parameters: [Parameter], functionName: String, isInternalOnly: Bool, responseTypes: [(HTTPStatusCodes, TypeType)], swagger: Swagger, swaggerFile: SwaggerFile) -> ([FunctionParameter], [ModelDefinition]) {
