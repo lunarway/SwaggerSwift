@@ -13,7 +13,7 @@ extension ParameterType {
         case .number(format: let format, maximum: _, exclusiveMaximum: _, minimum: _, exclusiveMinimum: _, multipleOf: _):
             switch format {
             case .none:
-                return (.int, [])
+                return (.double, [])
             case .some(let some):
                 return (typeOfDataFormat(some), [])
             }
