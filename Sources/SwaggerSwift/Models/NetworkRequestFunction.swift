@@ -156,6 +156,7 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
             }.joined(separator: "\n")
 
             bodyInjection += """
+                \n
                 if let endBoundaryData = "--\\(boundary)--".data(using: .utf8) {
                     requestData.append(endBoundaryData)
                 }
