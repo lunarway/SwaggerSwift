@@ -41,6 +41,34 @@ extension NetworkRequestFunction: Swiftable {
     var typeName: String {
         return ""
     }
+    
+    private var returnType: String {
+        switch consumes {
+        case .json:
+            return "URLSessionDataTask"
+        case .multiPartFormData:
+            return "URLSessionUploadTask"
+        }
+    }
+    
+    private var arguments: String {
+        return parameters.map { "\($0.name.variableNameFormatted): \($0.typeName.toString(required: $0.required))" }.joined(separator: ", ")
+    }
+    
+    var declaration: String {
+        var declaration = ""
+        if isDeprecated {
+            declaration += "@available(*, deprecated)\n"
+        }
+
+        if isInternalOnly {
+            declaration += "#if DEBUG\n"
+        }
+
+        declaration += "@discardableResult\n"
+        declaration += "public func \(functionName)(\(arguments)) \(`throws` ? "throws" : "") -> \(returnType)"
+        return declaration
+    }
 
     func toSwift(swaggerFile: SwaggerFile, embedded: Bool) -> String {
         let arguments = parameters.map { "\($0.name.variableNameFormatted): \($0.typeName.toString(required: $0.required))" }.joined(separator: ", ")

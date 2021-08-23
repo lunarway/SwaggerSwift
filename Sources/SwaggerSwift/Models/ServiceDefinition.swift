@@ -23,9 +23,19 @@ public init(\(fields.map { "\($0.name): \($0.typeIsAutoclosure ? "@autoclosure "
         if let description = description {
             serviceDefinition.append("// \(description)\n")
         }
+        
+        // interface
+        serviceDefinition += """
+            public protocol \(typeName)Type {
+            \(self.functions
+                .sorted(by: { $0.functionName < $1.functionName })
+                .map { $0.declaration }
+                .joined(separator: "\n\n    "))
+            }\n\n
+            """
 
         serviceDefinition += """
-public struct \(typeName) {
+public struct \(typeName): \(typeName)Type {
     \(fields.map { "private let \($0.name): \($0.typeName)\($0.required ? "" : "?")" }.joined(separator: "\n    "))
 
     \(initMethod.replacingOccurrences(of: "\n", with: "\n    "))
