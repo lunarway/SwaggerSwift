@@ -3,7 +3,7 @@
     "pins": [
       {
         "package": "SwaggerSwiftML",
-        "repositoryURL": "https://github.com/MadsBogeskov/SwaggerSwiftML",
+        "repositoryURL": "https://github.com/lunarway/SwaggerSwiftML",
         "state": {
           "branch": null,
           "revision": "c315e99c93925098bf35f6735af8db410ac72173",
