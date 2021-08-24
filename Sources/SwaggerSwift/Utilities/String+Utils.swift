@@ -15,6 +15,10 @@ extension String {
         return prefix(1).uppercased() + dropFirst().lowercased()
     }
 
+    var lowercasingFirst: String {
+        return prefix(1).lowercased() + dropFirst()
+    }
+
     var pascalCased: String {
         return self.lowercased()
             .split(separator: " ")
