@@ -37,7 +37,13 @@ extension String {
 
         let parts = self.components(separatedBy: badChars)
 
-        let first = String(describing: parts.first!).lowercased()
+        let firstPart = parts.first!
+        let first: String
+        if firstPart.allSatisfy({ $0.isUppercase }) {
+            first = firstPart.lowercased()
+        } else {
+            first = firstPart.lowercasingFirst
+        }
         let rest = parts.dropFirst().map({String($0).lowercased().uppercasingFirst})
 
         return ([first] + rest).joined(separator: "")
