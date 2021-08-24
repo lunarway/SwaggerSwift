@@ -89,8 +89,7 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
         } else {
             return (.string, [])
         }
-    case .integer(let format,_,_,_,_,_): fallthrough
-    case .number(let format, _, _, _, _, _):
+    case .integer(let format,_,_,_,_,_):
         if let format = format {
             switch format {
             case .long:
@@ -120,6 +119,36 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
         }
 
         return (.int, [])
+    case .number(let format, _, _, _, _, _):
+        if let format = format {
+            switch format {
+            case .long:
+                return (.double, [])
+            case .float: return (.float, [])
+            case .int32: return (.int, [])
+            case .double: return (.double, [])
+            case .date: fallthrough
+            case .dateTime: fallthrough
+            case .password: fallthrough
+            case .email: fallthrough
+            case .string: fallthrough
+            case .byte: fallthrough
+            case .binary: fallthrough
+            case .boolean:
+                fatalError("This cannot happen for this case")
+            case .unsupported(let unsupported):
+                switch unsupported {
+                case "int64":
+                    return (.int64, [])
+                case "decimal":
+                    return (.double, [])
+                default:
+                    fatalError("Unsupported field type received: \(unsupported)")
+                }
+            }
+        }
+
+        return (.double, [])
     case .boolean:
         return (.boolean, [])
     case .array(let items, _, _, _, _):
