@@ -12,7 +12,7 @@ extension String {
     }
 
     var uppercasingFirst: String {
-        return prefix(1).uppercased() + dropFirst().lowercased()
+        return prefix(1).uppercased() + dropFirst()
     }
 
     var lowercasingFirst: String {
@@ -38,7 +38,7 @@ extension String {
         let parts = self.components(separatedBy: badChars)
 
         let first = String(describing: parts.first!).lowercased()
-        let rest = parts.dropFirst().map({String($0).uppercasingFirst})
+        let rest = parts.dropFirst().map({String($0).lowercased().uppercasingFirst})
 
         return ([first] + rest).joined(separator: "")
     }
