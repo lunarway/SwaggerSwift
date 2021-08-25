@@ -108,6 +108,8 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
                 fatalError("This cannot happen for this case")
             case .unsupported(let unsupported):
                 switch unsupported {
+                case "int":
+                    return (.int, [])
                 case "int64":
                     return (.int64, [])
                 case "decimal":
@@ -138,6 +140,8 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
                 fatalError("This cannot happen for this case")
             case .unsupported(let unsupported):
                 switch unsupported {
+                case "int":
+                    return (.int, [])
                 case "int64":
                     return (.int64, [])
                 case "decimal":
