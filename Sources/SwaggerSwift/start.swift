@@ -178,6 +178,50 @@ public enum AdditionalProperty: Codable {
 
 """
 
+let dateDecodingStrategy = """
+import Foundation
+
+internal func dateDecodingStrategy(_ decoder: Decoder) throws -> Date {
+    let container = try decoder.singleValueContainer()
+    let stringValue = try container.decode(String.self)
+
+    // first try decoding date time format (yyyy-MM-ddTHH:mm:ssZ)
+    let dateTimeFormatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [
+            .withFullDate,
+            .withDashSeparatorInDate,
+            .withTime,
+            .withColonSeparatorInTime
+        ]
+        return formatter
+    }()
+
+    if let date = dateTimeFormatter.date(from: stringValue) {
+        return date
+    }
+
+    // then try decoding date only format (yyyy-MM-dd)
+    let dateFormatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [
+            .withFullDate,
+            .withDashSeparatorInDate
+        ]
+        return formatter
+    }()
+
+    if let date = dateFormatter.date(from: stringValue) {
+        return date
+    }
+
+    throw DecodingError.dataCorruptedError(
+        in: container,
+        debugDescription: "Expected date string to be ISO8601-formatted."
+    )
+}
+"""
+
 // token
 func start(swaggerFilePath: String, token: String, destinationPath: String, projectName: String = "Services", verbose: Bool = false) throws {
     if verbose {
@@ -198,6 +242,7 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
     try! additionalPropertyUtil.write(toFile: "\(sourceDirectory)/AdditionalProperty.swift", atomically: true, encoding: .utf8)
     try! formData.write(toFile: "\(sourceDirectory)/FormData.swift", atomically: true, encoding: .utf8)
     try! dummyTest.write(toFile: "\(testDirectory)/DummyTest.swift", atomically: true, encoding: .utf8)
+    try! dateDecodingStrategy.write(toFile: "\(sourceDirectory)/DateDecodingStrategy.swift", atomically: true, encoding: .utf8)
 
     if let globalHeaderFields = swaggerFile.globalHeaders?.map({
         ModelField(description: nil,

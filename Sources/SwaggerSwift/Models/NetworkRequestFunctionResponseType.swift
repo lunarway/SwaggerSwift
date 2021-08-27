@@ -43,7 +43,7 @@ case \(statusCode.rawValue):
 case \(statusCode.rawValue):
     do {
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
+        decoder.dateDecodingStrategy = .custom(dateDecodingStrategy)
         let result = try decoder.decode(\(responseType).self, from: data)
 
         completionHandler(.\(swiftResult)(\(resultType("result", resultIsEnum))))
