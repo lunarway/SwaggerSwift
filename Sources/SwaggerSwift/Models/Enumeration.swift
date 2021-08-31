@@ -9,7 +9,9 @@ struct Enumeration {
     func modelDefinition(swaggerFile: SwaggerFile, embeddedFile: Bool) -> String {
         var cases = values
             .sorted(by: { $0 < $1 })
-            .map { isCodable ? "case \($0.camelized)" :  "case \($0)"}
+            .map { isCodable ? $0.camelized : $0 }
+            .map { swiftKeywords.contains($0) ? "`\($0)`" : $0 }
+            .map { "case \($0)" }
 
         var unknownName = "unknown"
         if values.contains(unknownName) {
