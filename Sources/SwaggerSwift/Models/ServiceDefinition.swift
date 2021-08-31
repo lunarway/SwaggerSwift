@@ -20,7 +20,7 @@ public init(\(fields.map { "\($0.name): \($0.typeIsAutoclosure ? "@autoclosure "
 }
 """
 
-        var serviceDefinition = "import Foundation\n\n"
+        var serviceDefinition = "import Foundation\nimport shared\n\n"
 
         if let description = description {
             serviceDefinition.append("// \(description)\n")

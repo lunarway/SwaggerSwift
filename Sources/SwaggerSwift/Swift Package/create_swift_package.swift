@@ -1,46 +1,106 @@
 import Foundation
 
-func createSwiftProject(at path: String, named name: String, fileManager: FileManager = FileManager.default) throws -> (String, String) {
-    let expandPath = path.replacingOccurrences(of: "~", with: NSHomeDirectory())
-    let sourceDirectory = expandPath + "/Sources/\(name)"
-    let testsDirectory = expandPath + "/Tests/\(name)Tests"
+func createTargetPathAt(basePath: String, for target: String, fileManager: FileManager = FileManager.default) throws {
+    let expandPath = basePath.replacingOccurrences(of: "~", with: NSHomeDirectory())
+    let sourceDirectory = expandPath + "/Sources/\(target)"
+    let testsDirectory = expandPath + "/Tests/\(target)Tests"
+    
+    try [sourceDirectory, testsDirectory].forEach {directory in
+        try fileManager.createDirectory(atPath: directory,
+                                        withIntermediateDirectories: true,
+                                        attributes: nil)
+    }
+}
 
-    try fileManager.createDirectory(atPath: testsDirectory,
-                                    withIntermediateDirectories: true,
-                                    attributes: nil)
-
-    try fileManager.createDirectory(atPath: sourceDirectory,
-                                    withIntermediateDirectories: true,
-                                    attributes: nil)
-
-    // create package file
-    let packageFile = """
+class SwiftPackageBuilder {
+    struct Product {
+        let name: String
+        let targets: [Target]
+    }
+    struct Target {
+        enum TargetType: String {
+            case target
+            case testTarget
+        }
+        let type: TargetType
+        let name: String
+        let dependencies: [String]
+    }
+    private let projectName: String
+    private let platforms: String // Find better datastructure
+    private var products: [Product]
+    private var targets: [Target]
+    
+    init(projectName: String, platforms: String, products: [Product] = [], targets: [Target] = []) {
+        self.projectName = projectName
+        self.platforms = platforms
+        self.products = products
+        self.targets = targets
+    }
+    
+    func addTarget(_ target: Target) {
+        targets.append(target)
+    }
+    
+    func buildPackageFile() -> String {
+        let productsLine = products.map { ".library(name: \"\($0.name)\", targets: [\($0.targets.map( { "\"\($0.name)\"" } ).joined(separator: ",\n"))])" }.joined(separator: ",\n")
+        let targetsLine = targets.map { ".\($0.type.rawValue)(name: \"\($0.name)\", dependencies:[\($0.dependencies.joined(separator: ","))], path: \"\($0.name)/\")" }.joined(separator: ",\n")
+        let packageFile = """
     // swift-tools-version:5.3
     // The swift-tools-version declares the minimum version of Swift required to build this package.
-
+    
     import PackageDescription
-
+    
     let package = Package(
         name: "PROJECT_NAME",
-        platforms: [.iOS(.v11)],
-        products: [.library(name: "PROJECT_NAME", targets: ["PROJECT_NAME"])],
+        platforms: [.iOS(.v12)],
+        products: [PRODUCTS],
         dependencies: [],
         targets: [
             // Targets are the basic building blocks of a package. A target can define a module or a test suite.
             // Targets can depend on other targets in this package, and on products in packages which this package depends on.
-            .target(
-                name: "PROJECT_NAME",
-                dependencies: []),
-            .testTarget(
-                name: "PROJECT_NAMETests",
-                dependencies: ["PROJECT_NAME"]),
+            TARGETS
         ]
     )
     """
+        return packageFile
+            .replacingOccurrences(of: "PROJECT_NAME", with: projectName)
+            .replacingOccurrences(of: "PRODUCTS", with: productsLine)
+            .replacingOccurrences(of: "TARGETS", with: targetsLine)
+    }
+    
+}
 
+func createSwiftProject(at path: String, named name: String, targets: [String] = [], fileManager: FileManager = FileManager.default) throws -> (String, String) {
+
+    targets.forEach { try? createTargetPathAt(basePath: path, for: $0) }
+    
+//    var someTargets = targets.reduce(into: [SwiftPackageBuilder.Target(type: .target, name: "shared", dependencies: [] )]) { acc, name in
+//        acc.append(SwiftPackageBuilder.Target(type: .target, name: name, dependencies: ["shared"]))
+////        acc.append(SwiftPackageBuilder.Target(type: .testTarget, name: "\(name)Tests", dependencies: [name]))
+//    }
+    
+    let products = targets.reduce(into: [SwiftPackageBuilder.Product(name: "shared", targets: [SwiftPackageBuilder.Target(type: .target, name: "shared", dependencies: [])])], { acc, name in
+        acc.append(SwiftPackageBuilder.Product(name: name, targets: [SwiftPackageBuilder.Target(type: .target, name: name, dependencies: ["shared"])]))
+    })
+    
+    let packageBuilder = SwiftPackageBuilder(projectName: name, platforms: "", products: products)
+    
+    packageBuilder.addTarget(SwiftPackageBuilder.Target(type: .target, name: "shared", dependencies: []))
+    targets.forEach { target in
+//        let line = ".target(name: \"shared\", dependencies: [], path: \"shared/\")"
+        let line = ".target(name: \"shared\")"
+        packageBuilder.addTarget(SwiftPackageBuilder.Target(type: .target, name: target, dependencies: ["\(line)"] ))
+//        packageBuilder.addTarget(SwiftPackageBuilder.Target(type: .testTarget, name: "\(target)Tests", dependencies: [target] ))
+    }
+    
+    let packageFile = packageBuilder.buildPackageFile()
+
+    let expandPath = path.replacingOccurrences(of: "~", with: NSHomeDirectory())
     try packageFile
         .replacingOccurrences(of: "PROJECT_NAME", with: name)
         .write(toFile: expandPath + "/Package.swift", atomically: true, encoding: .utf8)
 
-    return (sourceDirectory, testsDirectory)
+    return ("", "/Tests")
 }
+
