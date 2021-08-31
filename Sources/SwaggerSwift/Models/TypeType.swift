@@ -173,6 +173,8 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
         case .schema(_):
             fatalError("not supported")
         }
+    case .file:
+        return (.void, [])
     }
 }
 
