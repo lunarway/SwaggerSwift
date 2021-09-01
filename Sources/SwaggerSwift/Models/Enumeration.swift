@@ -14,7 +14,7 @@ struct Enumeration {
             .map { "case \($0)" }
 
         var unknownName = "unknown"
-        if values.contains(unknownName) {
+        if values.map { isCodable ? $0.camelized : $0 }.contains(unknownName) {
             unknownName = "unknownCase"
         }
 
