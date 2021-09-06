@@ -19,8 +19,10 @@ func parse(request requestNode: Node<Response>, httpMethod: HTTPMethod, serviceP
             return getType(forSchema: schema, typeNamePrefix: prefix, swagger: swagger)
         case .reference(let ref):
             let schema = swagger.findSchema(node: .reference(ref))
+            let typeName = (ref.components(separatedBy: "/").last ?? "").uppercasingFirst
+
             if case SchemaType.object = schema.type {
-                return (.object(typeName: ref.components(separatedBy: "/").last ?? ""), [])
+                return (.object(typeName: typeName), [])
             } else {
                 return getType(forSchema: schema, typeNamePrefix: prefix, swagger: swagger)
             }

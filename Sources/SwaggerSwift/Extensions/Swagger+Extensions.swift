@@ -1,9 +1,10 @@
+import Foundation
 import SwaggerSwiftML
 
 extension Swagger {
     /// The name of the service the Swagger file exposes
     var serviceName: String {
-        info.title.replacingOccurrences(of: " ", with: "")
+        info.title.components(separatedBy: CharacterSet.whitespaces).map { $0.uppercasingFirst }.joined()
     }
 
     func findParameter(node: Node<Parameter>) -> Parameter {

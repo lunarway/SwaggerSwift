@@ -1,3 +1,5 @@
+import Foundation
+
 /// Represents a Swift enum
 struct Enumeration {
     let serviceName: String
@@ -6,11 +8,25 @@ struct Enumeration {
     let values: [String]
     let isCodable: Bool
 
+    static func toCasename(_ str: String, _ isCodable: Bool) -> String {
+        let str = isCodable ? str.camelized : str
+
+        if swiftKeywords.contains(str) {
+            return "`\(str)`"
+        }
+
+        if str.isNumber {
+            return "_\(str)"
+        }
+
+        return str
+    }
+
     func modelDefinition(swaggerFile: SwaggerFile, embeddedFile: Bool) -> String {
         let valueNames = values
             .sorted(by: { $0 < $1 })
             .map { isCodable ? $0.camelized : $0 }
-            .map { swiftKeywords.contains($0) ? "`\($0)`" : $0 }
+            .map { Self.toCasename($0, isCodable) }
 
         var cases = valueNames.map { "case \($0)" }
 
@@ -28,12 +44,10 @@ public enum \(self.typeName)\(isCodable ? ": Codable, Equatable" : "") {
 \(cases.joined(separator: "\n").indentLines(1))
 """
         if isCodable {
-            let decodeCases = values.sorted().map {
-                """
-case "\($0)":
-    self = .\($0.camelized)
-"""
-            }.joined(separator: "\n").indentLines(1)
+            let decodeCases = values
+                .sorted()
+                .map { "case \"\($0)\": self = .\(Self.toCasename($0, isCodable))" }
+                .joined(separator: "\n").indentLines(1)
 
             model += """
 
@@ -53,7 +67,7 @@ public init(from decoder: Decoder) throws {
 
             let encodeCases = values.sorted().map {
                 """
-case .\($0.camelized):
+case .\(Self.toCasename($0, isCodable)):
     try container.encode("\($0)")
 """
             }.joined(separator: "\n").indentLines(1)
@@ -85,7 +99,7 @@ public init(rawValue: String) {
 
             let rawValueCases = values.sorted().map {
                 """
-case .\($0.camelized):
+case .\(Self.toCasename($0, isCodable)):
     return "\($0)"
 """
             }.joined(separator: "\n").indentLines(1)
@@ -140,5 +154,11 @@ extension String {
         self.split(separator: "\n", omittingEmptySubsequences: false)
             .map { String(repeating: defaultSpacing, count: count) + $0 }
             .joined(separator: "\n")
+    }
+}
+
+extension String  {
+    var isNumber: Bool {
+        return !isEmpty && rangeOfCharacter(from: CharacterSet.decimalDigits.inverted) == nil
     }
 }
