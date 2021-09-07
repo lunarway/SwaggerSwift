@@ -8,12 +8,12 @@ enum HTTPMethod: String {
 }
 
 // token
-func start(swaggerFilePath: String, token: String, destinationPath: String, projectName: String = "Services", verbose: Bool = false) throws {
+func start(swaggerFilePath: String, token: String, destinationPath: String, projectName: String = "Services", verbose: Bool = false, apiList: [String]? = nil) throws {
     if verbose {
         print("Parsing swagger at \(swaggerFilePath)")
     }
 
-    let (swaggers, swaggerFile) = try SwaggerFileParser.parse(path: swaggerFilePath, authToken: token, verbose: verbose)
+    let (swaggers, swaggerFile) = try SwaggerFileParser.parse(path: swaggerFilePath, authToken: token, apiList: apiList, verbose: verbose)
 
     if verbose {
         print("Creating Swift Project at \(destinationPath) named \(projectName)")

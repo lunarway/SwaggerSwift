@@ -15,13 +15,20 @@ struct SwaggerSwiftParser: ParsableCommand {
 
     @Argument(help: "GitHub token")
     var gitHubToken: String
+    
+    @Option(name: .shortAndLong, help: "List of APIs to generate", transform: { (arg: String) in
+        arg.split(separator: ",").map(String.init)
+        
+    })
+    var apiList: [String]?
 
     mutating func run() throws {
         try start(swaggerFilePath: swaggerFilePath,
                   token: gitHubToken,
                   destinationPath: destinationPath,
                   projectName: projectName,
-                  verbose: verbose)
+                  verbose: verbose,
+                  apiList: apiList)
     }
 }
 
