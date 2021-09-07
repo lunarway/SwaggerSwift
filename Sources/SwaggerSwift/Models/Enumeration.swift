@@ -1,4 +1,5 @@
 import Foundation
+import SwaggerSwiftML
 
 /// Represents a Swift enum
 struct Enumeration {
@@ -127,13 +128,15 @@ public var rawValue: String {
 }
 
 extension Enumeration: Swiftable {
-    func toSwift(swaggerFile: SwaggerFile, embedded: Bool) -> String {
+    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool) -> String {
         if embedded {
             return modelDefinition(swaggerFile: swaggerFile, embeddedFile: true)
         }
 
         var fileSections = ""
-        fileSections += "extension \(serviceName) {\n"
+        if let serviceName = serviceName {
+            fileSections += "extension \(serviceName) {\n"
+        }
 
         let modelDef = modelDefinition(swaggerFile: swaggerFile, embeddedFile: false)
         if let description = description, description.count > 0 {
@@ -143,7 +146,9 @@ extension Enumeration: Swiftable {
             fileSections += modelDef.indentLines(1) + "\n"
         }
 
-        fileSections += "}"
+        if serviceName != nil {
+            fileSections += "}"
+        }
 
         return fileSections
     }

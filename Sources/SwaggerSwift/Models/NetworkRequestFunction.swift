@@ -1,3 +1,5 @@
+import SwaggerSwiftML
+
 enum NetworkRequestFunctionConsumes {
     case json
     case multiPartFormData
@@ -42,7 +44,7 @@ extension NetworkRequestFunction: Swiftable {
         return ""
     }
 
-    func toSwift(swaggerFile: SwaggerFile, embedded: Bool) -> String {
+    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool) -> String {
         let arguments = parameters.map { "\($0.name.variableNameFormatted): \($0.typeName.toString(required: $0.required))" }.joined(separator: ", ")
 
         let servicePath = self.servicePath
@@ -223,7 +225,7 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
             \(responseTypes)
             default:
                 let result = String(data: data, encoding: .utf8) ?? ""
-                let error = NSError(domain: "OnboardingService", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: result])
+                let error = NSError(domain: "\(serviceName ?? "Generic")", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: result])
                 completionHandler(.failure(.requestFailed(error: error)))
             }
         }

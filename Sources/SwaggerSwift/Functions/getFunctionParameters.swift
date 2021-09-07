@@ -48,8 +48,7 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, isIn
                               required: param.required)
         }.sorted(by: { $0.name < $1.name })
 
-        let model = Model(serviceName: swagger.serviceName,
-                          description: "A collection of the header fields required for the request",
+        let model = Model(description: "A collection of the header fields required for the request",
                           typeName: typeName,
                           fields: fields,
                           inheritsFrom: [],

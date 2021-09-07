@@ -44,8 +44,7 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
 
         let models = result.flatMap { $0.2 }
 
-        let model = Model(serviceName: swagger.serviceName,
-                          description: schema.description,
+        let model = Model(description: schema.description,
                           typeName: typeName,
                           fields: result.flatMap { $0.1 },
                           inheritsFrom: ["Codable"],
@@ -103,8 +102,7 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
     let fields = fieldsAndEmbeddedTypes.map { $0.0 }
     let embeddedModelDefinitions = fieldsAndEmbeddedTypes.flatMap { $0.1 }
 
-    let model = Model(serviceName: swagger.serviceName,
-                      description: schema.description,
+    let model = Model(description: schema.description,
                       typeName: typeName,
                       fields: fields.sorted(by: { $0.name < $1.name }),
                       inheritsFrom: ["Codable"],
