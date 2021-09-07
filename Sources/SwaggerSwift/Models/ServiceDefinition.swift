@@ -1,3 +1,5 @@
+import SwaggerSwiftML
+
 /// Represent the overall service definition with all the network request methods and the primary initialiser
 struct ServiceDefinition {
     let typeName: String
@@ -8,7 +10,7 @@ struct ServiceDefinition {
 }
 
 extension ServiceDefinition: Swiftable {
-    func toSwift(swaggerFile: SwaggerFile, embedded: Bool) -> String {
+    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool) -> String {
         let initMethod = """
 /// Initialises the service
 /// - Parameters:
@@ -32,7 +34,9 @@ public struct \(typeName) {
 
     \(self.functions
         .sorted(by: { $0.functionName < $1.functionName })
-        .map { $0.toSwift(swaggerFile: swaggerFile, embedded: false).replacingOccurrences(of: "\n", with: "\n    ") }
+        .map { $0.toSwift(serviceName: serviceName, swaggerFile:
+                            swaggerFile,
+                          embedded: false).replacingOccurrences(of: "\n", with: "\n    ") }
         .joined(separator: "\n\n    "))
 }
 

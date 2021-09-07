@@ -3,7 +3,6 @@ import SwaggerSwiftML
 
 /// Represents some kind of network model. This could be a response type or a request type.
 struct Model {
-    let serviceName: String?
     let description: String?
     let typeName: String
     let fields: [ModelField]
@@ -17,8 +16,7 @@ struct Model {
         }
 
         let inheritedFields = inherits.flatMap { $0.fields }
-        return Model(serviceName: serviceName,
-                     description: description,
+        return Model(description: description,
                      typeName: typeName,
                      fields: (fields + inheritedFields).sorted(by: { $0.name < $1.name }),
                      inheritsFrom: inheritsFrom,
@@ -26,7 +24,7 @@ struct Model {
                      embeddedDefinitions: embeddedDefinitions)
     }
 
-    func modelDefinition(swaggerFile: SwaggerFile) -> String {
+    func modelDefinition(serviceName: String?, swaggerFile: SwaggerFile) -> String {
         let comment: String?
         if let description = description {
             comment = description.split(separator: "\n").map {
@@ -60,7 +58,11 @@ public init(\(fields.map { "\($0.name): \($0.type.toString(required: $0.required
             model += "\n\n"
         }
 
-        model += embeddedDefinitions.sorted(by: { $0.typeName < $1.typeName }).map { $0.toSwift(swaggerFile: swaggerFile, embedded: true) }.joined(separator: "\n\n").indentLines(1)
+        model += embeddedDefinitions
+            .sorted(by: { $0.typeName < $1.typeName })
+            .map { $0.toSwift(serviceName: serviceName, swaggerFile: swaggerFile, embedded: true) }
+            .joined(separator: "\n\n")
+            .indentLines(1)
 
         model += "\n}"
 
@@ -69,9 +71,9 @@ public init(\(fields.map { "\($0.name): \($0.type.toString(required: $0.required
 }
 
 extension Model: Swiftable {
-    func toSwift(swaggerFile: SwaggerFile, embedded: Bool) -> String {
+    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool) -> String {
         if embedded {
-            return modelDefinition(swaggerFile: swaggerFile)
+            return modelDefinition(serviceName: serviceName, swaggerFile: swaggerFile)
         }
 
         var model = "import Foundation\n\n"
@@ -86,7 +88,7 @@ extension Model: Swiftable {
             model += "extension \(serviceName) {\n"
         }
 
-        model += modelDefinition(swaggerFile: swaggerFile).indentLines(isInExtension ? 1 : 0)
+        model += modelDefinition(serviceName: serviceName, swaggerFile: swaggerFile).indentLines(isInExtension ? 1 : 0)
 
         if let _ = serviceName {
             model += "\n}"

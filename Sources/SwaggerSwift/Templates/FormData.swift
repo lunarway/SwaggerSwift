@@ -1,7 +1,7 @@
 import Foundation
 
 public struct FormData {
-    private let crlf = "\\r\\n"
+    private let crlf = "\r\n"
 
     /// the data representation of the object
     public let data: Data
@@ -27,17 +27,17 @@ public struct FormData {
             data.append(strData)
         }
 
-        var contentDisposition = "Content-Disposition: form-data; name=\\"\\(fieldName)\\""
+        var contentDisposition = "Content-Disposition: form-data; name=\"\(fieldName)\""
         if let filename = filename {
-            contentDisposition += "; filename=\\"\\(filename)\\""
+            contentDisposition += "; filename=\"\(filename)\""
         }
 
         var mutableData = Data()
 
-        append(string: "--\\(boundary)" + crlf, toData: &mutableData)
+        append(string: "--\(boundary)" + crlf, toData: &mutableData)
         append(string: contentDisposition + crlf, toData: &mutableData)
         if let mimeType = mimeType {
-            append(string: "Content-Type: \\(mimeType)" + crlf + crlf, toData: &mutableData)
+            append(string: "Content-Type: \(mimeType)" + crlf + crlf, toData: &mutableData)
         } else {
             append(string: crlf, toData: &mutableData)
         }

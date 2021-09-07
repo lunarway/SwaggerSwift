@@ -1,3 +1,5 @@
+import SwaggerSwiftML
+
 /// The types used by the service types, such as models, and enums
 enum ModelDefinition {
     case enumeration(Enumeration)
@@ -17,14 +19,20 @@ extension ModelDefinition: Swiftable {
         }
     }
 
-    func toSwift(swaggerFile: SwaggerFile, embedded: Bool) -> String {
+    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool) -> String {
         switch self {
         case .enumeration(let enumeration):
-            return enumeration.toSwift(swaggerFile: swaggerFile, embedded: embedded)
+            return enumeration.toSwift(serviceName: serviceName,
+                                       swaggerFile: swaggerFile,
+                                       embedded: embedded)
         case .model(let model):
-            return model.toSwift(swaggerFile: swaggerFile, embedded: embedded)
+            return model.toSwift(serviceName: serviceName,
+                                 swaggerFile: swaggerFile,
+                                 embedded: embedded)
         case .interface(let interface):
-            return interface.toSwift(swaggerFile: swaggerFile, embedded: embedded)
+            return interface.toSwift(serviceName: serviceName,
+                                     swaggerFile: swaggerFile,
+                                     embedded: embedded)
         }
     }
 
