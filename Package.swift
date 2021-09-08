@@ -18,7 +18,7 @@ let package = Package(
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "SwaggerSwiftML", package: "SwaggerSwiftML"),
             ],
-            resources: [.process("Templates")]),
+            resources: [.copy("Templates")]),
         .testTarget(
             name: "SwaggerSwiftTests",
             dependencies: ["SwaggerSwift"]),
