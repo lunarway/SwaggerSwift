@@ -13,12 +13,10 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "SwaggerSwift",
-            dependencies: [
+            name: "SwaggerSwift", dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "SwaggerSwiftML", package: "SwaggerSwiftML"),
-            ],
-            resources: [.process("Templates")]),
+            ]),
         .testTarget(
             name: "SwaggerSwiftTests",
             dependencies: ["SwaggerSwift"]),
