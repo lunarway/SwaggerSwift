@@ -18,6 +18,8 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
         print("Creating Swift Project at \(destinationPath) named \(projectName)")
     }
 
+    print(ProcessInfo.processInfo.environment["RESOURCE_PATH"])
+
     let (sourceDirectory, testDirectory) = try! createSwiftProject(at: destinationPath, named: projectName)
 
     if let templateDirectory = Bundle.main.executableURL?.deletingLastPathComponent().appendingPathComponent("Templates") {
