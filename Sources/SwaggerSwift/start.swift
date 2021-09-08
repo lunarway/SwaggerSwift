@@ -21,7 +21,7 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
 
     let (sourceDirectory, testDirectory) = try! createSwiftProject(at: destinationPath, named: projectName)
 
-    if let templateDirectory = Bundle.module.resourceURL {
+    if let templateDirectory = Bundle.main.bundleURL.appendPathComponent("Templates") {
         for file in try FileManager.default.contentsOfDirectory(at: templateDirectory, includingPropertiesForKeys: nil, options: []) {
             let cwd = URL(string: FileManager.default.currentDirectoryPath)!
             let destination: URL
