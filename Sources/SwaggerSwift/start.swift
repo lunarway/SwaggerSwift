@@ -7,6 +7,221 @@ enum HTTPMethod: String {
     case get, put, post, delete, patch, options, head
 }
 
+let serviceError = """
+public enum ServiceError<ErrorType>: Error {
+    // An error occured that is caused by the client app, and not the request
+    case clientError(reason: String)
+    // The request failed, e.g. timeout
+    case requestFailed(error: Error)
+    // The backend returned an error, e.g. a 500 Internal Server Error, 403 Unauthorized
+    case backendError(error: ErrorType)
+}
+"""
+
+let urlQueryItemExtension = """
+import Foundation
+
+extension URLQueryItem {
+    init(name: String, value: Bool) {
+        self.init(name: name, value: value ? "true" : "false")
+    }
+
+    init(name: String, value: Int) {
+        self.init(name: name, value: String(value))
+    }
+
+    init(name: String, value: Int64) {
+        self.init(name: name, value: String(value))
+    }
+}
+"""
+
+let parsingErrorExtension = """
+import Foundation
+
+public enum JSONParsingError: Error {
+    case invalidDate(String)
+}
+"""
+
+let networkInterceptor = """
+import Foundation
+
+public protocol NetworkInterceptor {
+    func networkWillPerformRequest(_ request: URLRequest) -> URLRequest
+    func networkDidPerformRequest(urlRequest: URLRequest, urlResponse: URLResponse?, data: Data?, error: Error?) -> Bool
+}
+"""
+
+let dummyTest = """
+import XCTest
+
+public struct DummyTest {
+    func testNetwork() {
+        XCTAssertTrue(true)
+    }
+}
+"""
+
+let formData = """
+import Foundation
+
+public struct FormData {
+    private let crlf = "\\r\\n"
+
+    /// the data representation of the object
+    public let data: Data
+    /// the mime type for the data, e.g. `image/png`
+    public let mimeType: String?
+    /// a filename representing the input - e.g. `image.png`
+    public let filename: String?
+
+    /// Creates the data part of a multi part request
+    /// - Parameters:
+    ///   - data: the piece of data being sent
+    ///   - mimeType: the mime type for the data, e.g. `image/png`
+    ///   - fileName: a filename representing the input - e.g. `image.png`
+    public init(data: Data, mimeType: String? = nil, fileName: String? = nil) {
+        self.data = data
+        self.mimeType = mimeType
+        self.filename = fileName
+    }
+
+    internal func toRequestData(named fieldName: String, using boundary: String) -> Data {
+        func append(string: String, toData data: inout Data) {
+            guard let strData = string.data(using: .utf8) else { return }
+            data.append(strData)
+        }
+
+        var contentDisposition = "Content-Disposition: form-data; name=\\"\\(fieldName)\\""
+        if let filename = filename {
+            contentDisposition += "; filename=\\"\\(filename)\\""
+        }
+
+        var mutableData = Data()
+
+        append(string: "--\\(boundary)" + crlf, toData: &mutableData)
+        append(string: contentDisposition + crlf, toData: &mutableData)
+        if let mimeType = mimeType {
+            append(string: "Content-Type: \\(mimeType)" + crlf + crlf, toData: &mutableData)
+        } else {
+            append(string: crlf, toData: &mutableData)
+        }
+
+        mutableData.append(data)
+
+        append(string: crlf, toData: &mutableData)
+
+        return mutableData as Data
+    }
+}
+"""
+
+let additionalPropertyUtil = """
+import Foundation
+
+public enum AdditionalProperty: Codable {
+    case string(String)
+    case integer(Int)
+    case double(Double)
+    case dictionary([String: AdditionalProperty])
+    case array([AdditionalProperty])
+    case bool(Bool)
+    case null
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+
+        if let stringValue = try? container.decode(String.self) {
+            self = .string(stringValue)
+        } else if let intValue = try? container.decode(Int.self) {
+            self = .integer(intValue)
+        } else if let doubleValue = try? container.decode(Double.self) {
+            self = .double(doubleValue)
+        } else if let dictionaryValue = try? container.decode([String: AdditionalProperty].self) {
+            self = .dictionary(dictionaryValue)
+        } else if let arrayValue = try? container.decode([AdditionalProperty].self) {
+            self = .array(arrayValue)
+        } else if let boolValue = try? container.decode(Bool.self) {
+            self = .bool(boolValue)
+        } else if container.decodeNil() {
+            self = .null
+        } else {
+            throw DecodingError.typeMismatch(
+                AdditionalProperty.self,
+                DecodingError.Context(codingPath: container.codingPath,
+                                      debugDescription: "AdditionalProperty contained un-supported value type")
+            )
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+        case .string(let stringValue):
+            try container.encode(stringValue)
+        case .integer(let value):
+            try container.encode(value)
+        case .double(let value):
+            try container.encode(value)
+        case .dictionary(let value):
+            try container.encode(value)
+        case .array(let value):
+            try container.encode(value)
+        case .bool(let value):
+            try container.encode(value)
+        case .null:
+            try container.encodeNil()
+        }
+    }
+}
+
+"""
+
+let dateDecodingStrategy = """
+import Foundation
+
+internal func dateDecodingStrategy(_ decoder: Decoder) throws -> Date {
+    let container = try decoder.singleValueContainer()
+    let stringValue = try container.decode(String.self)
+
+    // first try decoding date time format (yyyy-MM-ddTHH:mm:ssZ)
+    let dateTimeFormatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [
+            .withFullDate,
+            .withDashSeparatorInDate,
+            .withTime,
+            .withColonSeparatorInTime
+        ]
+        return formatter
+    }()
+
+    if let date = dateTimeFormatter.date(from: stringValue) {
+        return date
+    }
+
+    // then try decoding date only format (yyyy-MM-dd)
+    let dateFormatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [
+            .withFullDate,
+            .withDashSeparatorInDate
+        ]
+        return formatter
+    }()
+
+    if let date = dateFormatter.date(from: stringValue) {
+        return date
+    }
+
+    throw DecodingError.dataCorruptedError(
+        in: container,
+        debugDescription: "Expected date string to be ISO8601-formatted."
+    )
+}
+"""
+
 // token
 func start(swaggerFilePath: String, token: String, destinationPath: String, projectName: String = "Services", verbose: Bool = false, apiList: [String]? = nil) throws {
     if verbose {
@@ -18,26 +233,16 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
     if verbose {
         print("Creating Swift Project at \(destinationPath) named \(projectName)")
     }
-
     let (sourceDirectory, testDirectory) = try! createSwiftProject(at: destinationPath, named: projectName)
 
-    if let templateDirectory = Bundle.module.resourceURL?.appendingPathComponent("Templates") {
-        for file in try FileManager.default.contentsOfDirectory(at: templateDirectory, includingPropertiesForKeys: nil, options: []) {
-            let cwd = URL(string: FileManager.default.currentDirectoryPath)!
-            let destination: URL
-            if file.absoluteString.contains("Test") {
-                destination = URL(fileURLWithPath: "\(testDirectory)/\(file.lastPathComponent)", relativeTo: cwd)
-            } else {
-                destination = URL(fileURLWithPath: "\(sourceDirectory)/\(file.lastPathComponent)", relativeTo: cwd)
-            }
-
-            if FileManager.default.fileExists(atPath: destination.path) {
-                try FileManager.default.removeItem(at: destination)
-            }
-
-            try FileManager.default.copyItem(at: file, to: destination)
-        }
-    }
+    try! serviceError.write(toFile: "\(sourceDirectory)/ServiceError.swift", atomically: true, encoding: .utf8)
+    try! urlQueryItemExtension.write(toFile: "\(sourceDirectory)/URLQueryExtension.swift", atomically: true, encoding: .utf8)
+    try! parsingErrorExtension.write(toFile: "\(sourceDirectory)/ParsingError.swift", atomically: true, encoding: .utf8)
+    try! networkInterceptor.write(toFile: "\(sourceDirectory)/NetworkInterceptor.swift", atomically: true, encoding: .utf8)
+    try! additionalPropertyUtil.write(toFile: "\(sourceDirectory)/AdditionalProperty.swift", atomically: true, encoding: .utf8)
+    try! formData.write(toFile: "\(sourceDirectory)/FormData.swift", atomically: true, encoding: .utf8)
+    try! dummyTest.write(toFile: "\(testDirectory)/DummyTest.swift", atomically: true, encoding: .utf8)
+    try! dateDecodingStrategy.write(toFile: "\(sourceDirectory)/DateDecodingStrategy.swift", atomically: true, encoding: .utf8)
 
     if let globalHeaderFields = swaggerFile.globalHeaders?.map({
         ModelField(description: nil,
