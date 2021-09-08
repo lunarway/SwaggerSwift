@@ -22,6 +22,7 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
     let (sourceDirectory, testDirectory) = try! createSwiftProject(at: destinationPath, named: projectName)
 
     let templateDirectory = Bundle.main.bundleURL.appendingPathComponent("Templates")
+    print("Copying from \(templateDirectory)")
     for file in try FileManager.default.contentsOfDirectory(at: templateDirectory, includingPropertiesForKeys: nil, options: []) {
         let cwd = URL(string: FileManager.default.currentDirectoryPath)!
         let destination: URL
@@ -30,11 +31,11 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
         } else {
             destination = URL(fileURLWithPath: "\(sourceDirectory)/\(file.lastPathComponent)", relativeTo: cwd).deletingPathExtension().appendingPathExtension("swift")
         }
-        
+
         if FileManager.default.fileExists(atPath: destination.path) {
             try FileManager.default.removeItem(at: destination)
         }
-        
+
         try FileManager.default.copyItem(at: file, to: destination)
     }
 
