@@ -7,7 +7,6 @@ enum HTTPMethod: String {
     case get, put, post, delete, patch, options, head
 }
 
-// token
 func start(swaggerFilePath: String, token: String, destinationPath: String, projectName: String = "Services", verbose: Bool = false, apiList: [String]? = nil) throws {
     if verbose {
         print("Parsing swagger at \(swaggerFilePath)")
@@ -22,6 +21,7 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
     let (sourceDirectory, testDirectory) = try! createSwiftProject(at: destinationPath, named: projectName)
 
     if let templateDirectory = Bundle.main.executableURL?.deletingLastPathComponent().appendingPathComponent("Templates") {
+        print(templateDirectory)
         for file in try FileManager.default.contentsOfDirectory(at: templateDirectory, includingPropertiesForKeys: nil, options: []) {
             let cwd = URL(string: FileManager.default.currentDirectoryPath)!
             let destination: URL
