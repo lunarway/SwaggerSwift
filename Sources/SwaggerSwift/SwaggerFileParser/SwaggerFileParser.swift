@@ -3,7 +3,7 @@ import Yams
 import SwaggerSwiftML
 
 struct SwaggerFileParser {
-    static func parse(path: String, authToken: String, verbose: Bool) throws -> ([Swagger], SwaggerFile) {
+    static func parse(path: String, authToken: String, apiList: [String]? = nil, verbose: Bool) throws -> ([Swagger], SwaggerFile) {
         guard let data = FileManager.default.contents(atPath: path) else {
             throw NSError(domain: "SwaggerFileParser", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to load SwaggerFile at \(path)"])
         }
@@ -13,8 +13,10 @@ struct SwaggerFileParser {
         }
 
         let swaggerFile: SwaggerFile = try! YAMLDecoder().decode(from: swaggerFileText)
+        
+        let services = swaggerFile.services.filter { apiList?.contains($0.key) ?? true }
 
-        let requests = swaggerFile.services.map { service -> URLRequest in
+        let requests = services.map { service -> URLRequest in
             let url = URL(string: "https://raw.githubusercontent.com/\(swaggerFile.organisation)/\(service.key)/\(service.value.branch ?? "master")/\(swaggerFile.path)")!
             if verbose {
                 print("Downloading Swagger at: \(url.absoluteString)")
