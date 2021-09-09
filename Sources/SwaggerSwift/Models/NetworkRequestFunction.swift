@@ -210,6 +210,7 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
     request = interceptor?.networkWillPerformRequest(request) ?? request
     let task = urlSession().\(urlSessionMethodName) { (data, response, error) in
         if let interceptor = self.interceptor, interceptor.networkDidPerformRequest(urlRequest: request, urlResponse: response, data: data, error: error) == false {
+            completionHandler(.failure(ServiceError.requestInterceptedError))
             return
         }
 
