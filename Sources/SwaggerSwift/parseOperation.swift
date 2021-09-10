@@ -154,10 +154,22 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
     let rt: [NetworkRequestFunctionResponseType] = responseTypes
         .sorted(by: { $0.0.rawValue < $1.0.rawValue })
         .map {
+            let statusCode = $0.0
+            let isSuccessResponse = $0.0.isSuccess ? successResponses.count > 1 : errorResponses.count > 1
             switch $0.1 {
             case .string:
-                return NetworkRequestFunctionResponseType.textPlain($0.0, $0.0.isSuccess ? successResponses.count > 1 : errorResponses.count > 1)
-            case .int, .double, .float, .boolean, .int64, .array:
+                return NetworkRequestFunctionResponseType.textPlain(statusCode, isSuccessResponse)
+            case .int:
+                return NetworkRequestFunctionResponseType.int(statusCode, isSuccessResponse)
+            case .double:
+                return NetworkRequestFunctionResponseType.double(statusCode, isSuccessResponse)
+            case .float:
+                return NetworkRequestFunctionResponseType.float(statusCode, isSuccessResponse)
+            case .boolean:
+                return NetworkRequestFunctionResponseType.boolean(statusCode, isSuccessResponse)
+            case .int64:
+                return NetworkRequestFunctionResponseType.int64(statusCode, isSuccessResponse)
+            case .array:
                 fatalError("not supported")
             case .object(typeName: let typeName):
                 return NetworkRequestFunctionResponseType.applicationJson($0.0, $0.0.isSuccess ? successResponses.count > 1 : errorResponses.count > 1, typeName)

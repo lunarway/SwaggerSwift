@@ -5,6 +5,11 @@ private func toHttpCodeName(code: Int) -> String {
 enum NetworkRequestFunctionResponseType {
     case textPlain(HTTPStatusCodes, Bool)
     case applicationJson(HTTPStatusCodes, Bool, String)
+    case int(HTTPStatusCodes, Bool)
+    case double(HTTPStatusCodes, Bool)
+    case float(HTTPStatusCodes, Bool)
+    case boolean(HTTPStatusCodes, Bool)
+    case int64(HTTPStatusCodes, Bool)
     case void(HTTPStatusCodes, Bool)
 
     var statusCode: HTTPStatusCodes {
@@ -14,6 +19,16 @@ enum NetworkRequestFunctionResponseType {
         case .applicationJson(let statusCode, _, _):
             return statusCode
         case .void(let statusCode, _):
+            return statusCode
+        case .int(let statusCode, _):
+            return statusCode
+        case .double(let statusCode, _):
+            return statusCode
+        case .float(let statusCode, _):
+            return statusCode
+        case .boolean(let statusCode, _):
+            return statusCode
+        case .int64(let statusCode, _):
             return statusCode
         }
     }
@@ -63,6 +78,51 @@ case \(statusCode.rawValue):
     completionHandler(.\(swiftResult)(\(resultType("()", resultIsEnum))))
 """
             }
+        case .int(let statusCode, _):
+            return """
+case \(statusCode.rawValue):
+    if let stringValue = String(data: data, encoding: .utf8), let value = Int(stringValue) {
+        completionHandler(.success(value))
+    } else {
+        completionHandler(.failure(.clientError(reason: "Failed to convert backend result to expected type"))
+    }
+"""
+        case .double(let statusCode, _):
+            return """
+case \(statusCode.rawValue):
+    if let stringValue = String(data: data, encoding: .utf8), let value = Double(stringValue) {
+        completionHandler(.success(value))
+    } else {
+        completionHandler(.failure(.clientError(reason: "Failed to convert backend result to expected type"))
+    }
+"""
+        case .float(let statusCode, _):
+            return """
+case \(statusCode.rawValue):
+    if let stringValue = String(data: data, encoding: .utf8), let value = Float(stringValue) {
+        completionHandler(.success(value))
+    } else {
+        completionHandler(.failure(.clientError(reason: "Failed to convert backend result to expected type"))
+    }
+"""
+        case .boolean(let statusCode, _):
+            return """
+case \(statusCode.rawValue):
+    if let stringValue = String(data: data, encoding: .utf8), let value = Bool(stringValue) {
+        completionHandler(.success(value))
+    } else {
+        completionHandler(.failure(.clientError(reason: "Failed to convert backend result to expected type"))
+    }
+"""
+        case .int64(let statusCode, _):
+            return """
+case \(statusCode.rawValue):
+    if let stringValue = String(data: data, encoding: .utf8), let value = Int64(stringValue) {
+        completionHandler(.success(value))
+    } else {
+        completionHandler(.failure(.clientError(reason: "Failed to convert backend result to expected type"))
+    }
+"""
         }
     }
 }
