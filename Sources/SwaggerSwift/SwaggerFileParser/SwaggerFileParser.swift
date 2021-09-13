@@ -35,10 +35,8 @@ struct SwaggerFileParser {
             dispatchGroup.enter()
             URLSession.shared.dataTask(with: request) { data, response, error in
                 if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
-                    if continueOnFailedDownload {
-                        print("Failed to download Swagger from: \(request.url?.absoluteString ?? "")")
-                        print("If this is happening to all of your services your github token might not be valid")
-                    }
+                    print("Failed to download Swagger from: \(request.url?.absoluteString ?? "")")
+                    print("If this is happening to all of your services your github token might not be valid")
                     dispatchGroup.leave()
                     return
                 }
