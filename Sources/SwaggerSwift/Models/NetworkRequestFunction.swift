@@ -105,7 +105,11 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
 
         var bodyInjection: String = ""
         if let body = parameters.first(where: { $0.in == .body }) {
-            bodyInjection += "request.httpBody = try? JSONEncoder().encode(\(body.name))\n"
+            bodyInjection += """
+                let jsonEncoder = JSONEncoder()
+                jsonEncoder.dateEncodingStrategy = .iso8601
+                request.httpBody = try? JSONEncoder().encode(\(body.name))
+                """
         }
 
         if parameters.contains(where: { $0.in == .formData }) {
