@@ -108,7 +108,7 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
             bodyInjection += """
                 let jsonEncoder = JSONEncoder()
                 jsonEncoder.dateEncodingStrategy = .iso8601
-                request.httpBody = try? JSONEncoder().encode(\(body.name))
+                request.httpBody = try? jsonEncoder.encode(\(body.name))
                 """
         }
 
