@@ -273,8 +273,6 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
         try! FileManager.default.createDirectory(atPath: serviceDirectory, withIntermediateDirectories: true, attributes: nil)
         try! FileManager.default.createDirectory(atPath: modelDirectory, withIntermediateDirectories: true, attributes: nil)
 
-        let filePrefix = "\(swagger.serviceName.filter { !$0.unicodeScalars.map(CharacterSet.uppercaseLetters.contains).contains(false) })_"
-
         let serviceDefinition = parse(swagger: swagger, swaggerFile: swaggerFile)
 
         try! serviceDefinition.toSwift(serviceName: swagger.serviceName, swaggerFile: swaggerFile, embedded: false)
@@ -282,7 +280,7 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
 
         for type in serviceDefinition.innerTypes {
             let file = type.toSwift(serviceName: swagger.serviceName, swaggerFile: swaggerFile, embedded: false)
-            let filename = "\(modelDirectory)/\(filePrefix)\(type.typeName).swift"
+            let filename = "\(modelDirectory)/\(serviceDefinition.typeName)_\(type.typeName).swift"
             try! file.write(toFile: filename, atomically: true, encoding: .utf8)
             if verbose {
                 print("Wrote \(filename)")
