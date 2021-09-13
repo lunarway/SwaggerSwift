@@ -270,6 +270,8 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
 
         let serviceDirectory = "\(sourceDirectory)/\(swagger.serviceName)"
         let modelDirectory = "\(serviceDirectory)/Models"
+        try? FileManager.default.removeItem(atPath: serviceDirectory)
+        try? FileManager.default.removeItem(atPath: modelDirectory)
         try! FileManager.default.createDirectory(atPath: serviceDirectory, withIntermediateDirectories: true, attributes: nil)
         try! FileManager.default.createDirectory(atPath: modelDirectory, withIntermediateDirectories: true, attributes: nil)
 
