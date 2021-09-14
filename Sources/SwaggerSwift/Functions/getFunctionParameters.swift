@@ -46,7 +46,7 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, isIn
                               type: resultType.0,
                               name: name,
                               required: param.required)
-        }.sorted(by: { $0.name < $1.name })
+        }.sorted(by: { $0.argumentLabel < $1.argumentLabel })
 
         let model = Model(description: "A collection of the header fields required for the request",
                           typeName: typeName,

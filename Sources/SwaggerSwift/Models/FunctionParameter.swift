@@ -20,15 +20,3 @@ struct FunctionParameter {
         name.variableNameFormatted
     }
 }
-
-extension String {
-    var variableNameFormatted: String {
-        split(separator: ".")
-            .map { $0.split(separator: "-") }
-            .flatMap { $0 }
-            .map { String($0).capitalizingFirstLetter() }
-            .joined()
-            .camelized
-            .lowercasingFirst
-    }
-}

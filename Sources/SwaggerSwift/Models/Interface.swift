@@ -12,12 +12,18 @@ extension Interface: Swiftable {
     func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool) -> String {
         let comment = description != nil && description!.count > 0 ? "\n\(defaultSpacing)// \(description ?? "")" : ""
 
+        let fieldsString = fields
+            .sorted(by: { $0.safePropertyName < $1.safePropertyName })
+            .map { $0.toSwift.split(separator: "\n") }
+            .map { "\(defaultSpacing)\(defaultSpacing)\($0)" }
+            .joined(separator: "\n")
+
         return """
 import Foundation
 
 extension \(serviceName!) {\(comment)
     protocol \(typeName): \((inheritsFrom + ["Codable"]).joined(separator: ", ")) {
-\(fields.sorted(by: { $0.name < $1.name }).map { $0.toSwift.split(separator: "\n") }.flatMap { Array($0) }.map { "\(defaultSpacing)\(defaultSpacing)\($0)" }.joined(separator: "\n"))
+\(fieldsString)
     }
 }
 """
