@@ -175,7 +175,7 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
                     fatalError("Unsupported type inside array: \(type)")
                 }
             case .object(typeName: let typeName):
-                return NetworkRequestFunctionResponseType.applicationJson($0.0, $0.0.isSuccess ? successResponses.count > 1 : errorResponses.count > 1, typeName)
+                return NetworkRequestFunctionResponseType.object($0.0, $0.0.isSuccess ? successResponses.count > 1 : errorResponses.count > 1, typeName)
             case .void:
                 return NetworkRequestFunctionResponseType.void($0.0, $0.0.isSuccess ? successResponses.count > 1 : errorResponses.count > 1)
             case .date:
