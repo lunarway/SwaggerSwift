@@ -147,7 +147,6 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
         fatalError("[ERROR] No provided consumer for function \(httpMethod.rawValue) \(servicePath)")
     }
 
-
     let errorResponses = responseTypes.filter { !$0.0.isSuccess }
     let successResponses = responseTypes.filter { $0.0.isSuccess }
 
@@ -169,8 +168,12 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
                 return NetworkRequestFunctionResponseType.boolean(statusCode, isSuccessResponse)
             case .int64:
                 return NetworkRequestFunctionResponseType.int64(statusCode, isSuccessResponse)
-            case .array:
-                fatalError("not supported")
+            case .array(let type):
+                if case .object(let typeName) = type {
+                    return NetworkRequestFunctionResponseType.array($0.0, $0.0.isSuccess ? successResponses.count > 1 : errorResponses.count > 1, typeName)
+                } else {
+                    fatalError("Unsupported type inside array: \(type)")
+                }
             case .object(typeName: let typeName):
                 return NetworkRequestFunctionResponseType.applicationJson($0.0, $0.0.isSuccess ? successResponses.count > 1 : errorResponses.count > 1, typeName)
             case .void:

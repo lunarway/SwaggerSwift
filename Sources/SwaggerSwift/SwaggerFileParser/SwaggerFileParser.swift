@@ -38,7 +38,10 @@ struct SwaggerFileParser {
                     fatalError("Failed to download Swagger from: \(request.url?.absoluteString ?? "")")
                 }
 
-                files.append(String(data: data!, encoding: .utf8)!)
+                if let data = data {
+                    files.append(String(data: data, encoding: .utf8)!)
+                }
+
                 dispatchGroup.leave()
             }.resume()
         }

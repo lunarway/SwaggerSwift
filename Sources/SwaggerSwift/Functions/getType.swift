@@ -150,7 +150,8 @@ private func typeOfItems(schema: Schema, items: Node<Items>, typeNamePrefix: Str
     case .reference(let ref):
         let schema = swagger.findSchema(node: .reference(ref))
         if case SchemaType.object = schema.type {
-            return (.object(typeName: ref.components(separatedBy: "/").last!.uppercasingFirst), [])
+            let typeName = ref.components(separatedBy: "/").last!.uppercasingFirst
+            return (.object(typeName: typeName), [])
         } else {
             fatalError()
         }

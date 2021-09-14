@@ -8,8 +8,12 @@ func parse(swagger: Swagger, swaggerFile: SwaggerFile) -> ServiceDefinition {
     let functions = result.flatMap { $0.0 }
     let definitions = result.flatMap { $0.1 }
 
-    let builtinDefinitions = swagger.definitions!.map {
-        getType(forSchema: $0.value, typeNamePrefix: $0.key, swagger: swagger).1
+    let builtinDefinitions = swagger.definitions!.map { definition -> [ModelDefinition] in
+        let (_, innerDefinitions) = getType(forSchema: definition.value,
+                                            typeNamePrefix: definition.key,
+                                            swagger: swagger)
+
+        return innerDefinitions
     }.flatMap { $0 }
 
     let builtInResponses: [ModelDefinition] = swagger.responses?.map { response -> [ModelDefinition] in
