@@ -11,4 +11,6 @@ enum SwiftKeyword: String {
     case `throw`
     case `throws`
     case `override`
+    case `default`
+    case `defer`
 }
