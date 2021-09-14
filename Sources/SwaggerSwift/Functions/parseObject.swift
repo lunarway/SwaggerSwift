@@ -104,7 +104,7 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
 
     let model = Model(description: schema.description,
                       typeName: typeName,
-                      fields: fields.sorted(by: { $0.name < $1.name }),
+                      fields: fields.sorted(by: { $0.safePropertyName < $1.safePropertyName }),
                       inheritsFrom: ["Codable"],
                       isInternalOnly: schema.isInternalOnly,
                       embeddedDefinitions: embeddedModelDefinitions)

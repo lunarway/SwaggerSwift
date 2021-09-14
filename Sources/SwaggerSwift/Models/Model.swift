@@ -18,7 +18,7 @@ struct Model {
         let inheritedFields = inherits.flatMap { $0.fields }
         return Model(description: description,
                      typeName: typeName,
-                     fields: (fields + inheritedFields).sorted(by: { $0.name < $1.name }),
+                     fields: (fields + inheritedFields).sorted(by: { $0.safePropertyName < $1.safePropertyName }),
                      inheritsFrom: inheritsFrom,
                      isInternalOnly: isInternalOnly,
                      embeddedDefinitions: embeddedDefinitions)
@@ -34,13 +34,21 @@ struct Model {
             comment = nil
         }
 
+        let initParameterStrings: [String] = fields.map { field in
+            if field.needsArgumentLabel {
+                return "\(field.argumentLabel) \(field.safeParameterName): \(field.type.toString(required: field.required))"
+            } else {
+                return "\(field.safeParameterName): \(field.type.toString(required: field.required))"
+            }
+        }
+
         let initMethod = """
-public init(\(fields.map { "\($0.name): \($0.type.toString(required: $0.required))" }.joined(separator: ", "))) {
-    \(fields.map { "self.\($0.name) = \($0.name)" }.joined(separator: "\n    "))
+public init(\(initParameterStrings.joined(separator: ", "))) {
+    \(fields.map { "self.\($0.safePropertyName) = \($0.safeParameterName)" }.joined(separator: "\n    "))
 }
 """
 
-        let modelFields = fields.sorted(by: { $0.name < $1.name }).flatMap { $0.toSwift.split(separator: "\n") }
+        let modelFields = fields.sorted(by: { $0.safePropertyName < $1.safePropertyName }).flatMap { $0.toSwift.split(separator: "\n") }
 
         var model = ""
 
