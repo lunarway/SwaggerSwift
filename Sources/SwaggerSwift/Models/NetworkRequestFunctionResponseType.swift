@@ -4,8 +4,9 @@ private func toHttpCodeName(code: Int) -> String {
 
 enum NetworkRequestFunctionResponseType {
     case textPlain(HTTPStatusCodes, Bool)
-    case applicationJson(HTTPStatusCodes, Bool, String)
+    case object(HTTPStatusCodes, Bool, _ typeName: String)
     case int(HTTPStatusCodes, Bool)
+    case array(HTTPStatusCodes, Bool, _ typeName: String)
     case double(HTTPStatusCodes, Bool)
     case float(HTTPStatusCodes, Bool)
     case boolean(HTTPStatusCodes, Bool)
@@ -16,7 +17,7 @@ enum NetworkRequestFunctionResponseType {
         switch self {
         case .textPlain(let statusCode, _):
             return statusCode
-        case .applicationJson(let statusCode, _, _):
+        case .object(let statusCode, _, _):
             return statusCode
         case .void(let statusCode, _):
             return statusCode
@@ -29,6 +30,8 @@ enum NetworkRequestFunctionResponseType {
         case .boolean(let statusCode, _):
             return statusCode
         case .int64(let statusCode, _):
+            return statusCode
+        case .array(let statusCode, _, _):
             return statusCode
         }
     }
@@ -53,7 +56,7 @@ case \(statusCode.rawValue):
     let result = String(data: data, encoding: .utf8) ?? ""
     completionHandler(.\(swiftResult)(\(resultType("result", resultIsEnum))))
 """
-        case .applicationJson(let statusCode, let resultIsEnum, let responseType):
+        case .object(let statusCode, let resultIsEnum, let responseType):
             return """
 case \(statusCode.rawValue):
     do {
@@ -121,6 +124,19 @@ case \(statusCode.rawValue):
         completionHandler(.success(value))
     } else {
         completionHandler(.failure(.clientError(reason: "Failed to convert backend result to expected type"))
+    }
+"""
+        case .array(let statusCode, let resultIsEnum, let innerType):
+            return """
+case \(statusCode.rawValue):
+    do {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .custom(dateDecodingStrategy)
+        let result = try decoder.decode([\(innerType)].self, from: data)
+
+        completionHandler(.\(swiftResult)(\(resultType("result", resultIsEnum))))
+    } catch let error {
+        completionHandler(.failure(.requestFailed(error: error)))
     }
 """
         }

@@ -3,7 +3,6 @@ import SwaggerSwiftML
 func parse(request requestNode: Node<Response>, httpMethod: HTTPMethod, servicePath: String, statusCode: Int, swagger: Swagger) -> (TypeType, [ModelDefinition]) {
     let prefix = "\(servicePath.replacingOccurrences(of: "{", with: "").replacingOccurrences(of: "}", with: "").components(separatedBy: "/").map { $0.components(separatedBy: "-") }.flatMap { $0 }.map { $0.uppercasingFirst }.joined().capitalizingFirstLetter())\(statusCode)"
 
-
     let request: Response
     switch requestNode {
     case .reference(let ref):
