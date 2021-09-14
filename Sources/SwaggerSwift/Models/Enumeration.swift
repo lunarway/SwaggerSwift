@@ -12,7 +12,7 @@ struct Enumeration {
     static func toCasename(_ str: String, _ isCodable: Bool) -> String {
         let str = isCodable ? str.camelized : str
 
-        if swiftKeywords.contains(str) {
+        if SwiftKeyword(rawValue: str) != nil {
             return "`\(str)`"
         }
 
