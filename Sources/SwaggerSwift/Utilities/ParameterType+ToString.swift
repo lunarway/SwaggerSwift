@@ -83,9 +83,9 @@ private func typeOfDataFormat(_ dataFormat: DataFormat) -> TypeType {
     case .string:
         return .string
     case .byte:
-        fatalError("not supported")
+        fatalError("Bytes is not supported as a dataformat yet")
     case .binary:
-        fatalError("not supported")
+        fatalError("Binary is not supported as a dataformat yet")
     case .boolean:
         return .boolean
     case .date:
