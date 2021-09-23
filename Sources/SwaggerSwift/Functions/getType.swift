@@ -40,6 +40,8 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
                     return (.date, [])
                 case "uuid":
                     return (.object(typeName: "String"), [])
+                case "datetime":
+                    return (.object(typeName: "Date"), [])
                 default:
                     fatalError("Found unsupported field: \(unsupported)")
                 }
