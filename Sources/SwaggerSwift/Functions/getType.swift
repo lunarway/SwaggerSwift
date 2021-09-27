@@ -138,9 +138,12 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
         case .reference(_):
             fatalError("not supported")
         case .schema(let schema):
-            return getType(forSchema: schema,
-                           typeNamePrefix: typeNamePrefix,
-                           swagger: swagger)
+            let valueType = getType(forSchema: schema,
+                                    typeNamePrefix: typeNamePrefix,
+                                    swagger: swagger)
+            let valueString = valueType.0.toString(required: true)
+            let valueModelDefinitions = valueType.1
+            return (.object(typeName: "[String: " + valueString + "]"), valueModelDefinitions)
         }
     case .file:
         return (.void, [])
