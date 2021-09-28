@@ -19,7 +19,7 @@ struct Model {
         return Model(description: description,
                      typeName: typeName,
                      fields: (fields + inheritedFields).sorted(by: { $0.safePropertyName < $1.safePropertyName }),
-                     inheritsFrom: inheritsFrom,
+                     inheritsFrom: [],
                      isInternalOnly: isInternalOnly,
                      embeddedDefinitions: embeddedDefinitions)
     }
@@ -56,7 +56,7 @@ public init(\(initParameterStrings.joined(separator: ", "))) {
             model += comment + "\n"
         }
 
-        model += "public struct \(typeName)\(inheritsFrom.count > 0 ? ": \(inheritsFrom.joined(separator: ", "))" : "") {\n"
+        model += "public struct \(typeName): Codable {\n"
 
         model += modelFields.map { $0 }.joined(separator: "\n").indentLines(1)
 
@@ -80,32 +80,44 @@ public init(\(initParameterStrings.joined(separator: ", "))) {
 
 extension Model: Swiftable {
     func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool) -> String {
+        precondition(inheritsFrom.count == 0)
+
+        let isInExtension = serviceName != nil
+
         if embedded {
             return modelDefinition(serviceName: serviceName, swaggerFile: swaggerFile)
         }
 
-        var model = "import Foundation\n\n"
+        var model = ""
+        model.appendLine("import Foundation")
+        model.appendLine()
 
         if isInternalOnly {
-            model += "#if DEBUG\n"
+            model.appendLine("#if DEBUG")
+            model.appendLine()
         }
 
-        let isInExtension = serviceName != nil
-
         if let serviceName = serviceName {
-            model += "extension \(serviceName) {\n"
+            model.appendLine("extension \(serviceName) {")
         }
 
         model += modelDefinition(serviceName: serviceName, swaggerFile: swaggerFile).indentLines(isInExtension ? 1 : 0)
 
         if let _ = serviceName {
-            model += "\n}"
+            model.appendLine()
+            model.appendLine("}")
         }
 
         if isInternalOnly {
-            model += "#endif\n"
+            model.appendLine("#endif")
         }
 
         return model
+    }
+}
+
+extension String {
+    mutating func appendLine(_ str: String = "") {
+        self += str + "\n"
     }
 }
