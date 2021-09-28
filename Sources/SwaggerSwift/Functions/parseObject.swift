@@ -62,7 +62,8 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
                           fields: allOfParts.flatMap { $0.fields },
                           inheritsFrom: inherits,
                           isInternalOnly: schema.isInternalOnly,
-                          embeddedDefinitions: embedddedDefinitions)
+                          embeddedDefinitions: embedddedDefinitions,
+                          isCodable: true)
 
         return (.object(typeName: typeName), [.model(model)])
     }
@@ -120,7 +121,8 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
                       fields: fields.sorted(by: { $0.safePropertyName < $1.safePropertyName }),
                       inheritsFrom: [],
                       isInternalOnly: schema.isInternalOnly,
-                      embeddedDefinitions: embeddedModelDefinitions)
+                      embeddedDefinitions: embeddedModelDefinitions,
+                      isCodable: true)
 
     return (.object(typeName: typeName), [.model(model)])
 }

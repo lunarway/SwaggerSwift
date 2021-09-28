@@ -255,7 +255,8 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
                                   fields: globalHeaderFields,
                                   inheritsFrom: [],
                                   isInternalOnly: false,
-                                  embeddedDefinitions: [])
+                                  embeddedDefinitions: [],
+                                  isCodable: false)
 
         try! globalHeaders.toSwift(serviceName: nil,
                                    swaggerFile: swaggerFile,

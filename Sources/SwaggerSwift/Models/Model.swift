@@ -9,6 +9,7 @@ struct Model {
     let inheritsFrom: [String]
     let isInternalOnly: Bool
     let embeddedDefinitions: [ModelDefinition]
+    let isCodable: Bool
 
     func resolveInherits(_ definitions: [Model]) -> Model {
         let inherits = inheritsFrom.compactMap { definitionName in
@@ -21,7 +22,8 @@ struct Model {
                      fields: (fields + inheritedFields).sorted(by: { $0.safePropertyName < $1.safePropertyName }),
                      inheritsFrom: [],
                      isInternalOnly: isInternalOnly,
-                     embeddedDefinitions: embeddedDefinitions)
+                     embeddedDefinitions: embeddedDefinitions,
+                     isCodable: isCodable)
     }
 
     func modelDefinition(serviceName: String?, swaggerFile: SwaggerFile) -> String {
@@ -56,7 +58,7 @@ public init(\(initParameterStrings.joined(separator: ", "))) {
             model += comment + "\n"
         }
 
-        model += "public struct \(typeName): Codable {\n"
+        model += "public struct \(typeName)\(isCodable ? ": Codable" : "") {\n"
 
         model += modelFields.map { $0 }.joined(separator: "\n").indentLines(1)
 
@@ -109,6 +111,7 @@ extension Model: Swiftable {
         }
 
         if isInternalOnly {
+            model.appendLine()
             model.appendLine("#endif")
         }
 
