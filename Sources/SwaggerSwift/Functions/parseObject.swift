@@ -1,19 +1,29 @@
 import SwaggerSwiftML
 
+private struct AllOfPart {
+    let typeName: String?
+    let fields: [ModelField]
+    let embedddedDefinitions: [ModelDefinition]
+}
+
 func parseObject(required: [String], properties: [String: Node<Schema>], allOf: [Node<Schema>]?, swagger: Swagger, typeNamePrefix: String, schema: Schema, customFields: [String: String]) -> (TypeType, [ModelDefinition]) {
     let typeName = (customFields["x-override-name"] ?? schema.overridesName ?? typeNamePrefix).uppercasingFirst
 
     if let allOf = allOf {
-        let result: [(String?, [ModelField], [ModelDefinition])] = allOf.map {
+        let allOfParts: [AllOfPart] = allOf.map {
             switch $0 {
             case .reference(let reference):
                 let node = swagger.findSchema(node: .reference(reference))
                 if case SchemaType.object = node.type {
                     let typeName = reference.components(separatedBy: "/").last ?? ""
-                    return (typeName, [], [])
+                    return .init(typeName: typeName,
+                                 fields: [],
+                                 embedddedDefinitions: [])
                 } else {
                     let result = getType(forSchema: node, typeNamePrefix: typeName, swagger: swagger)
-                    return (nil, [], result.1)
+                    return .init(typeName: nil,
+                                 fields: [],
+                                 embedddedDefinitions: result.1)
                 }
             case .node(let innerSchema):
                 if case let SchemaType.object(properties, allOf) = innerSchema.type {
@@ -35,21 +45,25 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
                         }
                     }
 
-                    return (nil, result.map { $0.0 }, result.flatMap { $0.1 })
+                    return .init(typeName: nil,
+                                 fields: result.map { $0.0 },
+                                 embedddedDefinitions: result.flatMap { $0.1 })
                 } else {
                     fatalError("Not implemented")
                 }
             }
         }
 
-        let models = result.flatMap { $0.2 }
+        let embedddedDefinitions = allOfParts.flatMap { $0.embedddedDefinitions }
+        let inherits = allOfParts.compactMap { $0.typeName }
 
         let model = Model(description: schema.description,
                           typeName: typeName,
-                          fields: result.flatMap { $0.1 },
-                          inheritsFrom: ["Codable"],
+                          fields: allOfParts.flatMap { $0.fields },
+                          inheritsFrom: inherits,
                           isInternalOnly: schema.isInternalOnly,
-                          embeddedDefinitions: models)
+                          embeddedDefinitions: embedddedDefinitions,
+                          isCodable: true)
 
         return (.object(typeName: typeName), [.model(model)])
     }
@@ -105,9 +119,10 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
     let model = Model(description: schema.description,
                       typeName: typeName,
                       fields: fields.sorted(by: { $0.safePropertyName < $1.safePropertyName }),
-                      inheritsFrom: ["Codable"],
+                      inheritsFrom: [],
                       isInternalOnly: schema.isInternalOnly,
-                      embeddedDefinitions: embeddedModelDefinitions)
+                      embeddedDefinitions: embeddedModelDefinitions,
+                      isCodable: true)
 
     return (.object(typeName: typeName), [.model(model)])
 }
