@@ -2,6 +2,31 @@ import Foundation
 import Yams
 import SwaggerSwiftML
 
+struct StdOut: TextOutputStream {
+    let stdout = FileHandle.standardOutput
+
+    func write(_ string: String) {
+        guard let data = string.data(using: .utf8) else {
+            fatalError() // encoding failure: handle as you wish
+        }
+        stdout.write(data)
+    }
+}
+
+struct StdErr: TextOutputStream {
+    let stderr = FileHandle.standardError
+
+    func write(_ string: String) {
+        guard let data = string.data(using: .utf8) else {
+            fatalError() // encoding failure: handle as you wish
+        }
+        stderr.write(data)
+    }
+}
+
+var stdout = StdOut()
+var stderr = StdErr()
+
 struct SwaggerFileParser {
     static func parse(path: String, authToken: String, apiList: [String]? = nil, verbose: Bool) throws -> ([Swagger], SwaggerFile) {
         guard let data = FileManager.default.contents(atPath: path) else {
@@ -16,16 +41,16 @@ struct SwaggerFileParser {
         
         let services = swaggerFile.services.filter { apiList?.contains($0.key) ?? true }
 
-        let requests = services.map { service -> URLRequest in
+        let requests = services.map { service -> (String, URLRequest) in
             let url = URL(string: "https://raw.githubusercontent.com/\(swaggerFile.organisation)/\(service.key)/\(service.value.branch ?? "master")/\(swaggerFile.path)")!
             if verbose {
-                print("Downloading Swagger at: \(url.absoluteString)")
+                print("Downloading Swagger at: \(url.absoluteString)", to: &stdout)
             }
 
             var request = URLRequest(url: url)
             request.addValue("token \(authToken)", forHTTPHeaderField: "Authorization")
             request.addValue("application/vnd.github.v3.raw", forHTTPHeaderField: "Accept")
-            return request
+            return (service.key, request)
         }
 
         let dispatchGroup = DispatchGroup()
@@ -33,10 +58,12 @@ struct SwaggerFileParser {
         var files = [String]()
         for request in requests {
             dispatchGroup.enter()
-            URLSession.shared.dataTask(with: request) { data, response, error in
+            URLSession.shared.dataTask(with: request.1) { data, response, error in
                 if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
-                    print("Failed to download Swagger from: \(request.url?.absoluteString ?? "")")
-                    print("If this is happening to all of your services your github token might not be valid")
+                    print("Failed to download Swagger for \(request.0)", to: &stderr)
+                    print("- If this is happening to all of your services your github token might not be valid", to: &stderr)
+                    print("- HTTP Status: \(httpResponse.statusCode)", to: &stderr)
+                    print("- HTTP URL: \(httpResponse.url!.absoluteString)", to: &stderr)
                     dispatchGroup.leave()
                     return
                 }
@@ -52,8 +79,8 @@ struct SwaggerFileParser {
 
         return (try files.map {
             if verbose {
-                print("Swagger File:")
-                print($0)
+                print("Swagger File:", to: &stdout)
+                print($0, to: &stderr)
             }
 
             return try SwaggerReader.read(text: $0)
