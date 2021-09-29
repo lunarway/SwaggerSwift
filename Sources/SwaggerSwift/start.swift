@@ -225,14 +225,15 @@ internal func dateDecodingStrategy(_ decoder: Decoder) throws -> Date {
 // token
 func start(swaggerFilePath: String, token: String, destinationPath: String, projectName: String = "Services", verbose: Bool = false, apiList: [String]? = nil) throws {
     if verbose {
-        print("Parsing swagger at \(swaggerFilePath)")
+        print("Parsing swagger at \(swaggerFilePath)", to: &stdout)
     }
 
     let (swaggers, swaggerFile) = try SwaggerFileParser.parse(path: swaggerFilePath, authToken: token, apiList: apiList, verbose: verbose)
 
     if verbose {
-        print("Creating Swift Project at \(destinationPath) named \(projectName)")
+        print("Creating Swift Project at \(destinationPath) named \(projectName)", to: &stdout)
     }
+
     let (sourceDirectory, testDirectory) = try! createSwiftProject(at: destinationPath, named: projectName)
 
     try! serviceError.write(toFile: "\(sourceDirectory)/ServiceError.swift", atomically: true, encoding: .utf8)
@@ -266,7 +267,7 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
 
     for swagger in swaggers {
         if verbose {
-            print("Parsing contents of Swagger: \(swagger.serviceName)")
+            print("Parsing contents of Swagger: \(swagger.serviceName)", to: &stdout)
         }
 
         let serviceDirectory = "\(sourceDirectory)/\(swagger.serviceName)"
@@ -276,7 +277,7 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
         try! FileManager.default.createDirectory(atPath: serviceDirectory, withIntermediateDirectories: true, attributes: nil)
         try! FileManager.default.createDirectory(atPath: modelDirectory, withIntermediateDirectories: true, attributes: nil)
 
-        let serviceDefinition = parse(swagger: swagger, swaggerFile: swaggerFile)
+        let serviceDefinition = parse(swagger: swagger, swaggerFile: swaggerFile, verbose: verbose)
 
         try! serviceDefinition.toSwift(serviceName: swagger.serviceName, swaggerFile: swaggerFile, embedded: false)
             .write(toFile: "\(serviceDirectory)/\(serviceDefinition.typeName).swift", atomically: true, encoding: .utf8)
@@ -286,7 +287,7 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
             let filename = "\(modelDirectory)/\(serviceDefinition.typeName)_\(type.typeName).swift"
             try! file.write(toFile: filename, atomically: true, encoding: .utf8)
             if verbose {
-                print("Wrote \(filename)")
+                print("Wrote \(filename)", to: &stdout)
             }
         }
     }

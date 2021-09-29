@@ -11,8 +11,10 @@ func isErrorHttpCode(code: Int) -> Bool {
     return code < 199 || code > 299
 }
 
-func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, servicePath: String, parameters: [Parameter], swagger: Swagger, swaggerFile: SwaggerFile) -> (NetworkRequestFunction, [ModelDefinition]) {
-    print("-> Creating function for request: \(httpMethod.rawValue.uppercased()) \(servicePath)")
+func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, servicePath: String, parameters: [Parameter], swagger: Swagger, swaggerFile: SwaggerFile, verbose: Bool) -> (NetworkRequestFunction, [ModelDefinition]) {
+    if verbose {
+        print("-> Creating function for request: \(httpMethod.rawValue.uppercased()) \(servicePath)", to: &stderr)
+    }
 
     var functionName: String
     if let overrideName = operation.operationId {
