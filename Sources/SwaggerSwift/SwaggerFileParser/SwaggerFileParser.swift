@@ -41,7 +41,7 @@ struct SwaggerFileParser {
         
         let services = swaggerFile.services.filter { apiList?.contains($0.key) ?? true }
 
-        let requests = services.map { service -> (String, URLRequest) in
+        let requests = services.map { service -> (branch: Service, serviceName: String, request: URLRequest) in
             let url = URL(string: "https://raw.githubusercontent.com/\(swaggerFile.organisation)/\(service.key)/\(service.value.branch ?? "master")/\(swaggerFile.path)")!
             if verbose {
                 print("Downloading Swagger at: \(url.absoluteString)", to: &stdout)
@@ -50,7 +50,7 @@ struct SwaggerFileParser {
             var request = URLRequest(url: url)
             request.addValue("token \(authToken)", forHTTPHeaderField: "Authorization")
             request.addValue("application/vnd.github.v3.raw", forHTTPHeaderField: "Accept")
-            return (service.key, request)
+            return (service.value.branch, service.key, request)
         }
 
         let dispatchGroup = DispatchGroup()
@@ -58,9 +58,13 @@ struct SwaggerFileParser {
         var files = [String]()
         for request in requests {
             dispatchGroup.enter()
-            URLSession.shared.dataTask(with: request.1) { data, response, error in
+            URLSession.shared.dataTask(with: request.2) { data, response, error in
                 if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
-                    print("Failed to download Swagger for \(request.0)", to: &stderr)
+                    print("Failed to download Swagger for \(request.1)", to: &stderr)
+                    if request.branch !== "master" || request.branch !== "main" {
+                        print("⚠️⚠️⚠️ The branch was defined as ´\(request.branch)´. Perhaps this branch is deleted now? ⚠️⚠️⚠️", to: &stderr)
+                    }
+
                     print("- If this is happening to all of your services your github token might not be valid", to: &stderr)
                     print("- HTTP Status: \(httpResponse.statusCode)", to: &stderr)
                     print("- HTTP URL: \(httpResponse.url!.absoluteString)", to: &stderr)
