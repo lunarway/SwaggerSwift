@@ -54,14 +54,15 @@ extension NetworkRequestFunction: Swiftable {
         let queryStatement: String
         if queries.count > 0 {
             let queryItems = queries.map {
+                let fieldValue = $0.isEnum ? "\($0.fieldValue).rawValue" : $0.fieldValue
                 if $0.isOptional {
                     return """
                         if let \($0.fieldValue) = \($0.fieldValue) {
-                            queryItems.append(URLQueryItem(name: \"\($0.fieldName)\", value: \($0.fieldValue)))
+                            queryItems.append(URLQueryItem(name: \"\($0.fieldName)\", value: \(fieldValue)))
                         }
                         """
                 } else {
-                    return "queryItems.append(URLQueryItem(name: \"\($0.fieldName)\", value: \($0.fieldValue)))"
+                    return "queryItems.append(URLQueryItem(name: \"\($0.fieldName)\", value: \(fieldValue)))"
                 }
             }.joined(separator: "\n")
 

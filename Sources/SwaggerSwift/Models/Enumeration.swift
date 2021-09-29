@@ -3,7 +3,7 @@ import SwaggerSwiftML
 
 /// Represents a Swift enum
 struct Enumeration {
-    let serviceName: String
+    let serviceName: String?
     let description: String?
     let typeName: String
     let values: [String]

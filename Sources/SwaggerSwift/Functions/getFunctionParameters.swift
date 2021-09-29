@@ -31,7 +31,7 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, isIn
         let globalHeaderFieldNames = (swaggerFile.globalHeaders ?? []).map { makeHeaderFieldName(headerName: $0) }
 
         let fields: [ModelField] = headers.compactMap { param, type in
-            let resultType = type.toType(typePrefix: typeName, swagger: swagger)
+            let resultType = type.toType(typePrefix: typeName, description: param.description, swagger: swagger)
             let name = makeHeaderFieldName(headerName: param.name)
 
             // we should not add fields for the global headers
@@ -71,15 +71,17 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, isIn
 
     let pathParams: [FunctionParameter] = parameters.compactMap {
         if case let ParameterLocation.path(type) = $0.location {
-            let result = type.toType(typePrefix: typeName, swagger: swagger)
-            assert(result.1.count == 0, "A path param isnt expected to contain a special model definition inline, is it?")
-            resolvedModelDefinitions.append(contentsOf: result.1)
+            let (paramType, embeddedDefinitions) = type.toType(typePrefix: typeName + $0.name.uppercasingFirst,
+                                                               description: $0.description,
+                                                               swagger: swagger)
+            resolvedModelDefinitions.append(contentsOf: embeddedDefinitions)
+
             return FunctionParameter(description: $0.description,
                                      name: $0.name,
-                                     typeName: result.0,
+                                     typeName: paramType,
                                      required: $0.required,
                                      in: .path,
-                                     isEnum: false)
+                                     isEnum: embeddedDefinitions.count > 0)
         } else {
             return nil
         }
@@ -91,15 +93,16 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, isIn
 
     let queryParams: [FunctionParameter] = parameters.compactMap {
         if case let ParameterLocation.query(type, _) = $0.location {
-            let result = type.toType(typePrefix: typeName, swagger: swagger)
-            assert(result.1.count == 0, "A query param isnt expected to contain a special model definition inline, is it?")
-            resolvedModelDefinitions.append(contentsOf: result.1)
+            let (paramType, embeddedDefinitions) = type.toType(typePrefix: typeName + $0.name.uppercasingFirst,
+                                                               description: $0.description,
+                                                               swagger: swagger)
+            resolvedModelDefinitions.append(contentsOf: embeddedDefinitions)
             return FunctionParameter(description: $0.description,
                                      name: $0.name.camelized,
-                                     typeName: result.0,
+                                     typeName: paramType,
                                      required: $0.required,
                                      in: .query,
-                                     isEnum: false)
+                                     isEnum: embeddedDefinitions.count > 0)
         } else {
             return nil
         }
@@ -137,7 +140,7 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, isIn
 
                     return (param, modelDefinitions)
                 } else {
-                    let typeName = paramType.toType(typePrefix: typeName, swagger: swagger)
+                    let typeName = paramType.toType(typePrefix: typeName, description: $0.description, swagger: swagger)
                     let param = FunctionParameter(description: $0.description,
                                                   name: $0.name,
                                                   typeName: typeName.0,
@@ -156,7 +159,7 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, isIn
             case .array(_, collectionFormat: _, maxItems: _, minItems: _, uniqueItems: _):
                 fatalError("Not implemented")
             case .file:
-                let typeName = paramType.toType(typePrefix: typeName, swagger: swagger)
+                let typeName = paramType.toType(typePrefix: typeName, description: $0.description, swagger: swagger)
                 let param = FunctionParameter(description: $0.description,
                                               name: $0.name,
                                               typeName: typeName.0,
