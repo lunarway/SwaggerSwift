@@ -1,14 +1,31 @@
 import SwaggerSwiftML
 
 extension ParameterType {
-    func toType(typePrefix: String, swagger: Swagger) -> (TypeType, [ModelDefinition]) {
+    func toType(typePrefix: String, description: String?, swagger: Swagger) -> (TypeType, [ModelDefinition]) {
         switch self {
-        case .string(format: let format, enumValues: _, maxLength: _, minLength: _, pattern: _):
+        case .string(let format, let enumValues, maxLength: _, minLength: _, pattern: _):
+            let enumTypeName = typePrefix
             switch format {
             case .none:
-                return (.string, [])
+                if let enumValues = enumValues {
+                    return (.object(typeName: enumTypeName), [.enumeration(.init(serviceName: swagger.serviceName,
+                                                                                 description: description,
+                                                                                 typeName: enumTypeName,
+                                                                                 values: enumValues,
+                                                                                 isCodable: true))])
+                } else {
+                    return (.string, [])
+                }
             case .some(let some):
-                return (typeOfDataFormat(some), [])
+                if let enumValues = enumValues {
+                    return (.object(typeName: enumTypeName), [.enumeration(.init(serviceName: swagger.serviceName,
+                                                                                 description: description,
+                                                                                 typeName: enumTypeName,
+                                                                                 values: enumValues,
+                                                                                 isCodable: true))])
+                } else {
+                    return (typeOfDataFormat(some), [])
+                }
             }
         case .number(format: let format, maximum: _, exclusiveMaximum: _, minimum: _, exclusiveMinimum: _, multipleOf: _):
             switch format {

@@ -5,6 +5,7 @@ struct QueryElement {
     let fieldName: String
     let fieldValue: String
     let isOptional: Bool
+    let isEnum: Bool
 }
 
 func isErrorHttpCode(code: Int) -> Bool {
@@ -67,64 +68,74 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
     let queries: [QueryElement] = operationParameters.compactMap {
         if case ParameterLocation.query = $0.location {
             switch $0.location {
-            case .query(type: let type, allowEmptyValue: _):
+            case .query(let type, allowEmptyValue: _):
                 switch type {
-                case .string(format: let format, enumValues: _, maxLength: _, minLength: _, pattern: _):
+                case .string(format: let format, let enumValues, maxLength: _, minLength: _, pattern: _):
+                    let isEnum = (enumValues?.count ?? 0) > 0
+
                     if let format = format {
                         switch format {
                         case .int32:
-                            return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false)
+                            return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: isEnum)
                         case .long:
-                            return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false)
+                            return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: isEnum)
                         case .float:
-                            return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false)
+                            return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: isEnum)
                         case .double:
-                            return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false)
+                            return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: isEnum)
                         case .string:
-                            return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false)
+                            return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: isEnum)
                         case .byte:
-                            return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false)
+                            return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: isEnum)
                         case .binary:
-                            return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false)
+                            return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: isEnum)
                         case .boolean:
-                            return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false)
+                            return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: isEnum)
                         case .date:
-                            return QueryElement(fieldName: $0.name, fieldValue: "ISO8601DateFormatter().string(from: \($0.name.camelized))", isOptional: $0.required == false)
+                            return QueryElement(fieldName: $0.name, fieldValue: "ISO8601DateFormatter().string(from: \($0.name.camelized))", isOptional: $0.required == false, isEnum: isEnum)
                         case .dateTime:
-                            return QueryElement(fieldName: $0.name, fieldValue: "ISO8601DateFormatter().string(from: \($0.name.camelized))", isOptional: $0.required == false)
+                            return QueryElement(fieldName: $0.name, fieldValue: "ISO8601DateFormatter().string(from: \($0.name.camelized))", isOptional: $0.required == false, isEnum: isEnum)
                         case .password:
-                            return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false)
+                            return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: isEnum)
                         case .email:
-                            return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false)
+                            return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: isEnum)
                         case .unsupported(_):
-                            return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false)
+                            return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: isEnum)
                         }
+                    } else {
+                        return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: isEnum)
                     }
                 case .number(format: _, maximum: _, exclusiveMaximum: _, minimum: _, exclusiveMinimum: _, multipleOf: _):
-                    return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false)
+                    return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: false)
                 case .integer(format: _, maximum: _, exclusiveMaximum: _, minimum: _, exclusiveMinimum: _, multipleOf: _):
-                    return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false)
+                    return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: false)
                 case .boolean:
-                    return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false)
+                    return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: false)
                 case .array(_, collectionFormat: _, maxItems: _, minItems: _, uniqueItems: _):
-                    return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false)
+                    return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: false)
                 case .file:
-                    return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false)
+                    return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: false)
                 }
             case .header(type: _):
-                return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false)
-            case .path(type: _):
-                return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false)
+                return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: false)
+            case .path(let type):
+                switch type {
+                case .string(format: _, enumValues: let enumValues, maxLength: _, minLength: _, pattern: _):
+                    let isEnum = (enumValues?.count ?? 0) > 0
+                    return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: isEnum)
+                default:
+                    return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: false)
+                }
             case .formData(type: _, allowEmptyValue: _):
-                return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false)
+                return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: false)
             case .body(schema: _):
-                return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false)
+                return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: false)
             }
         } else {
             return nil
         }
 
-        return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false)
+        return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: false)
     }
 
     let headers: [NetworkRequestFunctionHeaderField] = operationParameters.compactMap {
