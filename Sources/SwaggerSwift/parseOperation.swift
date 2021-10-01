@@ -42,7 +42,7 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
                          servicePath: servicePath,
                          statusCode: $0.key,
                          swagger: swagger)
-        
+
         let statusCode = HTTPStatusCodes(rawValue: $0.key)!
         return (statusCode, type.0, type.1)
     }
@@ -61,7 +61,7 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
                                                          responseTypes: resTypes,
                                                          swagger: swagger,
                                                          swaggerFile: swaggerFile)
-    
+
     let functionParameters = functionParametersResult.0
     definitions.append(contentsOf: functionParametersResult.1)
 
@@ -99,7 +99,7 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
                             return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: isEnum)
                         case .email:
                             return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: isEnum)
-                        case .unsupported(_):
+                        case .unsupported:
                             return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: isEnum)
                         }
                     } else {

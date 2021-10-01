@@ -53,7 +53,7 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
         } else {
             return (.string, [])
         }
-    case .integer(let format,_,_,_,_,_):
+    case .integer(let format, _, _, _, _, _):
         if let format = format {
             switch format {
             case .long:
@@ -141,7 +141,7 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
         switch valueType {
         case .any:
             return (.object(typeName: "[String: AdditionalProperty]"), [])
-        case .reference(_):
+        case .reference:
             fatalError("not supported")
         case .schema(let schema):
             let valueType = getType(forSchema: schema,
@@ -164,7 +164,7 @@ private func typeOfItems(schema: Schema, items: Node<Items>, typeNamePrefix: Str
         let schema = swagger.findSchema(node: .reference(ref))
         if case SchemaType.object = schema.type {
             let typeName = ref.components(separatedBy: "/").last!.modelNamed
-            
+
             return (.object(typeName: typeName), [])
         } else {
             fatalError()

@@ -41,7 +41,6 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, isIn
 
             resolvedModelDefinitions.append(contentsOf: resultType.1)
 
-
             return ModelField(description: nil,
                               type: resultType.0,
                               name: name,
@@ -223,6 +222,10 @@ private func createResultEnumType(types: [(HTTPStatusCodes, TypeType)], failure:
 
 extension String {
     var modelNamed: String {
-        return self.uppercasingFirst.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: "-", with: "").replacingOccurrences(of: "_", with: "")
+        self
+            .split(separator: ".").map { String($0).uppercasingFirst }.joined()
+            .split(separator: "-").map { String($0).uppercasingFirst }.joined()
+            .split(separator: "_").map { String($0).uppercasingFirst }.joined()
+            .uppercasingFirst
     }
 }
