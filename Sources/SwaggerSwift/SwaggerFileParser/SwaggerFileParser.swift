@@ -37,8 +37,8 @@ struct SwaggerFileParser {
             throw NSError(domain: "SwaggerFileParser", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to load data in SwaggerFile at \(path)"])
         }
 
-        let swaggerFile: SwaggerFile = try! YAMLDecoder().decode(from: swaggerFileText)
-        
+        let swaggerFile: SwaggerFile = try YAMLDecoder().decode(from: swaggerFileText)
+
         let services = swaggerFile.services.filter { apiList?.contains($0.key) ?? true }
 
         let requests = services.map { service -> (branch: String?, serviceName: String, request: URLRequest) in
@@ -55,10 +55,11 @@ struct SwaggerFileParser {
 
         let dispatchGroup = DispatchGroup()
 
-        var files = [String]()
+        var files = [Swagger]()
         for request in requests {
             dispatchGroup.enter()
             URLSession.shared.dataTask(with: request.2) { data, response, error in
+                defer { dispatchGroup.leave() }
                 if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
                     print("Failed to download Swagger for \(request.1)", to: &stderr)
                     if let branch = request.branch {
@@ -68,26 +69,28 @@ struct SwaggerFileParser {
                     print("- If this is happening to all of your services your github token might not be valid", to: &stderr)
                     print("- HTTP Status: \(httpResponse.statusCode)", to: &stderr)
                     print("- HTTP URL: \(httpResponse.url!.absoluteString)", to: &stderr)
-                    dispatchGroup.leave()
                     return
                 }
 
-                if let data = data {
-                    files.append(String(data: data, encoding: .utf8)!)
-                }
+                guard let data = data else { return }
 
-                dispatchGroup.leave()
+                let stringValue = String(data: data, encoding: .utf8)!
+
+                do {
+                    files.append(try SwaggerReader.read(text: stringValue))
+                } catch let error {
+                    print("🚨🚨🚨 Failed to read Swagger for service: \(request.serviceName) 🚨🚨🚨 ", to: &stderr)
+                    if let branch = request.branch {
+                        print("⚠️⚠️⚠️ The branch was defined as ´\(branch)´. Perhaps this branch is broken now? ⚠️⚠️⚠️", to: &stderr)
+                    }
+
+                    print("🚨🚨🚨 \(error.localizedDescription)", to: &stderr)
+                }
             }.resume()
         }
+
         dispatchGroup.wait()
 
-        return (try files.map {
-            if verbose {
-                print("Swagger File:", to: &stdout)
-                print($0, to: &stderr)
-            }
-
-            return try SwaggerReader.read(text: $0)
-        }, swaggerFile)
+        return (files, swaggerFile)
     }
 }
