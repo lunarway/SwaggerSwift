@@ -45,7 +45,7 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
                 case "uri":
                     return (.object(typeName: "URL"), [])
                 default:
-                    fatalError("Found unsupported field: \(unsupported)")
+                    fatalError("🔥 \(swagger.serviceName): Found unsupported field: '\(unsupported)'")
                 }
             }
         } else {

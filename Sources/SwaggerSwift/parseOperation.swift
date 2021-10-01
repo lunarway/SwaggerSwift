@@ -134,8 +134,6 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
         } else {
             return nil
         }
-
-        return QueryElement(fieldName: $0.name, fieldValue: $0.name.camelized, isOptional: $0.required == false, isEnum: false)
     }
 
     let headers: [NetworkRequestFunctionHeaderField] = operationParameters.compactMap {
