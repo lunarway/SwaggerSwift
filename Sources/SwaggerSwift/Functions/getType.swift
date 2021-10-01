@@ -33,7 +33,8 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
             case .byte: fallthrough
             case .boolean: fallthrough
             case .int32:
-                fatalError("Found unsupported field")
+                print("⚠️ \(swagger.serviceName): A string should not be defined to be a \(format.toString)", to: &stderr)
+                return (.object(typeName: "String"), [])
             case .unsupported(let unsupported):
                 switch unsupported {
                 case "ISO8601":
