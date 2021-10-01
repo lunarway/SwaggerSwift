@@ -215,8 +215,14 @@ private func createResultEnumType(types: [(HTTPStatusCodes, TypeType)], failure:
 
         return (typeName, [enumeration])
     } else if filteredTypes.count == 1 {
-        return (filteredTypes[0].1.toString(required: true), [])
+        return (filteredTypes[0].1.toString(required: true).modelNamed, [])
     } else {
         return ("Void", [])
+    }
+}
+
+extension String {
+    var modelNamed: String {
+        return self.uppercasingFirst.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: "-", with: "").replacingOccurrences(of: "_", with: "")
     }
 }

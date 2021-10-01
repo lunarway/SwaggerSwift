@@ -46,7 +46,8 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
                 case "uri":
                     return (.object(typeName: "URL"), [])
                 default:
-                    fatalError("🔥 \(swagger.serviceName): Found unsupported field: '\(unsupported)'")
+                    print("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(unsupported)' for strings", to: &stderr)
+                    return (.object(typeName: "String"), [])
                 }
             }
         } else {
@@ -68,7 +69,8 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
             case .byte: fallthrough
             case .binary: fallthrough
             case .boolean:
-                fatalError("This cannot happen for this case")
+                print("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(format.toString)' for ints", to: &stderr)
+                return (.int, [])
             case .unsupported(let unsupported):
                 switch unsupported {
                 case "int":
@@ -78,7 +80,8 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
                 case "decimal":
                     return (.double, [])
                 default:
-                    fatalError("Unsupported field type received: \(unsupported)")
+                    print("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(unsupported)' for ints", to: &stderr)
+                    return (.int, [])
                 }
             }
         }
@@ -100,7 +103,8 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
             case .byte: fallthrough
             case .binary: fallthrough
             case .boolean:
-                fatalError("This cannot happen for this case")
+                print("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(format.toString)' for number", to: &stderr)
+                return (.double, [])
             case .unsupported(let unsupported):
                 switch unsupported {
                 case "int", "integer":
@@ -110,7 +114,8 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
                 case "decimal":
                     return (.double, [])
                 default:
-                    fatalError("Unsupported field type received: \(unsupported)")
+                    print("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(unsupported)' for number", to: &stderr)
+                    return (.double, [])
                 }
             }
         }
@@ -158,7 +163,8 @@ private func typeOfItems(schema: Schema, items: Node<Items>, typeNamePrefix: Str
     case .reference(let ref):
         let schema = swagger.findSchema(node: .reference(ref))
         if case SchemaType.object = schema.type {
-            let typeName = ref.components(separatedBy: "/").last!.uppercasingFirst
+            let typeName = ref.components(separatedBy: "/").last!.modelNamed
+            
             return (.object(typeName: typeName), [])
         } else {
             fatalError()
