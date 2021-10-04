@@ -41,7 +41,6 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, isIn
 
             resolvedModelDefinitions.append(contentsOf: resultType.1)
 
-
             return ModelField(description: nil,
                               type: resultType.0,
                               name: name,
@@ -215,8 +214,18 @@ private func createResultEnumType(types: [(HTTPStatusCodes, TypeType)], failure:
 
         return (typeName, [enumeration])
     } else if filteredTypes.count == 1 {
-        return (filteredTypes[0].1.toString(required: true), [])
+        return (filteredTypes[0].1.toString(required: true).modelNamed, [])
     } else {
         return ("Void", [])
+    }
+}
+
+extension String {
+    var modelNamed: String {
+        self
+            .split(separator: ".").map { String($0).uppercasingFirst }.joined()
+            .split(separator: "-").map { String($0).uppercasingFirst }.joined()
+            .split(separator: "_").map { String($0).uppercasingFirst }.joined()
+            .uppercasingFirst
     }
 }

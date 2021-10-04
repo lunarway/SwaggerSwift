@@ -62,7 +62,7 @@ case \(statusCode.rawValue):
     do {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .custom(dateDecodingStrategy)
-        let result = try decoder.decode(\(responseType).self, from: data)
+        let result = try decoder.decode(\(responseType.modelNamed).self, from: data)
 
         completionHandler(.\(swiftResult)(\(resultType("result", resultIsEnum))))
     } catch let error {

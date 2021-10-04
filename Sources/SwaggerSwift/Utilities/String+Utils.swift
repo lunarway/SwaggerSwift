@@ -1,6 +1,6 @@
 import Foundation
 
-fileprivate let badChars = CharacterSet.alphanumerics.inverted
+private let badChars = CharacterSet.alphanumerics.inverted
 
 extension String {
     func capitalizingFirstLetter() -> String {

@@ -48,7 +48,7 @@ func parse(swagger: Swagger, swaggerFile: SwaggerFile, verbose: Bool) -> Service
                      required: true,
                      typeIsAutoclosure: true,
                      typeIsBlock: true,
-                     defaultValue: nil),
+                     defaultValue: nil)
     ]
 
     if hasGlobalHeaders {

@@ -7,7 +7,7 @@ private struct AllOfPart {
 }
 
 func parseObject(required: [String], properties: [String: Node<Schema>], allOf: [Node<Schema>]?, swagger: Swagger, typeNamePrefix: String, schema: Schema, customFields: [String: String]) -> (TypeType, [ModelDefinition]) {
-    let typeName = (customFields["x-override-name"] ?? schema.overridesName ?? typeNamePrefix).uppercasingFirst
+    let typeName = (customFields["x-override-name"] ?? schema.overridesName ?? typeNamePrefix).modelNamed
 
     if let allOf = allOf {
         let allOfParts: [AllOfPart] = allOf.map {
@@ -82,6 +82,8 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
                 typeName = "\(typeName)\(propertyName.uppercasingFirst)"
             }
 
+            typeName = typeName.modelNamed
+
             if case SchemaType.object = node.type {
                 return (ModelField(description: node.description,
                                    type: .object(typeName: typeName),
@@ -99,6 +101,8 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
             if typeName == "Type" {
                 typeName = "\(typeName)\(propertyName.uppercasingFirst)"
             }
+
+            typeName = typeName.modelNamed
 
             let (type, embeddedDefinitions) = getType(forSchema: innerSchema,
                                                       typeNamePrefix: typeName,

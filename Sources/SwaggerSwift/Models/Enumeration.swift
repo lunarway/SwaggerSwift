@@ -65,7 +65,6 @@ public init(from decoder: Decoder) throws {
 
 """.indentLines(1)
 
-
             let encodeCases = values.sorted().map {
                 """
 case .\(Self.toCasename($0, isCodable)):
@@ -162,7 +161,7 @@ extension String {
     }
 }
 
-extension String  {
+extension String {
     var isNumber: Bool {
         return !isEmpty && rangeOfCharacter(from: CharacterSet.decimalDigits.inverted) == nil
     }
