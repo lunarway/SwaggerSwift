@@ -7,7 +7,7 @@ indirect enum TypeType {
     case int
     case double
     case float
-    case boolean
+    case boolean(defaultValue: Bool?)
     case int64
     case array(typeName: TypeType)
     case object(typeName: String)

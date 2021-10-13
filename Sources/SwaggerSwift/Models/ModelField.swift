@@ -6,6 +6,7 @@ struct ModelField {
     let argumentLabel: String
     let safePropertyName: SafePropertyName
     let safeParameterName: SafeParameterName
+    let defaultValue: String?
     var needsArgumentLabel: Bool {
         return argumentLabel != safeParameterName.value
     }
@@ -17,12 +18,26 @@ struct ModelField {
         self.safePropertyName = SafePropertyName(name)
         self.safeParameterName = SafeParameterName(name)
         self.required = required
+        switch type {
+        case .boolean(let defaultValue):
+            if let defaultValue = defaultValue {
+                if defaultValue {
+                    self.defaultValue = "true"
+                } else {
+                    self.defaultValue = "false"
+                }
+            } else {
+                self.defaultValue = nil
+            }
+        default:
+            self.defaultValue = nil
+        }
     }
 }
 
 extension ModelField {
     var toSwift: String {
-        let declaration = "public let \(safePropertyName): \(type.toString(required: required))"
+        let declaration = "public let \(safePropertyName): \(type.toString(required: required || defaultValue != nil))"
         if let desc = description {
             return """
 // \(desc)

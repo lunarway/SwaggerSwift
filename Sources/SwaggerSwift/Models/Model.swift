@@ -37,10 +37,19 @@ struct Model {
         }
 
         let initParameterStrings: [String] = fields.map { field in
-            if field.needsArgumentLabel {
-                return "\(field.argumentLabel) \(field.safeParameterName): \(field.type.toString(required: field.required))"
+            let defaultArg: String
+            if let defaultValue = field.defaultValue {
+                defaultArg = " = " + defaultValue
             } else {
-                return "\(field.safeParameterName): \(field.type.toString(required: field.required))"
+                defaultArg = ""
+            }
+
+            let fieldType = "\(field.type.toString(required: field.required || field.defaultValue != nil))"
+
+            if field.needsArgumentLabel {
+                return "\(field.argumentLabel) \(field.safeParameterName): \(fieldType)\(defaultArg)"
+            } else {
+                return "\(field.safeParameterName): \(fieldType)\(defaultArg)"
             }
         }
 
@@ -64,6 +73,11 @@ public init(\(initParameterStrings.joined(separator: ", "))) {
 
         model += "\n\n" + initMethod.indentLines(1)
 
+        if isCodable && fields.contains(where: { $0.defaultValue != nil }) {
+            model += "\n\n"
+            model += encodeFunction().indentLines(1)
+        }
+
         if embeddedDefinitions.count > 0 {
             model += "\n\n"
         }
@@ -77,6 +91,24 @@ public init(\(initParameterStrings.joined(separator: ", "))) {
         model += "\n}"
 
         return model
+    }
+
+    private func encodeFunction() -> String {
+        let decodeFields = fields.map {
+            "self.\($0.safePropertyName) = try container.decode\($0.required ? "" : "IfPresent")(\($0.type.toString(required: true)).self, forKey: .\($0.safePropertyName))\($0.required == false && $0.defaultValue != nil ? " ?? \($0.defaultValue!)" : "")"
+        }.joined(separator: "\n")
+
+
+        let functionBody = """
+let container = try decoder.container(keyedBy: CodingKeys.self)
+\(decodeFields)
+"""
+
+        return """
+public init(from decoder: Decoder) throws {
+\(functionBody.indentLines(1))
+}
+"""
     }
 }
 
