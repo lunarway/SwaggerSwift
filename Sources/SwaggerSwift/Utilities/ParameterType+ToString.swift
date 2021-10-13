@@ -42,7 +42,7 @@ extension ParameterType {
                 return (typeOfDataFormat(some), [])
             }
         case .boolean:
-            return (.boolean, [])
+            return (.boolean(defaultValue: nil), [])
         case .array(let items, collectionFormat: _, maxItems: _, minItems: _, uniqueItems: _):
             return typeOfItems(items.type, typePrefix: typePrefix, swagger: swagger)
         case .file:
@@ -79,7 +79,7 @@ private func typeOfItems(_ itemsType: ItemsType, typePrefix: String, swagger: Sw
             return (.int, [])
         }
     case .boolean:
-        return (.boolean, [])
+        return (.boolean(defaultValue: nil), [])
     case .array(let itemsType, collectionFormat: _, maxItems: _, minItems: _, uniqueItems: _):
         return typeOfItems(itemsType.type, typePrefix: typePrefix, swagger: swagger)
     case .object(required: _, properties: _, allOf: _):
@@ -104,7 +104,7 @@ private func typeOfDataFormat(_ dataFormat: DataFormat) -> TypeType {
     case .binary:
         fatalError("Binary is not supported as a dataformat yet")
     case .boolean:
-        return .boolean
+        return .boolean(defaultValue: nil)
     case .date:
         return .object(typeName: "Date")
     case .dateTime:
