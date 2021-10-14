@@ -1,6 +1,10 @@
 import Foundation
 import SwaggerSwiftML
 
+protocol test {
+    func abc(handler: @escaping (() -> Void))
+}
+
 /// Describes the types that can be returned from a function
 indirect enum TypeType {
     case string
@@ -10,11 +14,11 @@ indirect enum TypeType {
     case boolean(defaultValue: Bool?)
     case int64
     case array(typeName: TypeType)
-    case object(typeName: String)
+    case object(typeName: String, defaultValue: String? = nil)
     case date
     case void
 
-    func toString(required: Bool) -> String {
+    func toString(required: Bool, withDefaultValue: Bool = true) -> String {
         return { obj -> String in
             switch obj {
             case .string:
@@ -25,8 +29,8 @@ indirect enum TypeType {
                 return "Double"
             case .array(typeName: let typeName):
                 return "[\(typeName.toString(required: true))]"
-            case .object(typeName: let typeName):
-                return typeName
+            case .object(typeName: let typeName, defaultValue: let defaultValue):
+                return typeName + (defaultValue != nil && withDefaultValue ? " = \(defaultValue!)" : "")
             case .void:
                 return "Void"
             case .boolean:

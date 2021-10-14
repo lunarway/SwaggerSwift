@@ -182,7 +182,7 @@ func getFunctionParameters(_ parameters: [Parameter], functionName: String, isIn
     let successType = successTypeResult.0
     let failureTypeResult = createResultEnumType(types: responseTypes, failure: true, functionName: functionName, swagger: swagger)
     let failureType = failureTypeResult.0
-    let completionHandler = FunctionParameter(description: "The completion handler of the function returns as soon as the request completes", name: "completionHandler", typeName: .object(typeName: "@escaping (Result<\(successType), ServiceError<\(failureType)>>) -> Void = { _ in }"), required: true, in: .nowhere, isEnum: false)
+    let completionHandler = FunctionParameter(description: "The completion handler of the function returns as soon as the request completes", name: "completionHandler", typeName: .object(typeName: "@escaping (Result<\(successType), ServiceError<\(failureType)>>) -> Void ", defaultValue: "{ _ in }"), required: true, in: .nowhere, isEnum: false)
 
     resolvedParameters.append(completionHandler)
     resolvedModelDefinitions.append(contentsOf: successTypeResult.1)

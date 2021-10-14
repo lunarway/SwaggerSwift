@@ -12,6 +12,14 @@ struct NetworkRequestFunction {
     let parameters: [FunctionParameter]
     let `throws`: Bool
     let consumes: NetworkRequestFunctionConsumes
+    var returnType: String {
+        switch consumes {
+        case .json:
+            return "URLSessionDataTask"
+        case .multiPartFormData:
+            return "URLSessionUploadTask"
+        }
+    }
     let isInternalOnly: Bool
     let isDeprecated: Bool
 
@@ -143,7 +151,7 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
                     fatalError("not implemented")
                 case .array:
                     fatalError("not implemented")
-                case .object(typeName: let typeName):
+                case .object(typeName: let typeName, defaultValue: let _):
                     if typeName == "FormData" {
                         return "requestData.append(\($0.name).toRequestData(named: \"\($0.name)\", using: boundary))"
                     } else if $0.isEnum {
@@ -176,11 +184,11 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
         case .json:
             urlSessionMethodName = "dataTask(with: request)"
             headerStatements += "\n    request.addValue(\"application/json\", forHTTPHeaderField: \"Content-Type\")"
-            returnStatement = " -> URLSessionDataTask"
+            returnStatement = " -> \(returnType)"
 
         case .multiPartFormData:
             urlSessionMethodName = "uploadTask(with: request, from: requestData as Data)"
-            returnStatement = " -> URLSessionUploadTask"
+            returnStatement = " -> \(returnType)"
         }
 
         var declaration = ""

@@ -180,12 +180,12 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
             case .int64:
                 return NetworkRequestFunctionResponseType.int64(statusCode, isSuccessResponse)
             case .array(let type):
-                if case .object(let typeName) = type {
+                if case .object(let typeName, let defaultValue) = type {
                     return NetworkRequestFunctionResponseType.array($0.0, $0.0.isSuccess ? successResponses.count > 1 : errorResponses.count > 1, typeName)
                 } else {
                     fatalError("Unsupported type inside array: \(type)")
                 }
-            case .object(typeName: let typeName):
+            case .object(typeName: let typeName, defaultValue: let defaultValue):
                 return NetworkRequestFunctionResponseType.object($0.0, $0.0.isSuccess ? successResponses.count > 1 : errorResponses.count > 1, typeName)
             case .void:
                 return NetworkRequestFunctionResponseType.void($0.0, $0.0.isSuccess ? successResponses.count > 1 : errorResponses.count > 1)

@@ -14,6 +14,17 @@ extension ServiceDefinition: Swiftable {
         let imports = packagesToImport.reduce(into: "import Foundation\n", {accumulator, element in
             accumulator += "import \(element)\n"
         })
+
+        let protocolFunctions = functions.reduce(into: "") { $0 += "func \($1.functionName)(\($1.parameters.map( { "\($0.variableName): \($0.typeName.toString(required: $0.required, withDefaultValue: false))" }).joined(separator: ", "))) -> \($1.returnType)\n" }
+
+        let protocolDefinition = """
+        public protocol \(typeName)Type {
+           \(protocolFunctions)
+        }
+
+
+        """
+
         let initMethod = """
 /// Initialises the service
 /// - Parameters:
@@ -24,13 +35,14 @@ public init(\(fields.map { "\($0.name): \($0.typeIsAutoclosure ? "@autoclosure "
 """
 
         var serviceDefinition = "\(imports)\n"
+        serviceDefinition += protocolDefinition
 
         if let description = description {
             serviceDefinition.append("// \(description)\n")
         }
 
         serviceDefinition += """
-public struct \(typeName) {
+public struct \(typeName): \(typeName)Type {
     \(fields.map { "private let \($0.name): \($0.typeName)\($0.required ? "" : "?")" }.joined(separator: "\n    "))
 
     \(initMethod.replacingOccurrences(of: "\n", with: "\n    "))

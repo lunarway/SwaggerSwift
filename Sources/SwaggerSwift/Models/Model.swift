@@ -122,8 +122,11 @@ extension Model: Swiftable {
             return modelDefinition(serviceName: serviceName, swaggerFile: swaggerFile)
         }
 
+        let imports = packagesToImport.map { "import \($0)" }.joined(separator: "\n")
+
         var model = ""
         model.appendLine("import Foundation")
+        model.appendLine(imports)
         model.appendLine()
 
         if isInternalOnly {

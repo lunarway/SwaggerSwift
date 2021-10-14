@@ -290,8 +290,8 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
             .write(toFile: "\(serviceDirectory)/\(serviceDefinition.typeName).swift", atomically: true, encoding: .utf8)
 
         for type in serviceDefinition.innerTypes {
-            let file = type.toSwift(serviceName: swagger.serviceName, swaggerFile: swaggerFile, embedded: false, packagesToImport: [])
-            let filename = "\(modelDirectory)/\(serviceDefinition.typeName)_\(type.typeName).swift"
+            let file = type.toSwift(serviceName: nil, swaggerFile: swaggerFile, embedded: false, packagesToImport: [sharedPackageName])
+            let filename = "\(modelDirectory)/\(type.typeName).swift"
             try! file.write(toFile: filename, atomically: true, encoding: .utf8)
             if verbose {
                 print("Wrote \(filename)", to: &stdout)
