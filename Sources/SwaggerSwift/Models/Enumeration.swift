@@ -127,7 +127,7 @@ public var rawValue: String {
 }
 
 extension Enumeration: Swiftable {
-    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool) -> String {
+    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool, packagesToImport: [String]) -> String {
         if embedded {
             return modelDefinition(swaggerFile: swaggerFile, embeddedFile: true)
         }

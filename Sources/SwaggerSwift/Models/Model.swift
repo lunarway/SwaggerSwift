@@ -84,7 +84,7 @@ public init(\(initParameterStrings.joined(separator: ", "))) {
 
         model += embeddedDefinitions
             .sorted(by: { $0.typeName < $1.typeName })
-            .map { $0.toSwift(serviceName: serviceName, swaggerFile: swaggerFile, embedded: true) }
+            .map { $0.toSwift(serviceName: serviceName, swaggerFile: swaggerFile, embedded: true, packagesToImport: []) }
             .joined(separator: "\n\n")
             .indentLines(1)
 
@@ -113,7 +113,7 @@ public init(from decoder: Decoder) throws {
 }
 
 extension Model: Swiftable {
-    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool) -> String {
+    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool, packagesToImport: [String]) -> String {
         precondition(inheritsFrom.count == 0)
 
         let isInExtension = serviceName != nil

@@ -6,5 +6,5 @@ protocol Swiftable {
     var typeName: String { get }
 
     /// Convert the object into its Swift twin
-    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool) -> String
+    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool, packagesToImport: [String]) -> String
 }

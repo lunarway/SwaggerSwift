@@ -10,7 +10,10 @@ struct ServiceDefinition {
 }
 
 extension ServiceDefinition: Swiftable {
-    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool) -> String {
+    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool, packagesToImport: [String]) -> String {
+        let imports = packagesToImport.reduce(into: "import Foundation\n", {accumulator, element in
+            accumulator += "import \(element)\n"
+        })
         let initMethod = """
 /// Initialises the service
 /// - Parameters:
@@ -20,7 +23,7 @@ public init(\(fields.map { "\($0.name): \($0.typeIsAutoclosure ? "@autoclosure "
 }
 """
 
-        var serviceDefinition = "import Foundation\nimport shared\n\n"
+        var serviceDefinition = "\(imports)\n"
 
         if let description = description {
             serviceDefinition.append("// \(description)\n")
@@ -36,7 +39,8 @@ public struct \(typeName) {
         .sorted(by: { $0.functionName < $1.functionName })
         .map { $0.toSwift(serviceName: serviceName, swaggerFile:
                             swaggerFile,
-                          embedded: false).replacingOccurrences(of: "\n", with: "\n    ") }
+                          embedded: false,
+                                       packagesToImport: packagesToImport).replacingOccurrences(of: "\n", with: "\n    ") }
         .joined(separator: "\n\n    "))
 }
 

@@ -59,17 +59,18 @@ class SwiftPackageBuilder {
     
 }
 
-func createSwiftProject(at path: String, named name: String, targets: [String] = [], fileManager: FileManager = FileManager.default) throws -> (String, String) {
+func createSwiftProject(at path: String, named name: String, targets: [String] = [], fileManager: FileManager = FileManager.default) throws -> (String, String, String) {
 
-    let products = targets.reduce(into: [SwiftPackageBuilder.Product(name: "shared", targets: [SwiftPackageBuilder.Target(type: .target, name: "shared", dependencies: [])])], { acc, name in
-        acc.append(SwiftPackageBuilder.Product(name: name, targets: [SwiftPackageBuilder.Target(type: .target, name: name, dependencies: ["shared"])]))
+    let sharedTargetName = "\(name)Shared"
+    let products = targets.reduce(into: [SwiftPackageBuilder.Product(name: "\(name)Shared", targets: [SwiftPackageBuilder.Target(type: .target, name: sharedTargetName, dependencies: [])])], { acc, name in
+        acc.append(SwiftPackageBuilder.Product(name: name, targets: [SwiftPackageBuilder.Target(type: .target, name: name, dependencies: [sharedTargetName])]))
     })
     
     let packageBuilder = SwiftPackageBuilder(projectName: name, platforms: "", products: products)
     
-    packageBuilder.addTarget(SwiftPackageBuilder.Target(type: .target, name: "shared", dependencies: []))
+    packageBuilder.addTarget(SwiftPackageBuilder.Target(type: .target, name: sharedTargetName, dependencies: []))
     targets.forEach { target in
-        let line = ".target(name: \"shared\")"
+        let line = ".target(name: \"\(sharedTargetName)\")"
         packageBuilder.addTarget(SwiftPackageBuilder.Target(type: .target, name: target, dependencies: ["\(line)"] ))
     }
     
@@ -80,6 +81,6 @@ func createSwiftProject(at path: String, named name: String, targets: [String] =
         .replacingOccurrences(of: "PROJECT_NAME", with: name)
         .write(toFile: expandPath + "/Package.swift", atomically: true, encoding: .utf8)
 
-    return ("", "/Tests")
+    return ("", "/Tests", sharedTargetName)
 }
 
