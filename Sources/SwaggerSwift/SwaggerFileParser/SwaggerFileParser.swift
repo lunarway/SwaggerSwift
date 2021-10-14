@@ -55,7 +55,7 @@ struct SwaggerFileParser {
 
         let dispatchGroup = DispatchGroup()
 
-        var files = [Swagger]()
+        var swaggers = [Swagger]()
         for request in requests {
             dispatchGroup.enter()
             URLSession.shared.dataTask(with: request.2) { data, response, error in
@@ -77,7 +77,8 @@ struct SwaggerFileParser {
                 let stringValue = String(data: data, encoding: .utf8)!
 
                 do {
-                    files.append(try SwaggerReader.read(text: stringValue))
+                    let swagger = try SwaggerReader.read(text: stringValue)
+                    swaggers.append(swagger)
                 } catch let error {
                     print("🚨🚨🚨 Failed to read Swagger for service: \(request.serviceName) 🚨🚨🚨 ", to: &stderr)
                     if let branch = request.branch {
@@ -91,6 +92,6 @@ struct SwaggerFileParser {
 
         dispatchGroup.wait()
 
-        return (files, swaggerFile)
+        return (swaggers, swaggerFile)
     }
 }
