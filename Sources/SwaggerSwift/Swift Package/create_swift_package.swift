@@ -1,17 +1,5 @@
 import Foundation
 
-func createTargetPathAt(basePath: String, for target: String, fileManager: FileManager = FileManager.default) throws {
-    let expandPath = basePath.replacingOccurrences(of: "~", with: NSHomeDirectory())
-    let sourceDirectory = expandPath + "/Sources/\(target)"
-    let testsDirectory = expandPath + "/Tests/\(target)Tests"
-    
-    try [sourceDirectory, testsDirectory].forEach {directory in
-        try fileManager.createDirectory(atPath: directory,
-                                        withIntermediateDirectories: true,
-                                        attributes: nil)
-    }
-}
-
 class SwiftPackageBuilder {
     struct Product {
         let name: String
@@ -73,8 +61,6 @@ class SwiftPackageBuilder {
 
 func createSwiftProject(at path: String, named name: String, targets: [String] = [], fileManager: FileManager = FileManager.default) throws -> (String, String) {
 
-//    targets.forEach { try? createTargetPathAt(basePath: path, for: $0) }
-    
     let products = targets.reduce(into: [SwiftPackageBuilder.Product(name: "shared", targets: [SwiftPackageBuilder.Target(type: .target, name: "shared", dependencies: [])])], { acc, name in
         acc.append(SwiftPackageBuilder.Product(name: name, targets: [SwiftPackageBuilder.Target(type: .target, name: name, dependencies: ["shared"])]))
     })
