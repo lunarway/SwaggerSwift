@@ -231,21 +231,6 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
     let (swaggers, swaggerFile) = try SwaggerFileParser.parse(path: swaggerFilePath, authToken: token, apiList: apiList, verbose: verbose)
 
     if verbose {
-<<<<<<< HEAD
-        print("Creating Swift Project at \(destinationPath) named \(projectName)", to: &stdout)
-    }
-
-    let (sourceDirectory, testDirectory) = try! createSwiftProject(at: destinationPath, named: projectName)
-
-    try! serviceError.write(toFile: "\(sourceDirectory)/ServiceError.swift", atomically: true, encoding: .utf8)
-    try! urlQueryItemExtension.write(toFile: "\(sourceDirectory)/URLQueryExtension.swift", atomically: true, encoding: .utf8)
-    try! parsingErrorExtension.write(toFile: "\(sourceDirectory)/ParsingError.swift", atomically: true, encoding: .utf8)
-    try! networkInterceptor.write(toFile: "\(sourceDirectory)/NetworkInterceptor.swift", atomically: true, encoding: .utf8)
-    try! additionalPropertyUtil.write(toFile: "\(sourceDirectory)/AdditionalProperty.swift", atomically: true, encoding: .utf8)
-    try! formData.write(toFile: "\(sourceDirectory)/FormData.swift", atomically: true, encoding: .utf8)
-    try! dummyTest.write(toFile: "\(testDirectory)/DummyTest.swift", atomically: true, encoding: .utf8)
-    try! dateDecodingStrategy.write(toFile: "\(sourceDirectory)/DateDecodingStrategy.swift", atomically: true, encoding: .utf8)
-=======
         print("Creating Swift Project at \(destinationPath)")
     }
     
@@ -262,9 +247,7 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
     try! networkInterceptor.write(toFile: "\(sharedDirectory)/NetworkInterceptor.swift", atomically: true, encoding: .utf8)
     try! additionalPropertyUtil.write(toFile: "\(sharedDirectory)/AdditionalProperty.swift", atomically: true, encoding: .utf8)
     try! formData.write(toFile: "\(sharedDirectory)/FormData.swift", atomically: true, encoding: .utf8)
-//    try! dummyTest.write(toFile: "\(abc)/DummyTest.swift", atomically: true, encoding: .utf8)
     try! dateDecodingStrategy.write(toFile: "\(sharedDirectory)/DateDecodingStrategy.swift", atomically: true, encoding: .utf8)
->>>>>>> 925016e (WIP)
 
     if let globalHeaderFields = swaggerFile.globalHeaders?.map({
         ModelField(description: nil,
@@ -280,15 +263,12 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
                                   embeddedDefinitions: [],
                                   isCodable: false)
 
-<<<<<<< HEAD
         try! globalHeaders.toSwift(serviceName: nil,
                                    swaggerFile: swaggerFile,
                                    embedded: false)
-            .write(toFile: "\(sourceDirectory)/GlobalHeaders.swift", atomically: true, encoding: .utf8)
-=======
-        try! globalHeaders.toSwift(swaggerFile: swaggerFile, embedded: false)
-            .write(toFile: "\(sharedDirectory)/GlobalHeaders.swift", atomically: true, encoding: .utf8)
->>>>>>> 925016e (WIP)
+            .write(toFile: "\(sharedDirectory)/GlobalHeaders.swift",
+                   atomically: true,
+                   encoding: .utf8)
     }
 
     for swagger in swaggers {
