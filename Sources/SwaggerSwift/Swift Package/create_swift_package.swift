@@ -73,12 +73,7 @@ class SwiftPackageBuilder {
 
 func createSwiftProject(at path: String, named name: String, targets: [String] = [], fileManager: FileManager = FileManager.default) throws -> (String, String) {
 
-    targets.forEach { try? createTargetPathAt(basePath: path, for: $0) }
-    
-//    var someTargets = targets.reduce(into: [SwiftPackageBuilder.Target(type: .target, name: "shared", dependencies: [] )]) { acc, name in
-//        acc.append(SwiftPackageBuilder.Target(type: .target, name: name, dependencies: ["shared"]))
-////        acc.append(SwiftPackageBuilder.Target(type: .testTarget, name: "\(name)Tests", dependencies: [name]))
-//    }
+//    targets.forEach { try? createTargetPathAt(basePath: path, for: $0) }
     
     let products = targets.reduce(into: [SwiftPackageBuilder.Product(name: "shared", targets: [SwiftPackageBuilder.Target(type: .target, name: "shared", dependencies: [])])], { acc, name in
         acc.append(SwiftPackageBuilder.Product(name: name, targets: [SwiftPackageBuilder.Target(type: .target, name: name, dependencies: ["shared"])]))
@@ -88,10 +83,8 @@ func createSwiftProject(at path: String, named name: String, targets: [String] =
     
     packageBuilder.addTarget(SwiftPackageBuilder.Target(type: .target, name: "shared", dependencies: []))
     targets.forEach { target in
-//        let line = ".target(name: \"shared\", dependencies: [], path: \"shared/\")"
         let line = ".target(name: \"shared\")"
         packageBuilder.addTarget(SwiftPackageBuilder.Target(type: .target, name: target, dependencies: ["\(line)"] ))
-//        packageBuilder.addTarget(SwiftPackageBuilder.Target(type: .testTarget, name: "\(target)Tests", dependencies: [target] ))
     }
     
     let packageFile = packageBuilder.buildPackageFile()
