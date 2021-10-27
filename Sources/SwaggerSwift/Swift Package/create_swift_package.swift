@@ -15,31 +15,31 @@ func createSwiftProject(at path: String, named name: String, fileManager: FileMa
 
     // create package file
     let packageFile = """
-// swift-tools-version:5.5
-// The swift-tools-version declares the minimum version of Swift required to build this package.
+    // swift-tools-version:5.5
+    // The swift-tools-version declares the minimum version of Swift required to build this package.
 
-import PackageDescription
+    import PackageDescription
 
-let package = Package(
-    name: "PROJECT_NAME",
-    platforms: [.iOS(.v11)],
-    products: [
-        .library(name: "PROJECT_NAME",
-                 targets: ["PROJECT_NAME"]),
-        .library(name: "PROJECT_NAMEStatic",
-                 type: .static,
-                 targets: ["PROJECT_NAME"]),
-        .library(name: "PROJECT_NAMEDynamic",
-                 type: .dynamic,
-                 targets: ["PROJECT_NAME"])
-    ],
-    targets: [
-        .target(name: "PROJECT_NAME"),
-        .testTarget(
-            name: "PROJECT_NAMETests",
-            dependencies: ["PROJECT_NAME"]),
-    ]
-)
+    let package = Package(
+        name: "PROJECT_NAME",
+        platforms: [.iOS(.v11)],
+        products: [
+            .library(name: "PROJECT_NAME",
+                     targets: ["PROJECT_NAME"]),
+            .library(name: "PROJECT_NAMEStatic",
+                     type: .static,
+                     targets: ["PROJECT_NAME"]),
+            .library(name: "PROJECT_NAMEDynamic",
+                     type: .dynamic,
+                     targets: ["PROJECT_NAME"])
+        ],
+        targets: [
+            .target(name: "PROJECT_NAME"),
+            .testTarget(
+                name: "PROJECT_NAMETests",
+                dependencies: ["PROJECT_NAME"]),
+        ]
+    )
 
     """
 
