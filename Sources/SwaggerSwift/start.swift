@@ -222,6 +222,39 @@ internal func dateDecodingStrategy(_ decoder: Decoder) throws -> Date {
 }
 """
 
+private class BundleFinder {}
+
+// To be removed when Apple fixes the issue with missing
+// resources bundles when loading bundles
+
+extension Foundation.Bundle {
+    /// Returns the resource bundle associated with the current Swift module.
+    public static var assetsModule: Bundle = {
+        let bundleName = "SwaggerSwift_SwaggerSwift"
+
+        let candidates = [
+            // Bundle should be present here when the package is linked into an App.
+            Bundle.main.resourceURL,
+
+            // Bundle should be present here when the package is linked into a framework.
+            Bundle(for: BundleFinder.self).resourceURL,
+
+            // For command-line tools.
+            Bundle.main.bundleURL,
+        ] + Bundle.allBundles.map { $0.bundleURL }
+
+        for candidate in candidates {
+            let bundlePath = candidate?.appendingPathComponent(bundleName + ".bundle")
+            if let bundle = bundlePath.flatMap(Bundle.init(url:)) {
+                return bundle
+            }
+        }
+        
+        fatalError("unable to find bundle named SwaggerSwift_SwaggerSwift")
+    }()
+}
+
+
 // token
 func start(swaggerFilePath: String, token: String, destinationPath: String, projectName: String = "Services", verbose: Bool = false, apiList: [String]? = nil) throws {
     if verbose {
@@ -235,6 +268,10 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
     }
 
     let (sourceDirectory, testDirectory) = try! createSwiftProject(at: destinationPath, named: projectName)
+
+    print("resources")
+    print(Bundle.assetsModule.bundlePath)
+    print(Bundle.assetsModule.url(forResource: "Template", withExtension: "txt"))
 
     try! serviceError.write(toFile: "\(sourceDirectory)/ServiceError.swift", atomically: true, encoding: .utf8)
     try! urlQueryItemExtension.write(toFile: "\(sourceDirectory)/URLQueryExtension.swift", atomically: true, encoding: .utf8)
