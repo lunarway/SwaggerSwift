@@ -244,6 +244,7 @@ extension Foundation.Bundle {
         ] + Bundle.allBundles.map { $0.bundleURL }
 
         for candidate in candidates {
+            print("can: " + candidate?.absoluteString)
             let bundlePath = candidate?.appendingPathComponent(bundleName + ".bundle")
             if let bundle = bundlePath.flatMap(Bundle.init(url:)) {
                 return bundle
