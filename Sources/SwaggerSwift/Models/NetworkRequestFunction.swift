@@ -75,23 +75,14 @@ extension NetworkRequestFunction: Swiftable {
             queryStatement = ""
         }
 
-        let swaggerGlobalHeaders = swaggerFile.globalHeaders ?? []
-
-        var globalHeaders = swaggerGlobalHeaders
-            .map { NetworkRequestFunctionHeaderField(headerName: $0, required: true) }
-            .map { """
-request.addValue(globalHeaders.\($0.headerModelName), forHTTPHeaderField: \"\($0.fieldName)\")
-"""
-            }.joined(separator: "\n")
-
-        if globalHeaders.count > 0 {
-            globalHeaders = "let globalHeaders = self.headerProvider()\n" + globalHeaders
+        var globalHeaders = ""
+        if let globalHeaderFields = swaggerFile.globalHeaders, globalHeaderFields.count > 0  {
+            globalHeaders += "let globalHeaders = self.headerProvider()\n"
+            globalHeaders += "globalHeaders.add(to: &request)"
         }
 
-        let globalHeaderInitialisation = globalHeaders.replacingOccurrences(of: "\n", with: "\n    ")
-
         var headerStatements = headers
-            .filter { !swaggerGlobalHeaders.map { $0.lowercased() }.contains($0.fieldName.lowercased()) }
+            .filter { !(swaggerFile.globalHeaders ?? []).map { $0.lowercased() }.contains($0.fieldName.lowercased()) }
             .map {
                 if $0.required {
                     return "request.addValue(headers.\($0.headerModelName), forHTTPHeaderField: \"\($0.fieldName)\")"
@@ -207,7 +198,7 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
     let requestUrl = urlComponents.url!
     var request = URLRequest(url: requestUrl)
     request.httpMethod = "\(httpMethod.uppercased())"
-    \(globalHeaderInitialisation)
+\(globalHeaders.indentLines(1))
     \(headerStatements)
 
     \(bodyInjection.replacingOccurrences(of: "\n", with: "\n\(defaultSpacing)"))
