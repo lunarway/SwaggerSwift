@@ -245,23 +245,10 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
     try! dummyTest.write(toFile: "\(testDirectory)/DummyTest.swift", atomically: true, encoding: .utf8)
     try! dateDecodingStrategy.write(toFile: "\(sourceDirectory)/DateDecodingStrategy.swift", atomically: true, encoding: .utf8)
 
-    if let globalHeaderFields = swaggerFile.globalHeaders?.map({
-        ModelField(description: nil,
-                   type: .string,
-                   name: makeHeaderFieldName(headerName: $0),
-                   required: true)
-    }) {
-        let globalHeaders = Model(description: nil,
-                                  typeName: "GlobalHeaders",
-                                  fields: globalHeaderFields,
-                                  inheritsFrom: [],
-                                  isInternalOnly: false,
-                                  embeddedDefinitions: [],
-                                  isCodable: false)
+    if let globalHeaderFields = swaggerFile.globalHeaders {
+        let globalHeaders = GlobalHeadersModel(headerFields: globalHeaderFields)
 
-        try! globalHeaders.toSwift(serviceName: nil,
-                                   swaggerFile: swaggerFile,
-                                   embedded: false)
+        try! globalHeaders.toSwift(swaggerFile: swaggerFile)
             .write(toFile: "\(sourceDirectory)/GlobalHeaders.swift", atomically: true, encoding: .utf8)
     }
 
