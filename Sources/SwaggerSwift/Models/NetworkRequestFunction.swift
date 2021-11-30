@@ -1,3 +1,4 @@
+import Foundation
 import SwaggerSwiftML
 
 enum NetworkRequestFunctionConsumes {
@@ -184,6 +185,16 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
         }
 
         declaration += "@discardableResult\n"
+
+        declaration += """
+        \(description?.documentationFormat() ?? "/// No description provided")
+        /// - Endpoint: \(self.httpMethod.uppercased()) \(self.servicePath)
+        /// - Parameters:
+        \(parameters.map { "///   - \($0.variableName): \($0.description?.replacingOccurrences(of: "\n", with: ". ").replacingOccurrences(of: "..", with: ".") ?? "No description")" }.joined(separator: "\n"))
+        /// - Returns: the URLSession task. This can be used to cancel the request.
+
+        """
+
         declaration += "public func \(functionName)(\(arguments)) \(`throws` ? "throws" : "") \(returnStatement) {"
 
         let responseTypes = self.responseTypes.map { $0.print() }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n            ")
@@ -210,10 +221,10 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
         }
 
         if let error = error {
-            completionHandler(.failure(.requestFailed(error: error)))
+            completion(.failure(.requestFailed(error: error)))
         } else if let data = data {
             guard let httpResponse = response as? HTTPURLResponse else {
-                completionHandler(.failure(ServiceError.clientError(reason: "Returned response object wasnt a HTTP URL Response as expected, but was instead a \\(String(describing: response))")))
+                completion(.failure(ServiceError.clientError(reason: "Returned response object wasnt a HTTP URL Response as expected, but was instead a \\(String(describing: response))")))
                 return
             }
 
@@ -222,7 +233,7 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
             default:
                 let result = String(data: data, encoding: .utf8) ?? ""
                 let error = NSError(domain: "\(serviceName ?? "Generic")", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: result])
-                completionHandler(.failure(.requestFailed(error: error)))
+                completion(.failure(.requestFailed(error: error)))
             }
         }
     }
@@ -238,5 +249,11 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
         }
 
         return body
+    }
+}
+
+private extension String {
+    func documentationFormat() -> String {
+        trimmingCharacters(in: CharacterSet.newlines).components(separatedBy: "\n").map { "/// \($0)" }.joined(separator: "\n")
     }
 }
