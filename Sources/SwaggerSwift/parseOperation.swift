@@ -19,7 +19,7 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
 
     var functionName: String
     if let overrideName = operation.operationId {
-        functionName = overrideName
+        functionName = overrideName.lowercasingFirst
     } else {
         functionName = httpMethod.rawValue + servicePath
             .replacingOccurrences(of: "{", with: "")
