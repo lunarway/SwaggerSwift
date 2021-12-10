@@ -61,7 +61,7 @@ public init(\(initParameterStrings.joined(separator: ", "))) {
     func addToRequestFunction() -> String {
         var function = ""
 
-        function += "func add(to request: inout URLRequest) {\n"
+        function += "public func add(to request: inout URLRequest) {\n"
 
         function += headerFields.map { "request.addValue(\(makeHeaderFieldName(headerName: $0)), forHTTPHeaderField: \"\($0)\")" }.joined(separator: "\n").indentLines(1)
         function += "\n"
