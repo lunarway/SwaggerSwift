@@ -1,3 +1,5 @@
+import Foundation
+
 /// Represents a single field on a Model
 struct ModelField {
     let description: String?
@@ -40,7 +42,7 @@ extension ModelField {
         let declaration = "public let \(safePropertyName): \(type.toString(required: required || defaultValue != nil))"
         if let desc = description {
             return """
-// \(desc)
+\(desc.components(separatedBy: "\n").filter { $0.isEmpty == false }.map { "// \($0)" }.joined(separator: "\n").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines))
 \(declaration)
 """
         } else {
