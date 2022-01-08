@@ -4,7 +4,7 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
     switch schema.type {
     case .string(format: let format, let enumValues, _, _, _):
         if let enumValues = enumValues {
-            let enumTypename = typeNamePrefix
+            let enumTypename = typeNamePrefix.modelNamed
             let def = ModelDefinition.enumeration(Enumeration(serviceName: swagger.serviceName,
                                                               description: schema.description,
                                                               typeName: enumTypename,

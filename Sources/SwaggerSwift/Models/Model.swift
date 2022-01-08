@@ -95,7 +95,23 @@ public init(\(initParameterStrings.joined(separator: ", "))) {
 
     private func encodeFunction() -> String {
         let decodeFields = fields.map {
-            "self.\($0.safePropertyName) = try container.decode\($0.required ? "" : "IfPresent")(\($0.type.toString(required: true)).self, forKey: .\($0.safePropertyName))\($0.required == false && $0.defaultValue != nil ? " ?? \($0.defaultValue!)" : "")"
+            let variableName = $0.safePropertyName
+            let typeName = $0.type.toString(required: true)
+            let decodeIfPresent: String
+            if $0.required == false || $0.defaultValue != nil {
+                decodeIfPresent = "IfPresent"
+            } else {
+                decodeIfPresent = ""
+            }
+
+            let defaultValue: String
+            if let defaultValueValue = $0.defaultValue {
+                defaultValue = " ?? \(defaultValueValue)"
+            } else {
+                defaultValue = ""
+            }
+
+            return "self.\(variableName) = try container.decode\(decodeIfPresent)(\(typeName).self, forKey: .\(variableName))\(defaultValue)"
         }.joined(separator: "\n")
 
 

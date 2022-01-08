@@ -6,8 +6,28 @@ func parse(request requestNode: Node<Response>, httpMethod: HTTPMethod, serviceP
     let request: Response
     switch requestNode {
     case .reference(let ref):
-        let str = String(ref.split(separator: "/").last!)
-        request = swagger.responses![str]!
+		let pathParts = ref.split(separator: "/").map { String($0) }
+		guard pathParts.count == 3 else { fatalError( "Invalid reference found: \(ref)" ) }
+
+		let pathType = pathParts[1].lowercased()
+		let typeName = pathParts[2]
+
+		switch pathType {
+		case "definitions":
+			guard let schema = swagger.definitions?[typeName] else {
+				fatalError("\(swagger.serviceName): Failed to find referenced object: \(ref)")
+			}
+
+			request = Response(schema: schema)
+		case "responses":
+			guard let req = swagger.responses?[typeName] else {
+				fatalError("\(swagger.serviceName): Failed to find referenced object: \(ref)")
+			}
+
+			request = req
+		default:
+			fatalError("\(swagger.serviceName): Unsupported path ('\(pathType)') provided in reference: '\(ref)'")
+		}
     case .node(let node):
         request = node
     }

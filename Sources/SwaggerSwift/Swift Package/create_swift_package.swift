@@ -50,6 +50,7 @@ class SwiftPackageBuilder {
             TARGETS
         ]
     )
+
     """
         return packageFile
             .replacingOccurrences(of: "PROJECT_NAME", with: projectName)

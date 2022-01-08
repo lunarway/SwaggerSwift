@@ -249,27 +249,11 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
     try! formData.write(toFile: "\(sharedDirectory)/FormData.swift", atomically: true, encoding: .utf8)
     try! dateDecodingStrategy.write(toFile: "\(sharedDirectory)/DateDecodingStrategy.swift", atomically: true, encoding: .utf8)
 
-    if let globalHeaderFields = swaggerFile.globalHeaders?.map({
-        ModelField(description: nil,
-                   type: .string,
-                   name: makeHeaderFieldName(headerName: $0),
-                   required: true)
-    }) {
-        let globalHeaders = Model(description: nil,
-                                  typeName: "GlobalHeaders",
-                                  fields: globalHeaderFields,
-                                  inheritsFrom: [],
-                                  isInternalOnly: false,
-                                  embeddedDefinitions: [],
-                                  isCodable: false)
+    if let globalHeaderFields = swaggerFile.globalHeaders {
+        let globalHeaders = GlobalHeadersModel(headerFields: globalHeaderFields)
 
-        try! globalHeaders.toSwift(serviceName: nil,
-                                   swaggerFile: swaggerFile,
-                                   embedded: false,
-                                   packagesToImport: [])
-            .write(toFile: "\(sharedDirectory)/GlobalHeaders.swift",
-                   atomically: true,
-                   encoding: .utf8)
+        try! globalHeaders.toSwift(swaggerFile: swaggerFile)
+            .write(toFile: "\(sourceDirectory)/GlobalHeaders.swift", atomically: true, encoding: .utf8)
     }
 
     for swagger in swaggers {

@@ -90,11 +90,12 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
                                    name: propertyName,
                                    required: schema.required.contains(propertyName)), [])
             } else {
-                let (type, embeddedDefinitions) = getType(forSchema: node, typeNamePrefix: typeName, swagger: swagger)
-                return (ModelField(description: node.description,
-                                   type: type,
-                                   name: propertyName,
-                                   required: schema.required.contains(propertyName)), embeddedDefinitions)
+                // since it is a referenced object we dont care about the embedded definitions as they are parsed elsewhere
+                let (type, _) = getType(forSchema: node, typeNamePrefix: typeName, swagger: swagger)
+                    return (ModelField(description: node.description,
+                                       type: type,
+                                       name: propertyName,
+                                       required: schema.required.contains(propertyName)), [])
             }
         case .node(let innerSchema):
             var typeName = "\(propertyName.uppercasingFirst)"
