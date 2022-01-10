@@ -140,6 +140,7 @@ extension Model: Swiftable {
 
         var model = ""
         model.appendLine("import Foundation")
+        packagesToImport.forEach { model.appendLine("import \($0)") }
         model.appendLine()
 
         if isInternalOnly {
