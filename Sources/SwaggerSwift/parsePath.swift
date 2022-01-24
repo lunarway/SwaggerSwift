@@ -20,7 +20,7 @@ func parse(path: SwaggerSwiftML.Path, servicePath: String, swagger: Swagger, swa
     }
 
     if let operation = path.post,
-       let result = parse(operation: operation, httpMethod: .post, servicePath: servicePath, parameters: parameters, swagger: swagger, swaggerFile: swaggerFile, verbose: verbose){
+       let result = parse(operation: operation, httpMethod: .post, servicePath: servicePath, parameters: parameters, swagger: swagger, swaggerFile: swaggerFile, verbose: verbose) {
         functions.append(result.0)
         modelDefinitions.append(contentsOf: result.1)
     }
@@ -38,13 +38,13 @@ func parse(path: SwaggerSwiftML.Path, servicePath: String, swagger: Swagger, swa
     }
 
     if let operation = path.head,
-       let result = parse(operation: operation, httpMethod: .head, servicePath: servicePath, parameters: parameters, swagger: swagger, swaggerFile: swaggerFile, verbose: verbose){
+       let result = parse(operation: operation, httpMethod: .head, servicePath: servicePath, parameters: parameters, swagger: swagger, swaggerFile: swaggerFile, verbose: verbose) {
         functions.append(result.0)
         modelDefinitions.append(contentsOf: result.1)
     }
 
     if let operation = path.patch,
-       let result = parse(operation: operation, httpMethod: .patch, servicePath: servicePath, parameters: parameters, swagger: swagger, swaggerFile: swaggerFile, verbose: verbose){
+       let result = parse(operation: operation, httpMethod: .patch, servicePath: servicePath, parameters: parameters, swagger: swagger, swaggerFile: swaggerFile, verbose: verbose) {
         functions.append(result.0)
         modelDefinitions.append(contentsOf: result.1)
     }
