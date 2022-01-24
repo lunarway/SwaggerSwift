@@ -12,7 +12,7 @@ func isErrorHttpCode(code: Int) -> Bool {
     return code < 199 || code > 299
 }
 
-func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, servicePath: String, parameters: [Parameter], swagger: Swagger, swaggerFile: SwaggerFile, verbose: Bool) -> (NetworkRequestFunction, [ModelDefinition]) {
+func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, servicePath: String, parameters: [Parameter], swagger: Swagger, swaggerFile: SwaggerFile, verbose: Bool) -> (NetworkRequestFunction, [ModelDefinition])? {
     if verbose {
         print("-> Creating function for request: \(httpMethod.rawValue.uppercased()) \(servicePath)", to: &stderr)
     }
@@ -152,10 +152,12 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
         case "multipart/form-data":
             consumes = .multiPartFormData
         default:
-            fatalError("[ERROR] Does not support consume type: \(consume)")
+            print("[WARNING] Does not support consume type: \(consume)")
+            return nil
         }
     } else {
-        fatalError("[ERROR] No provided consumer for function \(httpMethod.rawValue) \(servicePath)")
+        print("[WARNING] No provided consumer or not supported for function \(httpMethod.rawValue) \(servicePath), skipping")
+        return nil
     }
 
     let errorResponses = responseTypes.filter { !$0.0.isSuccess }
