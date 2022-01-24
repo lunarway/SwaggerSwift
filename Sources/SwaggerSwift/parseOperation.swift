@@ -152,11 +152,11 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
         case "multipart/form-data":
             consumes = .multiPartFormData
         default:
-            print("[WARNING] Does not support consume type: \(consume)")
+            print("⚠️⚠️⚠️ Does not support consume type: \(consume) ⚠️⚠️⚠️")
             return nil
         }
     } else {
-        print("[WARNING] No provided consumer or not supported for function \(httpMethod.rawValue) \(servicePath), skipping")
+        print("⚠️⚠️⚠️ No provided consumer or not supported for function \(httpMethod.rawValue) \(servicePath), skipping ⚠️⚠️⚠️")
         return nil
     }
 
