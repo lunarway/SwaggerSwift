@@ -8,7 +8,7 @@ func parse(swagger: Swagger, swaggerFile: SwaggerFile, verbose: Bool) -> Service
     let functions = result.flatMap { $0.0 }
     let definitions = result.flatMap { $0.1 }
 
-    let builtinDefinitions = swagger.definitions!.map { definition -> [ModelDefinition] in
+    let builtinDefinitions = swagger.definitions?.map { definition -> [ModelDefinition] in
         let (_, innerDefinitions) = getType(forSchema: definition.value,
                                             typeNamePrefix: definition.key,
                                             swagger: swagger)
@@ -69,7 +69,7 @@ func parse(swagger: Swagger, swaggerFile: SwaggerFile, verbose: Bool) -> Service
                                       typeIsBlock: false,
                                       defaultValue: "nil"))
 
-    let builtInModels = builtinDefinitions.compactMap { model -> Model? in
+    let builtInModels = builtinDefinitions?.compactMap { model -> Model? in
         if case let ModelDefinition.model(model) = model {
             return model
         } else {
@@ -77,12 +77,12 @@ func parse(swagger: Swagger, swaggerFile: SwaggerFile, verbose: Bool) -> Service
         }
     }
 
-    let resolvedBuiltinModels = builtinDefinitions.map { $0.resolveInherits(builtInModels) }
-    let resolvedDefinitions = definitions.map { $0.resolveInherits(builtInModels) }
+    let resolvedBuiltinModels = builtinDefinitions?.map { $0.resolveInherits(builtInModels ?? []) }
+    let resolvedDefinitions = definitions.map { $0.resolveInherits(builtInModels ?? []) }
 
     return ServiceDefinition(typeName: swagger.serviceName,
                              description: swagger.info.description?.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines),
                              fields: serviceFields,
                              functions: functions,
-                             innerTypes: resolvedBuiltinModels + resolvedDefinitions + builtInResponses)
+                             innerTypes: (resolvedBuiltinModels ?? []) + resolvedDefinitions + builtInResponses)
 }
