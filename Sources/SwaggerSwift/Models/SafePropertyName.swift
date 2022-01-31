@@ -4,8 +4,8 @@ struct SafePropertyName: Equatable, Hashable {
     let value: String
 
     init(_ propertyName: String) {
-        if SwiftKeyword(rawValue: propertyName) != nil {
-            value = "`" + propertyName + "`"
+        if let keyword = SwiftKeyword(rawValue: propertyName) {
+            value = keyword.safePropertyName
         } else {
             value = propertyName
         }

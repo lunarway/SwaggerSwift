@@ -9,7 +9,7 @@ struct ModelField {
     let safePropertyName: SafePropertyName
     let safeParameterName: SafeParameterName
     let defaultValue: String?
-    var needsArgumentLabel: Bool {
+    var isNamedAfterSwiftKeyword: Bool {
         return argumentLabel != safeParameterName.value
     }
 
@@ -20,6 +20,7 @@ struct ModelField {
         self.safePropertyName = SafePropertyName(name)
         self.safeParameterName = SafeParameterName(name)
         self.required = required
+
         switch type {
         case .boolean(let defaultValue):
             if let defaultValue = defaultValue {

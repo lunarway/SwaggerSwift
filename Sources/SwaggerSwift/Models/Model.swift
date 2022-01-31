@@ -46,7 +46,7 @@ struct Model {
 
             let fieldType = "\(field.type.toString(required: field.required || field.defaultValue != nil))"
 
-            if field.needsArgumentLabel {
+            if field.isNamedAfterSwiftKeyword {
                 return "\(field.argumentLabel) \(field.safeParameterName): \(fieldType)\(defaultArg)"
             } else {
                 return "\(field.safeParameterName): \(fieldType)\(defaultArg)"
@@ -73,9 +73,17 @@ public init(\(initParameterStrings.joined(separator: ", "))) {
 
         model += "\n\n" + initMethod.indentLines(1)
 
-        if isCodable && fields.contains(where: { $0.defaultValue != nil }) {
+        let fieldIsNamedAfterKeyword = fields.contains(where: { $0.isNamedAfterSwiftKeyword })
+        let fieldHasDefaultValue = fields.contains(where: { $0.defaultValue != nil })
+
+        if isCodable && (fieldIsNamedAfterKeyword || fieldHasDefaultValue) {
             model += "\n\n"
             model += encodeFunction().indentLines(1)
+        }
+
+        if isCodable && fieldIsNamedAfterKeyword {
+            model += "\n\n"
+            model += codingKeysFunction().indentLines(1)
         }
 
         if embeddedDefinitions.count > 0 {
@@ -91,6 +99,16 @@ public init(\(initParameterStrings.joined(separator: ", "))) {
         model += "\n}"
 
         return model
+    }
+
+    private func codingKeysFunction() -> String {
+        let cases = fields.map { "case \($0.safeParameterName) = \"\($0.argumentLabel)\"" }.joined(separator: "\n").indentLines(1)
+
+        return """
+        enum CodingKeys: String, CodingKey {
+        \(cases)
+        }
+        """
     }
 
     private func encodeFunction() -> String {
