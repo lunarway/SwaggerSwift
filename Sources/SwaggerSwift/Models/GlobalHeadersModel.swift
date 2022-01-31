@@ -24,7 +24,7 @@ struct GlobalHeadersModel {
 
             let fieldType = "\(field.type.toString(required: field.required || field.defaultValue != nil))"
 
-            if field.needsArgumentLabel {
+            if field.isNamedAfterSwiftKeyword {
                 return "\(field.argumentLabel) \(field.safeParameterName): \(fieldType)\(defaultArg)"
             } else {
                 return "\(field.safeParameterName): \(fieldType)\(defaultArg)"

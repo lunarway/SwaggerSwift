@@ -5,7 +5,7 @@ struct SafeParameterName: Equatable, Hashable {
 
     init(_ parameterName: String) {
         if SwiftKeyword(rawValue: parameterName) != nil {
-            value = "_swaggerswift_" + parameterName
+            value = "_\(parameterName)"
         } else {
             value = parameterName
         }
