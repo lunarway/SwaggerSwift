@@ -17,12 +17,14 @@ struct Model {
         }
 
         let inheritedFields = inherits.flatMap { $0.fields }
+        let inheritedEmbeddedDefinitions = inherits.flatMap { $0.embeddedDefinitions }
+
         return Model(description: description,
                      typeName: typeName,
                      fields: (fields + inheritedFields).sorted(by: { $0.safePropertyName < $1.safePropertyName }),
                      inheritsFrom: [],
                      isInternalOnly: isInternalOnly,
-                     embeddedDefinitions: embeddedDefinitions,
+                     embeddedDefinitions: embeddedDefinitions + inheritedEmbeddedDefinitions,
                      isCodable: isCodable)
     }
 
@@ -131,7 +133,6 @@ public init(\(initParameterStrings.joined(separator: ", "))) {
 
             return "self.\(variableName) = try container.decode\(decodeIfPresent)(\(typeName).self, forKey: .\(variableName))\(defaultValue)"
         }.joined(separator: "\n")
-
 
         let functionBody = """
 let container = try decoder.container(keyedBy: CodingKeys.self)
