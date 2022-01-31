@@ -77,7 +77,7 @@ extension NetworkRequestFunction: Swiftable {
         }
 
         var globalHeaders = ""
-        if let globalHeaderFields = swaggerFile.globalHeaders, globalHeaderFields.count > 0  {
+        if let globalHeaderFields = swaggerFile.globalHeaders, globalHeaderFields.count > 0 {
             globalHeaders += "let globalHeaders = self.headerProvider()\n"
             globalHeaders += "globalHeaders.add(to: &request)"
         }
