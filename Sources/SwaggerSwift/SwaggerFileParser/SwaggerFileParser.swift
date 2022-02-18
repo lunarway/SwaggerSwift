@@ -72,6 +72,12 @@ struct SwaggerFileParser {
                     return
                 }
 
+                if let error = error {
+                    print("🚨 Failed to  download Swagger for \(request.1)", to: &stderr)
+                    print("🚨 - \(error.localizedDescription)", to: &stderr)
+                    return
+                }
+
                 guard let data = data else { return }
 
                 let stringValue = String(data: data, encoding: .utf8)!
