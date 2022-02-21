@@ -26,6 +26,7 @@ extension String {
             .joined()
     }
 
+    /// camel cased -> camelCased
     var camelized: String {
         guard !isEmpty else {
             return ""

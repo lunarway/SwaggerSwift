@@ -26,8 +26,11 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
                                  embedddedDefinitions: result.1)
                 }
             case .node(let innerSchema):
-                if case let SchemaType.object(properties, allOf) = innerSchema.type {
-                    assert(allOf == nil, "Not implemented")
+                if case let SchemaType.object(properties, allOfItems) = innerSchema.type {
+                    if let allOfItems = allOfItems, allOfItems.count > 0 {
+                        print("There allOf items present but it is not currently supported")
+                    }
+
                     let result: [(ModelField, [ModelDefinition])] = properties.map {
                         switch $0.value {
                         case .reference(let reference):

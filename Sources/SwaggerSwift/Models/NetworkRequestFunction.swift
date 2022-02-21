@@ -56,10 +56,11 @@ extension NetworkRequestFunction: Swiftable {
         if queries.count > 0 {
             let queryItems = queries.map {
                 let fieldValue = $0.isEnum ? "\($0.fieldValue).rawValue" : $0.fieldValue
+                let fieldName = $0.fieldName.camelized
                 if $0.isOptional {
                     return """
-                        if let \($0.fieldValue) = \($0.fieldValue) {
-                            queryItems.append(URLQueryItem(name: \"\($0.fieldName)\", value: \(fieldValue)))
+                        if let \(fieldName)Value = \($0.fieldValue) {
+                            queryItems.append(URLQueryItem(name: \"\($0.fieldName)\", value: \(fieldName)Value))
                         }
                         """
                 } else {
@@ -94,7 +95,7 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
     }
 """
                 }
-            }.joined(separator: "\n\(defaultSpacing)")
+            }.joined(separator: "\n")
 
         var bodyInjection: String = ""
         if let body = parameters.first(where: { $0.in == .body }) {
@@ -167,7 +168,7 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
         switch consumes {
         case .json:
             urlSessionMethodName = "dataTask(with: request)"
-            headerStatements += "\n    request.addValue(\"application/json\", forHTTPHeaderField: \"Content-Type\")"
+            headerStatements += "request.addValue(\"application/json\", forHTTPHeaderField: \"Content-Type\")"
             returnStatement = " -> URLSessionDataTask"
 
         case .multiPartFormData:
@@ -195,9 +196,16 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
 
         """
 
-        declaration += "public func \(functionName)(\(arguments)) \(`throws` ? "throws" : "") \(returnStatement) {"
+        declaration += "public func \(functionName)(\(arguments))\(`throws` ? " throws" : "")\(returnStatement) {"
 
         let responseTypes = self.responseTypes.map { $0.print() }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n            ")
+
+        let requestPart = (globalHeaders.addNewlinesIfNonEmpty(2)
+                           + headerStatements.addNewlinesIfNonEmpty(2)
+                           + bodyInjection.addNewlinesIfNonEmpty(2))
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .indentLines(1)
+            .addNewlinesIfNonEmpty()
 
         var body =
             """
@@ -205,15 +213,11 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
     let endpointUrl = self.baseUrl().appendingPathComponent("\(servicePath)")
 
     \(queryStatement.count > 0 ? "var" : "let") urlComponents = URLComponents(url: endpointUrl, resolvingAgainstBaseURL: true)!
-    \(queryStatement)
+\(queryStatement.indentLines(1))
     let requestUrl = urlComponents.url!
     var request = URLRequest(url: requestUrl)
     request.httpMethod = "\(httpMethod.uppercased())"
-\(globalHeaders.indentLines(1))
-    \(headerStatements)
-
-    \(bodyInjection.replacingOccurrences(of: "\n", with: "\n\(defaultSpacing)"))
-
+\(requestPart)
     request = interceptor?.networkWillPerformRequest(request) ?? request
     let task = urlSession().\(urlSessionMethodName) { (data, response, error) in
         if let interceptor = self.interceptor, interceptor.networkDidPerformRequest(urlRequest: request, urlResponse: response, data: data, error: error) == false {
@@ -255,5 +259,13 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
 private extension String {
     func documentationFormat() -> String {
         trimmingCharacters(in: CharacterSet.newlines).components(separatedBy: "\n").map { "/// \($0)" }.joined(separator: "\n")
+    }
+
+    func addNewlinesIfNonEmpty(_ count: Int = 1) -> String {
+        if self.count > 0 {
+            return self + String(repeating: "\n", count: count)
+        } else {
+            return self
+        }
     }
 }
