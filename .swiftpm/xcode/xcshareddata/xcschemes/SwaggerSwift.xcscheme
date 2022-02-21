@@ -34,7 +34,21 @@
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
-      </BuildActionEntries>
+      </BuildActionEntries>         
+      <BuildActionEntry
+         buildForTesting = "YES"
+         buildForRunning = "YES"
+         buildForProfiling = "YES"
+         buildForArchiving = "YES"
+         buildForAnalyzing = "YES">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "SwaggerSwift_SwaggerSwift"
+            BuildableName = "SwaggerSwift_SwaggerSwift"
+            BlueprintName = "SwaggerSwift_SwaggerSwift"
+            ReferencedContainer = "container:">
+         </BuildableReference>
+      </BuildActionEntry>
    </BuildAction>
    <TestAction
       buildConfiguration = "Debug"
