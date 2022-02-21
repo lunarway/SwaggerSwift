@@ -9,54 +9,8 @@ private struct AllOfPart {
 func parseObject(required: [String], properties: [String: Node<Schema>], allOf: [Node<Schema>]?, swagger: Swagger, typeNamePrefix: String, schema: Schema, customFields: [String: String]) -> (TypeType, [ModelDefinition]) {
     let typeName = (customFields["x-override-name"] ?? schema.overridesName ?? typeNamePrefix).modelNamed
 
-    if let allOf = allOf {
-        let allOfParts: [AllOfPart] = allOf.map {
-            switch $0 {
-            case .reference(let reference):
-                let node = swagger.findSchema(node: .reference(reference))
-                if case SchemaType.object = node.type {
-                    let typeName = reference.components(separatedBy: "/").last ?? ""
-                    return .init(typeName: typeName,
-                                 fields: [],
-                                 embedddedDefinitions: [])
-                } else {
-                    let result = getType(forSchema: node, typeNamePrefix: typeName, swagger: swagger)
-                    return .init(typeName: nil,
-                                 fields: [],
-                                 embedddedDefinitions: result.1)
-                }
-            case .node(let innerSchema):
-                if case let SchemaType.object(properties, allOfItems) = innerSchema.type {
-                    if let allOfItems = allOfItems, allOfItems.count > 0 {
-                        print("There allOf items present but it is not currently supported")
-                    }
-
-                    let result: [(ModelField, [ModelDefinition])] = properties.map {
-                        switch $0.value {
-                        case .reference(let reference):
-                            let node = swagger.findSchema(node: .reference(reference))
-                            let typeName = reference.components(separatedBy: "/").last ?? ""
-                            if case SchemaType.object = node.type {
-                                return (ModelField(description: node.description, type: .object(typeName: typeName), name: $0.key, required: innerSchema.required.contains($0.key)), [])
-                            } else {
-                                let type = getType(forSchema: node, typeNamePrefix: typeName, swagger: swagger)
-                                return (ModelField(description: node.description, type: type.0, name: $0.key, required: innerSchema.required.contains($0.key)), type.1)
-                            }
-                        case .node(let schema):
-                            let type = getType(forSchema: schema, typeNamePrefix: typeName, swagger: swagger)
-                            return (ModelField(description: schema.description, type: type.0, name: $0.key, required: innerSchema.required.contains($0.key)), type.1)
-                        }
-                    }
-
-                    return .init(typeName: nil,
-                                 fields: result.map { $0.0 },
-                                 embedddedDefinitions: result.flatMap { $0.1 })
-                } else {
-                    fatalError("Not implemented")
-                }
-            }
-        }
-
+    if let allOf = allOf, allOf.count > 0 {
+        let allOfParts: [AllOfPart] = parseAllOf(allOf: allOf, typeName: typeName, swagger: swagger)
         let embedddedDefinitions = allOfParts.flatMap { $0.embedddedDefinitions }
         let inherits = allOfParts.compactMap { $0.typeName }
 
@@ -95,10 +49,10 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
             } else {
                 // since it is a referenced object we dont care about the embedded definitions as they are parsed elsewhere
                 let (type, _) = getType(forSchema: node, typeNamePrefix: typeName, swagger: swagger)
-                    return (ModelField(description: node.description,
-                                       type: type,
-                                       name: propertyName,
-                                       required: schema.required.contains(propertyName)), [])
+                return (ModelField(description: node.description,
+                                   type: type,
+                                   name: propertyName,
+                                   required: schema.required.contains(propertyName)), [])
             }
         case .node(let innerSchema):
             var typeName = "\(propertyName.uppercasingFirst)"
@@ -133,4 +87,53 @@ func parseObject(required: [String], properties: [String: Node<Schema>], allOf: 
                       isCodable: true)
 
     return (.object(typeName: typeName), [.model(model)])
+}
+
+private func parseAllOf(allOf: [Node<Schema>], typeName: String, swagger: Swagger) -> [AllOfPart] {
+    return allOf.map {
+        switch $0 {
+        case .reference(let reference):
+            let node = swagger.findSchema(node: .reference(reference))
+            if case SchemaType.object = node.type {
+                let typeName = reference.components(separatedBy: "/").last ?? ""
+                return .init(typeName: typeName,
+                             fields: [],
+                             embedddedDefinitions: [])
+            } else {
+                let result = getType(forSchema: node, typeNamePrefix: typeName, swagger: swagger)
+                return .init(typeName: nil,
+                             fields: [],
+                             embedddedDefinitions: result.1)
+            }
+        case .node(let innerSchema):
+            if case let SchemaType.object(properties, allOfItems) = innerSchema.type {
+                if let allOfItems = allOfItems, allOfItems.count > 0 {
+                    print("There allOf items present but it is not currently supported")
+                }
+
+                let result: [(ModelField, [ModelDefinition])] = properties.map {
+                    switch $0.value {
+                    case .reference(let reference):
+                        let node = swagger.findSchema(node: .reference(reference))
+                        let typeName = reference.components(separatedBy: "/").last ?? ""
+                        if case SchemaType.object = node.type {
+                            return (ModelField(description: node.description, type: .object(typeName: typeName), name: $0.key, required: innerSchema.required.contains($0.key)), [])
+                        } else {
+                            let type = getType(forSchema: node, typeNamePrefix: typeName, swagger: swagger)
+                            return (ModelField(description: node.description, type: type.0, name: $0.key, required: innerSchema.required.contains($0.key)), type.1)
+                        }
+                    case .node(let schema):
+                        let type = getType(forSchema: schema, typeNamePrefix: typeName, swagger: swagger)
+                        return (ModelField(description: schema.description, type: type.0, name: $0.key, required: innerSchema.required.contains($0.key)), type.1)
+                    }
+                }
+
+                return .init(typeName: nil,
+                             fields: result.map { $0.0 },
+                             embedddedDefinitions: result.flatMap { $0.1 })
+            } else {
+                fatalError("Not implemented")
+            }
+        }
+    }
 }

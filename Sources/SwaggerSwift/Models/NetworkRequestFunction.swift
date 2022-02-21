@@ -55,15 +55,36 @@ extension NetworkRequestFunction: Swiftable {
         let queryStatement: String
         if queries.count > 0 {
             let queryItems = queries.map {
-                let fieldValue = $0.isEnum ? "\($0.fieldValue).rawValue" : $0.fieldValue
                 let fieldName = $0.fieldName.camelized
                 if $0.isOptional {
+                    let fieldValue: String
+                    switch $0.valueType {
+                    case .enum:
+                        fieldValue = "\($0.fieldValue)?.rawValue"
+                    case .date:
+                        return """
+                            if let \(fieldName)Value = \($0.fieldName) {
+                                queryItems.append(URLQueryItem(name: \"\($0.fieldName)\", value: \(fieldName)Value))
+                            }
+                            """
+                    default:
+                        fieldValue = "\($0.fieldValue)"
+                    }
+
                     return """
-                        if let \(fieldName)Value = \($0.fieldValue) {
+                        if let \(fieldName)Value = \(fieldValue) {
                             queryItems.append(URLQueryItem(name: \"\($0.fieldName)\", value: \(fieldName)Value))
                         }
                         """
                 } else {
+                    let fieldValue: String
+                    switch $0.valueType {
+                    case .enum:
+                        fieldValue = "\($0.fieldValue).rawValue"
+                    default:
+                        fieldValue = "\($0.fieldValue)"
+                    }
+
                     return "queryItems.append(URLQueryItem(name: \"\($0.fieldName)\", value: \(fieldValue)))"
                 }
             }.joined(separator: "\n")
@@ -77,13 +98,13 @@ extension NetworkRequestFunction: Swiftable {
             queryStatement = ""
         }
 
-        var globalHeaders = ""
+        var globalHeaders = [String]()
         if let globalHeaderFields = swaggerFile.globalHeaders, globalHeaderFields.count > 0 {
-            globalHeaders += "let globalHeaders = self.headerProvider()\n"
-            globalHeaders += "globalHeaders.add(to: &request)"
+            globalHeaders.append("let globalHeaders = self.headerProvider()")
+            globalHeaders.append("globalHeaders.add(to: &request)")
         }
 
-        var headerStatements = headers
+        var headerStatements: [String] = headers
             .filter { !(swaggerFile.globalHeaders ?? []).map { $0.lowercased() }.contains($0.fieldName.lowercased()) }
             .map {
                 if $0.required {
@@ -95,7 +116,7 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
     }
 """
                 }
-            }.joined(separator: "\n")
+            }
 
         var bodyInjection: String = ""
         if let body = parameters.first(where: { $0.in == .body }) {
@@ -168,7 +189,7 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
         switch consumes {
         case .json:
             urlSessionMethodName = "dataTask(with: request)"
-            headerStatements += "request.addValue(\"application/json\", forHTTPHeaderField: \"Content-Type\")"
+            headerStatements.append("request.addValue(\"application/json\", forHTTPHeaderField: \"Content-Type\")")
             returnStatement = " -> URLSessionDataTask"
 
         case .multiPartFormData:
@@ -200,8 +221,8 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
 
         let responseTypes = self.responseTypes.map { $0.print() }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n            ")
 
-        let requestPart = (globalHeaders.addNewlinesIfNonEmpty(2)
-                           + headerStatements.addNewlinesIfNonEmpty(2)
+        let requestPart = (globalHeaders.joined(separator: "\n").addNewlinesIfNonEmpty(2)
+                           + headerStatements.joined(separator: "\n").addNewlinesIfNonEmpty(2)
                            + bodyInjection.addNewlinesIfNonEmpty(2))
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .indentLines(1)
