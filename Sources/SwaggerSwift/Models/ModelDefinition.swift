@@ -24,15 +24,15 @@ extension ModelDefinition: Swiftable {
         case .enumeration(let enumeration):
             return enumeration.toSwift(serviceName: serviceName,
                                        swaggerFile: swaggerFile,
-                                       embedded: embedded)
+                                       embedded: embedded).appending("\n")
         case .model(let model):
             return model.toSwift(serviceName: serviceName,
                                  swaggerFile: swaggerFile,
-                                 embedded: embedded)
+                                 embedded: embedded).appending("\n")
         case .interface(let interface):
             return interface.toSwift(serviceName: serviceName,
                                      swaggerFile: swaggerFile,
-                                     embedded: embedded)
+                                     embedded: embedded).appending("\n")
         }
     }
 

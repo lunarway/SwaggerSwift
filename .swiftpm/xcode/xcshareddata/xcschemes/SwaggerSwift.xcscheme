@@ -34,20 +34,6 @@
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "YES"
-            buildForProfiling = "YES"
-            buildForArchiving = "YES"
-            buildForAnalyzing = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "SwaggerSwift_SwaggerSwift"
-               BuildableName = "SwaggerSwift_SwaggerSwift"
-               BlueprintName = "SwaggerSwift_SwaggerSwift"
-               ReferencedContainer = "container:">
-            </BuildableReference>
-         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -90,7 +76,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "-s /Users/madsbogeskov/Developer/lunar/ios-app/SwaggerFile.yml -p LunarServices -d /Users/madsbogeskov/Developer/lunar/ios-app/Common/LunarServices -v true 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"
+            argument = "-s /Users/madsbogeskov/Developer/lunar/ios-app/SwaggerFile.yml -p LunarServices -d /Users/madsbogeskov/Developer/lunar/ios-app/Common/LunarServices -v true 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"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
