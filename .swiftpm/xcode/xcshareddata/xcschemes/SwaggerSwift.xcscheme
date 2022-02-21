@@ -34,7 +34,7 @@
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
-      </BuildActionEntries>         
+      </BuildActionEntries>
       <BuildActionEntry
          buildForTesting = "YES"
          buildForRunning = "YES"
@@ -90,7 +90,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "-s /Users/madsbogeskov/Developer/lunar/ios-app/SwaggerFile.yml -p LunarServices -d /Users/madsbogeskov/Developer/lunar/ios-app/Common/LunarServices -v true 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"
+            argument = "-s /Users/madsbogeskov/Developer/lunar/ios-app/SwaggerFile.yml -p LunarServices -d /Users/madsbogeskov/Developer/lunar/ios-app/Common/LunarServices -v true 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"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
