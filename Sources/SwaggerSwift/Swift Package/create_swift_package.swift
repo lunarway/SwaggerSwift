@@ -17,22 +17,17 @@ class SwiftPackageBuilder {
     private let projectName: String
     private let platforms: String // Find better datastructure
     private var products: [Product]
-    private var targets: [Target]
     
-    init(projectName: String, platforms: String, products: [Product] = [], targets: [Target] = []) {
+    init(projectName: String, platforms: String, products: [Product] = []) {
         self.projectName = projectName
         self.platforms = platforms
         self.products = products
-        self.targets = targets
-    }
-    
-    func addTarget(_ target: Target) {
-        targets.append(target)
     }
     
     func buildPackageFile() -> String {
         let productsLine = products.map { ".library(name: \"\($0.name)\", targets: [\($0.targets.map( { "\"\($0.name)\"" } ).joined(separator: ",\n"))])" }.joined(separator: ",\n")
-        let targetsLine = targets.map { ".\($0.type.rawValue)(name: \"\($0.name)\", dependencies:[\($0.dependencies.joined(separator: ","))], path: \"\($0.name)/\")" }.joined(separator: ",\n")
+        let allTargets = products.flatMap({ $0.targets })
+        let targetsLine = allTargets.map { ".\($0.type.rawValue)(name: \"\($0.name)\", dependencies:[\"\($0.dependencies.joined(separator: ","))\"])" }.joined(separator: ",\n")
         let packageFile = """
     // swift-tools-version:5.3
     // The swift-tools-version declares the minimum version of Swift required to build this package.
@@ -60,28 +55,19 @@ class SwiftPackageBuilder {
     
 }
 
-func createSwiftProject(at path: String, named name: String, targets: [String] = [], fileManager: FileManager = FileManager.default) throws -> (String, String, String) {
+func createSwiftProject(at path: String, named name: String, sharedTargetName: String, targets: [String] = [], fileManager: FileManager = FileManager.default) throws {
+    let sharedTarget = SwiftPackageBuilder.Target(type: .target, name: sharedTargetName, dependencies: [])
+    let serviceTargets = targets.map { SwiftPackageBuilder.Target(type: .target, name: $0, dependencies: [sharedTargetName]) }
+    var targets = [sharedTarget]
+    targets.append(contentsOf: serviceTargets)
+    let product = SwiftPackageBuilder.Product(name: name, targets: targets)
+    let packageBuilder = SwiftPackageBuilder(projectName: name, platforms: "", products: [product])
 
-    let sharedTargetName = "\(name)Shared"
-    let products = targets.reduce(into: [SwiftPackageBuilder.Product(name: "\(name)Shared", targets: [SwiftPackageBuilder.Target(type: .target, name: sharedTargetName, dependencies: [])])], { acc, name in
-        acc.append(SwiftPackageBuilder.Product(name: name, targets: [SwiftPackageBuilder.Target(type: .target, name: name, dependencies: [sharedTargetName])]))
-    })
-    
-    let packageBuilder = SwiftPackageBuilder(projectName: name, platforms: "", products: products)
-    
-    packageBuilder.addTarget(SwiftPackageBuilder.Target(type: .target, name: sharedTargetName, dependencies: []))
-    targets.forEach { target in
-        let line = ".target(name: \"\(sharedTargetName)\")"
-        packageBuilder.addTarget(SwiftPackageBuilder.Target(type: .target, name: target, dependencies: ["\(line)"] ))
-    }
-    
     let packageFile = packageBuilder.buildPackageFile()
 
     let expandPath = path.replacingOccurrences(of: "~", with: NSHomeDirectory())
     try packageFile
         .replacingOccurrences(of: "PROJECT_NAME", with: name)
         .write(toFile: expandPath + "/Package.swift", atomically: true, encoding: .utf8)
-
-    return ("", "/Tests", sharedTargetName)
 }
 
