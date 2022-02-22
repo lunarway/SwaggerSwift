@@ -11,7 +11,10 @@ struct ServiceDefinition {
 }
 
 extension ServiceDefinition: Swiftable {
-    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool) -> String {
+    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool, packagesToImport: [String]) -> String {
+        let imports = packagesToImport.reduce(into: "import Foundation\n", {accumulator, element in
+            accumulator += "import \(element)\n"
+        })
         let initMethod = """
 /// Initialises the service
 /// - Parameters:
@@ -21,7 +24,7 @@ public init(\(fields.map { "\($0.name): \($0.typeIsAutoclosure ? "@autoclosure "
 }
 """
 
-        var serviceDefinition = "import Foundation\n\n"
+        var serviceDefinition = "\(imports)\n"
 
         if let description = description {
             serviceDefinition.append("// \(description)\n")
@@ -32,7 +35,7 @@ public init(\(fields.map { "\($0.name): \($0.typeIsAutoclosure ? "@autoclosure "
             .map {
                 $0.toSwift(serviceName: serviceName,
                            swaggerFile: swaggerFile,
-                           embedded: false)
+                           embedded: false, packagesToImport: packagesToImport)
             }.joined(separator: "\n").indentLines(1).trimmingCharacters(in: CharacterSet.newlines)
 
         serviceDefinition += """

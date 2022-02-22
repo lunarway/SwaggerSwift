@@ -21,7 +21,7 @@ public enum ServiceError<ErrorType>: Error {
 let urlQueryItemExtension = """
 import Foundation
 
-extension URLQueryItem {
+public extension URLQueryItem {
     init(name: String, value: Bool) {
         self.init(name: name, value: value ? "true" : "false")
     }
@@ -91,7 +91,7 @@ public struct FormData {
         self.filename = fileName
     }
 
-    internal func toRequestData(named fieldName: String, using boundary: String) -> Data {
+    public func toRequestData(named fieldName: String, using boundary: String) -> Data {
         func append(string: String, toData data: inout Data) {
             guard let strData = string.data(using: .utf8) else { return }
             data.append(strData)
@@ -185,7 +185,7 @@ public enum AdditionalProperty: Codable {
 let dateDecodingStrategy = """
 import Foundation
 
-internal func dateDecodingStrategy(_ decoder: Decoder) throws -> Date {
+public func dateDecodingStrategy(_ decoder: Decoder) throws -> Date {
     let container = try decoder.singleValueContainer()
     let stringValue = try container.decode(String.self)
 
@@ -235,25 +235,30 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
     let (swaggers, swaggerFile) = try SwaggerFileParser.parse(path: swaggerFilePath, authToken: token, apiList: apiList, verbose: verbose)
 
     if verbose {
-        print("Creating Swift Project at \(destinationPath) named \(projectName)", to: &stdout)
+        print("Creating Swift Project at \(destinationPath)")
     }
 
-    let (sourceDirectory, testDirectory) = try! createSwiftProject(at: destinationPath, named: projectName)
+    let sharedTargetName = "\(projectName)Shared"
+    try! createSwiftProject(at: destinationPath, named: projectName, sharedTargetName: sharedTargetName, targets: swaggers.map(\.serviceName))
 
-    try! serviceError.write(toFile: "\(sourceDirectory)/ServiceError.swift", atomically: true, encoding: .utf8)
-    try! urlQueryItemExtension.write(toFile: "\(sourceDirectory)/URLQueryExtension.swift", atomically: true, encoding: .utf8)
-    try! parsingErrorExtension.write(toFile: "\(sourceDirectory)/ParsingError.swift", atomically: true, encoding: .utf8)
-    try! networkInterceptor.write(toFile: "\(sourceDirectory)/NetworkInterceptor.swift", atomically: true, encoding: .utf8)
-    try! additionalPropertyUtil.write(toFile: "\(sourceDirectory)/AdditionalProperty.swift", atomically: true, encoding: .utf8)
-    try! formData.write(toFile: "\(sourceDirectory)/FormData.swift", atomically: true, encoding: .utf8)
-    try! dummyTest.write(toFile: "\(testDirectory)/DummyTest.swift", atomically: true, encoding: .utf8)
-    try! dateDecodingStrategy.write(toFile: "\(sourceDirectory)/DateDecodingStrategy.swift", atomically: true, encoding: .utf8)
+    let sharedDirectory = [destinationPath, "Sources", sharedTargetName].joined(separator: "/")
+    
+    try FileManager.default.createDirectory(atPath: sharedDirectory,
+                                    withIntermediateDirectories: true,
+                                    attributes: nil)
+    try! serviceError.write(toFile: "\(sharedDirectory)/ServiceError.swift", atomically: true, encoding: .utf8)
+    try! urlQueryItemExtension.write(toFile: "\(sharedDirectory)/URLQueryExtension.swift", atomically: true, encoding: .utf8)
+    try! parsingErrorExtension.write(toFile: "\(sharedDirectory)/ParsingError.swift", atomically: true, encoding: .utf8)
+    try! networkInterceptor.write(toFile: "\(sharedDirectory)/NetworkInterceptor.swift", atomically: true, encoding: .utf8)
+    try! additionalPropertyUtil.write(toFile: "\(sharedDirectory)/AdditionalProperty.swift", atomically: true, encoding: .utf8)
+    try! formData.write(toFile: "\(sharedDirectory)/FormData.swift", atomically: true, encoding: .utf8)
+    try! dateDecodingStrategy.write(toFile: "\(sharedDirectory)/DateDecodingStrategy.swift", atomically: true, encoding: .utf8)
 
     if let globalHeaderFields = swaggerFile.globalHeaders {
         let globalHeaders = GlobalHeadersModel(headerFields: globalHeaderFields)
 
         try! globalHeaders.toSwift(swaggerFile: swaggerFile)
-            .write(toFile: "\(sourceDirectory)/GlobalHeaders.swift", atomically: true, encoding: .utf8)
+            .write(toFile: "\(sharedDirectory)/GlobalHeaders.swift", atomically: true, encoding: .utf8)
     }
 
     for swagger in swaggers {
@@ -261,7 +266,7 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
             print("Parsing contents of Swagger: \(swagger.serviceName)", to: &stdout)
         }
 
-        let serviceDirectory = "\(sourceDirectory)/\(swagger.serviceName)"
+        let serviceDirectory = [destinationPath, "Sources", swagger.serviceName].joined(separator: "/")
         let modelDirectory = "\(serviceDirectory)/Models"
         try? FileManager.default.removeItem(atPath: serviceDirectory)
         try? FileManager.default.removeItem(atPath: modelDirectory)
@@ -270,11 +275,11 @@ func start(swaggerFilePath: String, token: String, destinationPath: String, proj
 
         let serviceDefinition = parse(swagger: swagger, swaggerFile: swaggerFile, verbose: verbose)
 
-        try! serviceDefinition.toSwift(serviceName: swagger.serviceName, swaggerFile: swaggerFile, embedded: false)
+        try! serviceDefinition.toSwift(serviceName: swagger.serviceName, swaggerFile: swaggerFile, embedded: false, packagesToImport: [sharedTargetName])
             .write(toFile: "\(serviceDirectory)/\(serviceDefinition.typeName).swift", atomically: true, encoding: .utf8)
 
         for type in serviceDefinition.innerTypes {
-            let file = type.toSwift(serviceName: swagger.serviceName, swaggerFile: swaggerFile, embedded: false)
+            let file = type.toSwift(serviceName: swagger.serviceName, swaggerFile: swaggerFile, embedded: false, packagesToImport: [sharedTargetName])
             let filename = "\(modelDirectory)/\(serviceDefinition.typeName)_\(type.typeName).swift"
             try! file.write(toFile: filename, atomically: true, encoding: .utf8)
             if verbose {
