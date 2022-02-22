@@ -1,3 +1,4 @@
+import Foundation
 import SwaggerSwiftML
 
 /// Represent the overall service definition with all the network request methods and the primary initialiser
@@ -29,19 +30,21 @@ public init(\(fields.map { "\($0.name): \($0.typeIsAutoclosure ? "@autoclosure "
             serviceDefinition.append("// \(description)\n")
         }
 
+        let functions = self.functions
+            .sorted(by: { $0.functionName < $1.functionName })
+            .map {
+                $0.toSwift(serviceName: serviceName,
+                           swaggerFile: swaggerFile,
+                           embedded: false, packagesToImport: packagesToImport)
+            }.joined(separator: "\n").indentLines(1).trimmingCharacters(in: CharacterSet.newlines)
+
         serviceDefinition += """
 public struct \(typeName) {
     \(fields.map { "private let \($0.name): \($0.typeName)\($0.required ? "" : "?")" }.joined(separator: "\n    "))
 
     \(initMethod.replacingOccurrences(of: "\n", with: "\n    "))
 
-    \(self.functions
-        .sorted(by: { $0.functionName < $1.functionName })
-        .map { $0.toSwift(serviceName: serviceName, swaggerFile:
-                            swaggerFile,
-                          embedded: false,
-                                       packagesToImport: packagesToImport).replacingOccurrences(of: "\n", with: "\n    ") }
-        .joined(separator: "\n\n    "))
+\(functions)
 }
 
 """

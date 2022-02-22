@@ -17,12 +17,14 @@ struct Model {
         }
 
         let inheritedFields = inherits.flatMap { $0.fields }
+        let inheritedEmbeddedDefinitions = inherits.flatMap { $0.embeddedDefinitions }
+
         return Model(description: description,
                      typeName: typeName,
                      fields: (fields + inheritedFields).sorted(by: { $0.safePropertyName < $1.safePropertyName }),
                      inheritsFrom: [],
                      isInternalOnly: isInternalOnly,
-                     embeddedDefinitions: embeddedDefinitions,
+                     embeddedDefinitions: embeddedDefinitions + inheritedEmbeddedDefinitions,
                      isCodable: isCodable)
     }
 
@@ -46,7 +48,7 @@ struct Model {
 
             let fieldType = "\(field.type.toString(required: field.required || field.defaultValue != nil))"
 
-            if field.needsArgumentLabel {
+            if field.isNamedAfterSwiftKeyword {
                 return "\(field.argumentLabel) \(field.safeParameterName): \(fieldType)\(defaultArg)"
             } else {
                 return "\(field.safeParameterName): \(fieldType)\(defaultArg)"
@@ -73,9 +75,17 @@ public init(\(initParameterStrings.joined(separator: ", "))) {
 
         model += "\n\n" + initMethod.indentLines(1)
 
-        if isCodable && fields.contains(where: { $0.defaultValue != nil }) {
+        let fieldIsNamedAfterKeyword = fields.contains(where: { $0.isNamedAfterSwiftKeyword })
+        let fieldHasDefaultValue = fields.contains(where: { $0.defaultValue != nil })
+
+        if isCodable && (fieldIsNamedAfterKeyword || fieldHasDefaultValue) {
             model += "\n\n"
             model += encodeFunction().indentLines(1)
+        }
+
+        if isCodable && fieldIsNamedAfterKeyword {
+            model += "\n\n"
+            model += codingKeysFunction().indentLines(1)
         }
 
         if embeddedDefinitions.count > 0 {
@@ -91,6 +101,16 @@ public init(\(initParameterStrings.joined(separator: ", "))) {
         model += "\n}"
 
         return model
+    }
+
+    private func codingKeysFunction() -> String {
+        let cases = fields.map { "case \($0.safeParameterName) = \"\($0.argumentLabel)\"" }.joined(separator: "\n").indentLines(1)
+
+        return """
+        enum CodingKeys: String, CodingKey {
+        \(cases)
+        }
+        """
     }
 
     private func encodeFunction() -> String {
@@ -113,7 +133,6 @@ public init(\(initParameterStrings.joined(separator: ", "))) {
 
             return "self.\(variableName) = try container.decode\(decodeIfPresent)(\(typeName).self, forKey: .\(variableName))\(defaultValue)"
         }.joined(separator: "\n")
-
 
         let functionBody = """
 let container = try decoder.container(keyedBy: CodingKeys.self)
