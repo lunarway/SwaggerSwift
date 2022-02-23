@@ -25,9 +25,9 @@ class SwiftPackageBuilder {
     }
     
     func buildPackageFile() -> String {
-        let productsLine = products.map { ".library(name: \"\($0.name)\", targets: [\($0.targets.map( { "\"\($0.name)\"" } ).joined(separator: ",\n"))])" }.joined(separator: ",\n")
+        let productsLine = products.map { ".library(name: \"\($0.name)\", type: .static, targets: [\($0.targets.map( { "\"\($0.name)\"" } ).joined(separator: ",\n"))])" }.joined(separator: ",\n")
         let allTargets = products.flatMap({ $0.targets })
-        let targetsLine = allTargets.map { ".\($0.type.rawValue)(name: \"\($0.name)\", dependencies:[\"\($0.dependencies.joined(separator: ","))\"])" }.joined(separator: ",\n")
+        let targetsLine = allTargets.map { ".\($0.type.rawValue)(name: \"\($0.name)\", dependencies:[\($0.dependencies.map({"\"\($0)\""}).joined(separator: ","))])" }.joined(separator: ",\n")
         let packageFile = """
     // swift-tools-version:5.3
     // The swift-tools-version declares the minimum version of Swift required to build this package.
@@ -40,8 +40,6 @@ class SwiftPackageBuilder {
         products: [PRODUCTS],
         dependencies: [],
         targets: [
-            // Targets are the basic building blocks of a package. A target can define a module or a test suite.
-            // Targets can depend on other targets in this package, and on products in packages which this package depends on.
             TARGETS
         ]
     )
