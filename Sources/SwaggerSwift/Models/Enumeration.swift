@@ -133,8 +133,9 @@ extension Enumeration: Swiftable {
         }
 
         var fileSections = ""
+        fileSections += packagesToImport.map{"import \($0)"}.joined(separator: "\n")
         if let serviceName = serviceName {
-            fileSections += "extension \(serviceName) {\n"
+            fileSections += "\n\nextension \(serviceName) {\n"
         }
 
         let modelDef = modelDefinition(swaggerFile: swaggerFile, embeddedFile: false)
