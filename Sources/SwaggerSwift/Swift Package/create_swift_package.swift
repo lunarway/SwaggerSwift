@@ -64,6 +64,7 @@ func createSwiftProject(at path: String, named name: String, sharedTargetName: S
     let packageFile = packageBuilder.buildPackageFile()
 
     let expandPath = path.replacingOccurrences(of: "~", with: NSHomeDirectory())
+    try fileManager.createDirectory(atPath: expandPath, withIntermediateDirectories: true)
     try packageFile
         .replacingOccurrences(of: "PROJECT_NAME", with: name)
         .write(toFile: expandPath + "/Package.swift", atomically: true, encoding: .utf8)
