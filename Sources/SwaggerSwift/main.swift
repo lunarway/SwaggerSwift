@@ -1,4 +1,5 @@
 import ArgumentParser
+import SwaggerSwiftCore
 
 struct SwaggerSwiftParser: ParsableCommand {
     @Option(name: .shortAndLong, help: "Path to SwaggerFile")

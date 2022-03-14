@@ -231,7 +231,7 @@ public func dateDecodingStrategy(_ decoder: Decoder) throws -> Date {
 """
 
 // token
-func start(swaggerFilePath: String, token: String, destinationPath: String, projectName: String = "Services", verbose: Bool = false, apiList: [String]? = nil) throws {
+public func start(swaggerFilePath: String, token: String, destinationPath: String, projectName: String = "Services", verbose: Bool = false, apiList: [String]? = nil) throws {
     if verbose {
         print("Parsing swagger at \(swaggerFilePath)", to: &stdout)
     }
