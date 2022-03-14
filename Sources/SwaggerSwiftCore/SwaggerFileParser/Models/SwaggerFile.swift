@@ -1,4 +1,5 @@
 struct SwaggerFile: Decodable {
+    
     let path: String
     let organisation: String
     let services: [String: Service]
@@ -9,6 +10,13 @@ struct SwaggerFile: Decodable {
         case organisation
         case services
         case globalHeaders
+    }
+
+    init(path: String, organisation: String, services: [String : Service], globalHeaders: [String]?) {
+        self.path = path
+        self.organisation = organisation
+        self.services = services
+        self.globalHeaders = globalHeaders
     }
 
     init(from decoder: Decoder) throws {

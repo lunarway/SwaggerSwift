@@ -77,8 +77,9 @@ public init(\(initParameterStrings.joined(separator: ", "))) {
 
         let fieldIsNamedAfterKeyword = fields.contains(where: { $0.isNamedAfterSwiftKeyword })
         let fieldHasDefaultValue = fields.contains(where: { $0.defaultValue != nil })
+        let fieldHasOptionalURL = fields.contains(where: { $0.type.toString(required: true) == "URL" && !$0.required })
 
-        if isCodable && (fieldIsNamedAfterKeyword || fieldHasDefaultValue) {
+        if isCodable && (fieldIsNamedAfterKeyword || fieldHasDefaultValue || fieldHasOptionalURL) {
             model += "\n\n"
             model += encodeFunction().indentLines(1)
         }
@@ -131,7 +132,18 @@ public init(\(initParameterStrings.joined(separator: ", "))) {
                 defaultValue = ""
             }
 
-            return "self.\(variableName) = try container.decode\(decodeIfPresent)(\(typeName).self, forKey: .\(variableName))\(defaultValue)"
+            if !$0.required, typeName == "URL" {
+                return """
+            // Allows the backend to return badly formatted urls
+            if let urlString = try container.decode\(decodeIfPresent)(String.self, forKey: .\(variableName))\(defaultValue) {
+                self.\(variableName) = URL(string: urlString)
+            } else {
+                self.\(variableName) = nil
+            }
+            """
+            } else {
+                return "self.\(variableName) = try container.decode\(decodeIfPresent)(\(typeName).self, forKey: .\(variableName))\(defaultValue)"
+            }
         }.joined(separator: "\n")
 
         let functionBody = """
