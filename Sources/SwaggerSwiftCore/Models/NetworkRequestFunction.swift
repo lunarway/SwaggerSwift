@@ -48,9 +48,17 @@ extension NetworkRequestFunction: Swiftable {
     func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool, packagesToImport: [String]) -> String {
         let arguments = parameters.map { "\($0.name.variableNameFormatted): \($0.typeName.toString(required: $0.required))" }.joined(separator: ", ")
 
-        let servicePath = self.servicePath
-            .replacingOccurrences(of: "{", with: "\\(")
-            .replacingOccurrences(of: "}", with: ")")
+        let servicePath = self.servicePath.split(separator: "/").map {
+            let path = String($0)
+                .replacingOccurrences(of: "{", with: "")
+                .replacingOccurrences(of: "}", with: "")
+
+            if $0.contains("{") {
+                return "\\(\(path.variableNameFormatted))"
+            } else {
+                return path
+            }
+        }.joined(separator: "/")
 
         let queryStatement: String
         if queries.count > 0 {

@@ -30,7 +30,6 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
             .replacingOccurrences(of: "{", with: "")
             .replacingOccurrences(of: "}", with: "")
             .replacingOccurrences(of: "/", with: "_")
-            .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "-", with: "_")
             .split(separator: "_")
             .map { String($0).uppercasingFirst }
