@@ -15,10 +15,14 @@ let package = Package(
         .target(
             name: "SwaggerSwift", dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
-                .product(name: "SwaggerSwiftML", package: "SwaggerSwiftML")
+                "SwaggerSwiftCore"
+            ]),
+        .target(
+            name: "SwaggerSwiftCore", dependencies: [
+                .product(name: "SwaggerSwiftML", package: "SwaggerSwiftML"),
             ]),
         .testTarget(
-            name: "SwaggerSwiftTests",
+            name: "SwaggerSwiftCoreTests",
             dependencies: ["SwaggerSwift"])
     ]
 )

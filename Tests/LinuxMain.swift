@@ -1,7 +1,7 @@
 import XCTest
 
-import SwaggerSwiftTests
+import SwaggerSwiftCoreTests
 
 var tests = [XCTestCaseEntry]()
-tests += SwaggerSwiftTests.allTests()
+tests += SwaggerSwiftCoreTests.allTests()
 XCTMain(tests)

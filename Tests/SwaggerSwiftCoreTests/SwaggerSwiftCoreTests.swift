@@ -1,6 +1,6 @@
 import XCTest
 
-final class SwaggerSwiftTests: XCTestCase {
+final class SwaggerSwiftCoreTests: XCTestCase {
     func testExample() {
 //        // This is an example of a functional test case.
 //        // Use XCTAssert and related functions to verify your tests produce the correct
