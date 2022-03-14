@@ -77,9 +77,9 @@ public init(\(initParameterStrings.joined(separator: ", "))) {
         
         let fieldIsNamedAfterKeyword = fields.contains(where: { $0.isNamedAfterSwiftKeyword })
         let fieldHasDefaultValue = fields.contains(where: { $0.defaultValue != nil })
-        let fieldHasURL = fields.contains(where: { $0.type.toString(required: true) == "URL" })
+        let fieldHasOptionalURL = fields.contains(where: { $0.type.toString(required: true) == "URL" && !$0.required })
         
-        if isCodable && (fieldIsNamedAfterKeyword || fieldHasDefaultValue || fieldHasURL) {
+        if isCodable && (fieldIsNamedAfterKeyword || fieldHasDefaultValue || fieldHasOptionalURL) {
             model += "\n\n"
             model += encodeFunction().indentLines(1)
         }

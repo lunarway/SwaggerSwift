@@ -5,7 +5,7 @@ final class SwaggerSwiftTests: XCTestCase {
     
     let swaggerFile = SwaggerFile(path: "", organisation: "", services: [:], globalHeaders: nil)
     
-    func testURLDecodeFormat() {
+    func testOptionalURLDecodeFormat() {
         
         let model = Model(description: nil,
                           typeName: "Test",
@@ -38,8 +38,33 @@ public struct Test: Codable {
 }
 """)
     }
+    
+    func testURLDecodeFormat() {
+        
+        let model = Model(description: nil,
+                          typeName: "Test",
+                          fields: [.init(description: nil, type: .object(typeName: "URL"), name: "url", required: true)],
+                          inheritsFrom: [],
+                          isInternalOnly: false,
+                          embeddedDefinitions: [],
+                          isCodable: true)
+
+        let result = model.modelDefinition(serviceName: nil,
+                                           swaggerFile: swaggerFile)
+
+        XCTAssertEqual(result, """
+public struct Test: Codable {
+    public let url: URL
+
+    public init(url: URL) {
+        self.url = url
+    }
+}
+""")
+    }
 
     static var allTests = [
-        ("testExample", testURLDecodeFormat)
+        ("testOptionalURLDecodeFormat", testOptionalURLDecodeFormat),
+        ("testURLDecodeFormat", testURLDecodeFormat)
     ]
 }
