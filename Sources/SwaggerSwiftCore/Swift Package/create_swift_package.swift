@@ -5,6 +5,7 @@ class SwiftPackageBuilder {
         let name: String
         let targets: [Target]
     }
+
     struct Target {
         enum TargetType: String {
             case target
@@ -14,6 +15,7 @@ class SwiftPackageBuilder {
         let name: String
         let dependencies: [String]
     }
+
     private let projectName: String
     private let platforms: String // Find better datastructure
     private var products: [Product]
@@ -25,11 +27,38 @@ class SwiftPackageBuilder {
     }
     
     func buildPackageFile() -> String {
-        let productsLine = products.map { ".library(name: \"\($0.name)\", type: .static, targets: [\($0.targets.map( { "\"\($0.name)\"" } ).joined(separator: ",\n"))])" }.joined(separator: ",\n")
-        let allTargets = products.flatMap({ $0.targets })
-        let targetsLine = allTargets.map { ".\($0.type.rawValue)(name: \"\($0.name)\", dependencies:[\($0.dependencies.map({"\"\($0)\""}).joined(separator: ","))])" }.joined(separator: ",\n")
-        let packageFile = """
-    // swift-tools-version:5.3
+        let products = self.products.sorted(by: { $0.name < $1.name })
+
+        let productsLine = products.map {
+        """
+        .library(
+            name: \"\($0.name)\",
+            type: .static,
+            targets: [
+        \($0.targets.sorted(by: { $0.name < $1.name }).map { "\"\($0.name)\"" }.joined(separator: ",\n").indentLines(2))
+            ]
+        )
+        """
+        }.joined(separator: ",\n").indentLines(2)
+
+        let allTargets = products.flatMap { $0.targets }
+
+        let targetsLine = allTargets
+            .sorted(by: { $0.name < $1.name })
+            .map { target in
+        """
+        .\(target.type.rawValue)(
+            name: \"\(target.name)\",
+            dependencies: [
+        \(target.dependencies.map { "\"\($0)\"" }.joined(separator: ",").indentLines(2))
+            ]
+        )
+        """
+            }.joined(separator: ",\n").indentLines(2)
+
+        let packageFile =
+    """
+    // swift-tools-version:5.5
     // The swift-tools-version declares the minimum version of Swift required to build this package.
     
     import PackageDescription
@@ -37,10 +66,12 @@ class SwiftPackageBuilder {
     let package = Package(
         name: "PROJECT_NAME",
         platforms: [.iOS(.v12)],
-        products: [PRODUCTS],
+        products: [
+    PRODUCTS
+        ],
         dependencies: [],
         targets: [
-            TARGETS
+    TARGETS
         ]
     )
 
