@@ -141,8 +141,14 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
         switch valueType {
         case .any:
             return (.object(typeName: "[String: AdditionalProperty]"), [])
-        case .reference:
-            fatalError("not supported")
+        case .reference(let ref):
+            let schema = swagger.findSchema(node: .reference(ref))
+            let valueType = getType(forSchema: schema,
+                                    typeNamePrefix: typeNamePrefix,
+                                    swagger: swagger)
+            let valueString = valueType.0.toString(required: true)
+            let valueModelDefinitions = valueType.1
+            return (.object(typeName: "[String: " + valueString + "]"), valueModelDefinitions)
         case .schema(let schema):
             let valueType = getType(forSchema: schema,
                                     typeNamePrefix: typeNamePrefix,
@@ -162,11 +168,14 @@ private func typeOfItems(schema: Schema, items: Node<Items>, typeNamePrefix: Str
     switch items {
     case .reference(let ref):
         let schema = swagger.findSchema(node: .reference(ref))
-        if case SchemaType.object = schema.type {
+        switch schema.type {
+        case .object:
             let typeName = ref.components(separatedBy: "/").last!.modelNamed
 
             return (.object(typeName: typeName), [])
-        } else {
+        case .string(let format, let enumValues, let maxLength, let minLength, let pattern):
+            return (.en)
+        default:
             fatalError()
         }
     case .node(let node):
