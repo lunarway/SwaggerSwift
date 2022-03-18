@@ -173,8 +173,8 @@ private func typeOfItems(schema: Schema, items: Node<Items>, typeNamePrefix: Str
             let typeName = ref.components(separatedBy: "/").last!.modelNamed
 
             return (.object(typeName: typeName), [])
-        case .string(let format, let enumValues, let maxLength, let minLength, let pattern):
-            return (.en)
+        case .string:
+            return (.string,[])
         default:
             fatalError()
         }
