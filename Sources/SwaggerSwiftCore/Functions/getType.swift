@@ -174,7 +174,7 @@ private func typeOfItems(schema: Schema, items: Node<Items>, typeNamePrefix: Str
 
             return (.object(typeName: typeName), [])
         case .string:
-            return (.string,[])
+            return (.string, [])
         default:
             fatalError()
         }
