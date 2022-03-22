@@ -42,7 +42,7 @@ struct SwaggerFileParser {
         let services = swaggerFile.services.filter { apiList?.contains($0.key) ?? true }
 
         let requests = services.map { service -> (branch: String?, serviceName: String, request: URLRequest) in
-            let url = URL(string: "https://raw.githubusercontent.com/\(swaggerFile.organisation)/\(service.key)/\(service.value.branch ?? "master")/\(service.value.swaggerFilePath ?? swaggerFile.path)")!
+            let url = URL(string: "https://raw.githubusercontent.com/\(swaggerFile.organisation)/\(service.key)/\(service.value.branch ?? "master")/\(service.value.path ?? swaggerFile.path)")!
             if verbose {
                 print("Downloading Swagger at: \(url.absoluteString)", to: &stdout)
             }

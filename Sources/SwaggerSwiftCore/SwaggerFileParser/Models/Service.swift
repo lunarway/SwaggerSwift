@@ -1,4 +1,4 @@
 struct Service: Decodable {
     let branch: String?
-    let swaggerFilePath: String?
+    let path: String?
 }
