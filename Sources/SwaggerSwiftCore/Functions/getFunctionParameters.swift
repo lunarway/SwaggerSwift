@@ -210,7 +210,13 @@ private func createResultEnumType(types: [(HTTPStatusCodes, TypeType)], failure:
             }
         }
 
-        let enumeration = ModelDefinition.enumeration(Enumeration(serviceName: swagger.serviceName, description: "Result enum", typeName: typeName, values: fields, isCodable: false))
+        let enumeration = ModelDefinition.enumeration(
+            Enumeration(serviceName: swagger.serviceName,
+                        description: nil,
+                        typeName: typeName,
+                        values: fields,
+                        isCodable: false)
+        )
 
         return (typeName, [enumeration])
     } else if filteredTypes.count == 1 {

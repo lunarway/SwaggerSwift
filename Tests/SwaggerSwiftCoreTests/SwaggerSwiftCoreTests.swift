@@ -2,11 +2,11 @@ import XCTest
 @testable import SwaggerSwiftCore
 
 final class SwaggerSwiftTests: XCTestCase {
-    
+
     let swaggerFile = SwaggerFile(path: "", organisation: "", services: [:], globalHeaders: nil)
-    
+
     func testOptionalURLDecodeFormat() {
-        
+
         let model = Model(description: nil,
                           typeName: "Test",
                           fields: [.init(description: nil, type: .object(typeName: "URL"), name: "url", required: false)],
@@ -38,9 +38,9 @@ public struct Test: Codable {
 }
 """)
     }
-    
+
     func testURLDecodeFormat() {
-        
+
         let model = Model(description: nil,
                           typeName: "Test",
                           fields: [.init(description: nil, type: .object(typeName: "URL"), name: "url", required: true)],

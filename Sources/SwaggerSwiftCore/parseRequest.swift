@@ -1,9 +1,19 @@
 import SwaggerSwiftML
 
-func parse(request requestNode: Node<Response>, httpMethod: HTTPMethod, servicePath: String, statusCode: Int, swagger: Swagger) -> (TypeType, [ModelDefinition]) {
-    let prefix = "\(servicePath.replacingOccurrences(of: "{", with: "").replacingOccurrences(of: "}", with: "").components(separatedBy: "/").map { $0.components(separatedBy: "-") }.flatMap { $0 }.map { $0.uppercasingFirst }.joined().capitalizingFirstLetter())\(statusCode)"
+func parse(request requestNode: Node<SwaggerSwiftML.Response>, httpMethod: HTTPMethod, servicePath: String, statusCode: Int, swagger: Swagger) -> (TypeType, [ModelDefinition]) {
+    let requestName = servicePath
+        .replacingOccurrences(of: "{", with: "")
+        .replacingOccurrences(of: "}", with: "")
+        .components(separatedBy: "/")
+        .map { $0.components(separatedBy: "-") }
+        .flatMap { $0 }
+        .map { $0.uppercasingFirst }
+        .joined()
+        .capitalizingFirstLetter()
 
-    let request: Response
+    let prefix = "\(requestName)\(statusCode)"
+
+    let request: SwaggerSwiftML.Response
     switch requestNode {
     case .reference(let ref):
 		let pathParts = ref.split(separator: "/").map { String($0) }
@@ -18,7 +28,7 @@ func parse(request requestNode: Node<Response>, httpMethod: HTTPMethod, serviceP
 				fatalError("\(swagger.serviceName): Failed to find referenced object: \(ref)")
 			}
 
-			request = Response(schema: schema)
+            request = SwaggerSwiftML.Response(schema: schema)
 		case "responses":
 			guard let req = swagger.responses?[typeName] else {
 				fatalError("\(swagger.serviceName): Failed to find referenced object: \(ref)")

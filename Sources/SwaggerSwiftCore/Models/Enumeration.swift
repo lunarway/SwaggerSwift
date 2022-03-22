@@ -133,7 +133,7 @@ extension Enumeration: Swiftable {
         }
 
         var fileSections = ""
-        fileSections += packagesToImport.map{"import \($0)"}.joined(separator: "\n")
+        fileSections += packagesToImport.map {"import \($0)"}.joined(separator: "\n")
         if let serviceName = serviceName {
             fileSections += "\n\nextension \(serviceName) {\n"
         }
@@ -150,26 +150,6 @@ extension Enumeration: Swiftable {
             fileSections += "}"
         }
 
-        return fileSections
-    }
-}
-
-extension String {
-    func indentLines(_ count: Int) -> String {
-        self.split(separator: "\n", omittingEmptySubsequences: false)
-            .map {
-                if $0.trimmingCharacters(in: .whitespaces).count > 0 {
-                    return String(repeating: defaultSpacing, count: count) + $0
-                } else {
-                    return ""
-                }
-            }
-            .joined(separator: "\n")
-    }
-}
-
-extension String {
-    var isNumber: Bool {
-        return !isEmpty && rangeOfCharacter(from: CharacterSet.decimalDigits.inverted) == nil
+        return fileSections + "\n"
     }
 }

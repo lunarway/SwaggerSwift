@@ -17,6 +17,12 @@ func isErrorHttpCode(code: Int) -> Bool {
     return code < 199 || code > 299
 }
 
+struct Response {
+    let statusCode: HTTPStatusCodes
+    let responseType: TypeType
+    let embeddedDefinitions: [ModelDefinition]
+}
+
 func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, servicePath: String, parameters: [Parameter], swagger: Swagger, swaggerFile: SwaggerFile, verbose: Bool) -> (NetworkRequestFunction, [ModelDefinition])? {
     if verbose {
         print("-> Creating function for request: \(httpMethod.rawValue.uppercased()) \(servicePath)", to: &stderr)
@@ -38,22 +44,30 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
         functionName.unicodeScalars.removeAll(where: { !CharacterSet.alphanumerics.contains($0) })
     }
 
-    let responseTypes: [(HTTPStatusCodes, TypeType, [ModelDefinition])] = operation.responses.compactMap {
+    let responses: [Response] = operation.responses.compactMap {
+        let statusCodeString = $0.key
+        guard let statusCode = HTTPStatusCodes(rawValue: statusCodeString) else {
+            fatalError("Unknown status code received: \(statusCodeString)")
+        }
+
         guard let requestResponse = $0.value else { return nil }
 
-        let type = parse(request: requestResponse,
-                         httpMethod: httpMethod,
-                         servicePath: servicePath,
-                         statusCode: $0.key,
-                         swagger: swagger)
+        let (responseType, embeddedDefinition) = parse(
+            request: requestResponse,
+            httpMethod: httpMethod,
+            servicePath: servicePath,
+            statusCode: statusCodeString,
+            swagger: swagger
+        )
 
-        let statusCode = HTTPStatusCodes(rawValue: $0.key)!
-        return (statusCode, type.0, type.1)
+        return .init(statusCode: statusCode,
+                     responseType: responseType,
+                     embeddedDefinitions: embeddedDefinition)
     }
 
-    let resTypes = responseTypes.map { ($0.0, $0.1) }
+    let resTypes = responses.map { ($0.statusCode, $0.responseType) }
 
-    var definitions = responseTypes.map { $0.2 }.flatMap { $0 }
+    var definitions = responses.map { $0.embeddedDefinitions }.flatMap { $0 }
 
     let operationParameters: [Parameter] = (operation.parameters ?? []).map {
         swagger.findParameter(node: $0)
@@ -165,15 +179,15 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
         return nil
     }
 
-    let errorResponses = responseTypes.filter { !$0.0.isSuccess }
-    let successResponses = responseTypes.filter { $0.0.isSuccess }
+    let errorResponses = responses.filter { !$0.statusCode.isSuccess }
+    let successResponses = responses.filter { $0.statusCode.isSuccess }
 
-    let rt: [NetworkRequestFunctionResponseType] = responseTypes
-        .sorted(by: { $0.0.rawValue < $1.0.rawValue })
+    let rt: [NetworkRequestFunctionResponseType] = responses
+        .sorted(by: { $0.statusCode.rawValue < $1.statusCode.rawValue })
         .map {
-            let statusCode = $0.0
-            let isSuccessResponse = $0.0.isSuccess ? successResponses.count > 1 : errorResponses.count > 1
-            switch $0.1 {
+            let statusCode = $0.statusCode
+            let isSuccessResponse = $0.statusCode.isSuccess ? successResponses.count > 1 : errorResponses.count > 1
+            switch $0.responseType {
             case .string:
                 return NetworkRequestFunctionResponseType.textPlain(statusCode, isSuccessResponse)
             case .int:
@@ -188,14 +202,22 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
                 return NetworkRequestFunctionResponseType.int64(statusCode, isSuccessResponse)
             case .array(let type):
                 if case .object(let typeName) = type {
-                    return NetworkRequestFunctionResponseType.array($0.0, $0.0.isSuccess ? successResponses.count > 1 : errorResponses.count > 1, typeName)
+                    return NetworkRequestFunctionResponseType.array($0.statusCode, $0.statusCode.isSuccess ? successResponses.count > 1 : errorResponses.count > 1, typeName)
                 } else {
                     fatalError("Unsupported type inside array: \(type)")
                 }
             case .object(typeName: let typeName):
-                return NetworkRequestFunctionResponseType.object($0.0, $0.0.isSuccess ? successResponses.count > 1 : errorResponses.count > 1, typeName)
+                if let embeddedType = $0.embeddedDefinitions.first(where: { $0.typeName == typeName }) {
+                    switch embeddedType {
+                    case .enumeration:
+                        return .enumeration($0.statusCode, $0.statusCode.isSuccess ? successResponses.count > 1 : errorResponses.count > 1, typeName)
+                    default: break
+                    }
+                }
+
+                return NetworkRequestFunctionResponseType.object($0.statusCode, $0.statusCode.isSuccess ? successResponses.count > 1 : errorResponses.count > 1, typeName)
             case .void:
-                return NetworkRequestFunctionResponseType.void($0.0, $0.0.isSuccess ? successResponses.count > 1 : errorResponses.count > 1)
+                return NetworkRequestFunctionResponseType.void($0.statusCode, $0.statusCode.isSuccess ? successResponses.count > 1 : errorResponses.count > 1)
             case .date:
                 fatalError("Not implemented")
             }
