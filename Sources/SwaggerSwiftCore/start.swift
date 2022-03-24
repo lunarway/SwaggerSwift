@@ -246,7 +246,7 @@ public func start(swaggerFilePath: String, token: String, destinationPath: Strin
     try! createSwiftProject(at: destinationPath, named: projectName, sharedTargetName: sharedTargetName, targets: swaggers.map(\.serviceName))
 
     let sharedDirectory = [destinationPath, "Sources", sharedTargetName].joined(separator: "/")
-    
+
     try FileManager.default.createDirectory(atPath: sharedDirectory,
                                     withIntermediateDirectories: true,
                                     attributes: nil)

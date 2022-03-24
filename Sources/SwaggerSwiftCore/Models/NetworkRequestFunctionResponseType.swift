@@ -4,6 +4,7 @@ private func toHttpCodeName(code: Int) -> String {
 
 enum NetworkRequestFunctionResponseType {
     case textPlain(HTTPStatusCodes, Bool)
+    case enumeration(HTTPStatusCodes, Bool, _ typeName: String)
     case object(HTTPStatusCodes, Bool, _ typeName: String)
     case int(HTTPStatusCodes, Bool)
     case array(HTTPStatusCodes, Bool, _ typeName: String)
@@ -33,6 +34,8 @@ enum NetworkRequestFunctionResponseType {
             return statusCode
         case .array(let statusCode, _, _):
             return statusCode
+        case .enumeration(let statusCode, _, _):
+            return statusCode
         }
     }
 
@@ -43,7 +46,11 @@ enum NetworkRequestFunctionResponseType {
         let resultType: (String, Bool) -> String = { resultType, enumBased -> String in
             let resultBlock = resultType.count == 0 ? "" : "(\(resultType))"
             if failed {
-                return enumBased ? ".backendError(error: .\(statusCode.name)\(resultBlock))" : ".backendError(error: \(resultType))"
+                if enumBased {
+                    return ".backendError(error: .\(statusCode.name)\(resultBlock))"
+                } else {
+                    return ".backendError(error: \(resultType))"
+                }
             } else {
                 return enumBased ? ".\(statusCode.name)\(resultBlock)" : resultType
             }
@@ -139,6 +146,19 @@ case \(statusCode.rawValue):
         completion(.failure(.requestFailed(error: error)))
     }
 """
+        case .enumeration(let statusCode, let resultIsEnum, let responseType):
+            // This is necessary as iOS 12 doesnt support JSON fragments in JSONDecoder, so we have to do the parsing manually
+            return """
+            case \(statusCode.rawValue):
+                if let stringValue = String(data: data, encoding: .utf8) {
+                    // The string can be outputted as: "\\"enumValue\\"\\n", so we remove the newlines and remove the apostrophes
+                    let cleanedStringValue = stringValue.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).trimmingCharacters(in: CharacterSet(charactersIn: "\\""))
+                    let enumValue = \(responseType)(rawValue: cleanedStringValue)
+                    completion(.\(swiftResult)(\(resultType("enumValue", resultIsEnum))))
+                } else {
+                    completion(.failure(.clientError(reason: "Failed to convert backend result to expected type")))
+                }
+            """
         }
     }
 }

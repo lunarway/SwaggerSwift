@@ -19,7 +19,7 @@ let package = Package(
             ]),
         .target(
             name: "SwaggerSwiftCore", dependencies: [
-                .product(name: "SwaggerSwiftML", package: "SwaggerSwiftML"),
+                .product(name: "SwaggerSwiftML", package: "SwaggerSwiftML")
             ]),
         .testTarget(
             name: "SwaggerSwiftCoreTests",

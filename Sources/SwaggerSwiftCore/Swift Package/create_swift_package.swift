@@ -19,13 +19,13 @@ class SwiftPackageBuilder {
     private let projectName: String
     private let platforms: String // Find better datastructure
     private var products: [Product]
-    
+
     init(projectName: String, platforms: String, products: [Product] = []) {
         self.projectName = projectName
         self.platforms = platforms
         self.products = products
     }
-    
+
     func buildPackageFile() -> String {
         let products = self.products.sorted(by: { $0.name < $1.name })
 
@@ -60,9 +60,9 @@ class SwiftPackageBuilder {
     """
     // swift-tools-version:5.5
     // The swift-tools-version declares the minimum version of Swift required to build this package.
-    
+
     import PackageDescription
-    
+
     let package = Package(
         name: "PROJECT_NAME",
         platforms: [.iOS(.v12)],
@@ -81,7 +81,7 @@ class SwiftPackageBuilder {
             .replacingOccurrences(of: "PRODUCTS", with: productsLine)
             .replacingOccurrences(of: "TARGETS", with: targetsLine)
     }
-    
+
 }
 
 func createSwiftProject(at path: String, named name: String, sharedTargetName: String, targets: [String] = [], fileManager: FileManager = FileManager.default) throws {
@@ -100,4 +100,3 @@ func createSwiftProject(at path: String, named name: String, sharedTargetName: S
         .replacingOccurrences(of: "PROJECT_NAME", with: name)
         .write(toFile: expandPath + "/Package.swift", atomically: true, encoding: .utf8)
 }
-
