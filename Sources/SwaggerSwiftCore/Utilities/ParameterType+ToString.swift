@@ -94,9 +94,9 @@ private func typeOfDataFormat(_ dataFormat: DataFormat) -> TypeType {
     case .long:
         return .int
     case .float:
-        return .int
+        return .float
     case .double:
-        return .int
+        return .double
     case .string:
         return .string
     case .byte:
