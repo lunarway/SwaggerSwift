@@ -1,9 +1,9 @@
 import Foundation
 import SwaggerSwiftML
 
-func parse(swagger: Swagger, swaggerFile: SwaggerFile, verbose: Bool) -> ServiceDefinition {
+func parse(swagger: Swagger, swaggerFile: SwaggerFile) -> ServiceDefinition {
     let result = swagger.paths
-        .map { parse(path: $0.value, servicePath: $0.key, swagger: swagger, swaggerFile: swaggerFile, verbose: verbose) }
+        .map { parse(path: $0.value, servicePath: $0.key, swagger: swagger, swaggerFile: swaggerFile) }
 
     let functions = result.flatMap { $0.0 }
     let definitions = result.flatMap { $0.1 }

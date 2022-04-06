@@ -23,10 +23,8 @@ struct Response {
     let embeddedDefinitions: [ModelDefinition]
 }
 
-func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, servicePath: String, parameters: [Parameter], swagger: Swagger, swaggerFile: SwaggerFile, verbose: Bool) -> (NetworkRequestFunction, [ModelDefinition])? {
-    if verbose {
-        print("-> Creating function for request: \(httpMethod.rawValue.uppercased()) \(servicePath)", to: &stderr)
-    }
+func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, servicePath: String, parameters: [Parameter], swagger: Swagger, swaggerFile: SwaggerFile) -> (NetworkRequestFunction, [ModelDefinition])? {
+    log("-> Creating function for request: \(httpMethod.rawValue.uppercased()) \(servicePath)")
 
     var functionName: String
     if let overrideName = operation.operationId {
@@ -171,11 +169,11 @@ func parse(operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, serviceP
         case "multipart/form-data":
             consumes = .multiPartFormData
         default:
-            print("⚠️⚠️⚠️ Does not support consume type: \(consume) ⚠️⚠️⚠️")
+            log("⚠️⚠️⚠️ Does not support consume type: \(consume) ⚠️⚠️⚠️")
             return nil
         }
     } else {
-        print("⚠️⚠️⚠️ No provided consumer or not supported for function \(httpMethod.rawValue) \(servicePath), skipping ⚠️⚠️⚠️")
+        log("⚠️⚠️⚠️ No provided consumer or not supported for function \(httpMethod.rawValue) \(servicePath), skipping ⚠️⚠️⚠️")
         return nil
     }
 

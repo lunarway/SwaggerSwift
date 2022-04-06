@@ -45,7 +45,8 @@ func parse(request requestNode: Node<SwaggerSwiftML.Response>, httpMethod: HTTPM
     if let schemaNode = request.schema {
         switch schemaNode {
         case .node(let schema):
-            return getType(forSchema: schema, typeNamePrefix: prefix, swagger: swagger)
+            let (type, embeddedDefinitions) = getType(forSchema: schema, typeNamePrefix: prefix, swagger: swagger)
+            return (type, embeddedDefinitions)
         case .reference(let ref):
             let schema = swagger.findSchema(node: .reference(ref))
             let typeName = (ref.components(separatedBy: "/").last ?? "").uppercasingFirst

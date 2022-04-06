@@ -1,5 +1,4 @@
 struct SwaggerFile: Decodable {
-
     let path: String
     let organisation: String
     let services: [String: Service]
@@ -25,5 +24,10 @@ struct SwaggerFile: Decodable {
         self.organisation = try container.decode(String.self, forKey: .organisation)
         self.services = try container.decode([String: Service].self, forKey: .services)
         self.globalHeaders = try container.decodeIfPresent([String].self, forKey: .globalHeaders)
+    }
+
+    struct Service: Decodable {
+        let branch: String?
+        let path: String?
     }
 }

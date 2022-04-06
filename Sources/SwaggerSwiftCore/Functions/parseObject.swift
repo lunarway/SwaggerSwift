@@ -108,7 +108,7 @@ private func parseAllOf(allOf: [Node<Schema>], typeName: String, swagger: Swagge
         case .node(let innerSchema):
             if case let SchemaType.object(properties, allOfItems) = innerSchema.type {
                 if let allOfItems = allOfItems, allOfItems.count > 0 {
-                    print("There allOf items present but it is not currently supported")
+                    log("There allOf items present but it is not currently supported")
                 }
 
                 let result: [(ModelField, [ModelDefinition])] = properties.map {

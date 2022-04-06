@@ -33,7 +33,7 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
             case .byte: fallthrough
             case .boolean: fallthrough
             case .int32:
-                print("⚠️ \(swagger.serviceName): A string should not be defined to be a \(format.toString)", to: &stderr)
+                log("⚠️ \(swagger.serviceName): A string should not be defined to be a \(format.toString)", error: true)
                 return (.object(typeName: "String"), [])
             case .unsupported(let unsupported):
                 switch unsupported {
@@ -46,7 +46,7 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
                 case "uri":
                     return (.object(typeName: "URL"), [])
                 default:
-                    print("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(unsupported)' for strings", to: &stderr)
+                    log("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(unsupported)' for strings", error: true)
                     return (.object(typeName: "String"), [])
                 }
             }
@@ -69,7 +69,7 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
             case .byte: fallthrough
             case .binary: fallthrough
             case .boolean:
-                print("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(format.toString)' for ints", to: &stderr)
+                log("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(format.toString)' for ints", error: true)
                 return (.int, [])
             case .unsupported(let unsupported):
                 switch unsupported {
@@ -80,7 +80,7 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
                 case "decimal":
                     return (.double, [])
                 default:
-                    print("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(unsupported)' for ints", to: &stderr)
+                    log("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(unsupported)' for ints", error: true)
                     return (.int, [])
                 }
             }
@@ -103,7 +103,7 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
             case .byte: fallthrough
             case .binary: fallthrough
             case .boolean:
-                print("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(format.toString)' for number", to: &stderr)
+                log("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(format.toString)' for number", error: true)
                 return (.double, [])
             case .unsupported(let unsupported):
                 switch unsupported {
@@ -112,12 +112,12 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
                 case "int64":
                     return (.int64, [])
                 case "float64":
-                    print("⚠️ \(swagger.serviceName): `format: float64` format does not exist for type number in the Swagger spec. Please change it to specify `format: double` instead.", to: &stderr)
+                    log("⚠️ \(swagger.serviceName): `format: float64` format does not exist for type number in the Swagger spec. Please change it to specify `format: double` instead.", error: true)
                     return (.double, [])
                 case "decimal":
                     return (.double, [])
                 default:
-                    print("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(unsupported)' for number", to: &stderr)
+                    log("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(unsupported)' for number", error: true)
                     return (.double, [])
                 }
             }
