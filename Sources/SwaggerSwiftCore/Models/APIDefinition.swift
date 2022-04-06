@@ -2,7 +2,7 @@ import Foundation
 import SwaggerSwiftML
 
 /// Represent the overall service definition with all the network request methods and the primary initialiser
-struct ServiceDefinition {
+struct APIDefinition {
     let typeName: String
     let description: String?
     let fields: [ServiceField]
@@ -10,7 +10,7 @@ struct ServiceDefinition {
     let innerTypes: [ModelDefinition]
 }
 
-extension ServiceDefinition: Swiftable {
+extension APIDefinition: Swiftable {
     func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool, packagesToImport: [String]) -> String {
         let imports = packagesToImport.reduce(into: "import Foundation\n", {accumulator, element in
             accumulator += "import \(element)\n"

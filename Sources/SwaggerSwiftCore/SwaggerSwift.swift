@@ -137,7 +137,7 @@ public struct SwaggerSwift {
         // create directories
         try fileManager.createDirectory(atPath: modelDirectory, withIntermediateDirectories: true, attributes: nil)
 
-        let apiDefinition = SwaggerSwiftCore.parse(swagger: swagger, swaggerFile: swaggerFile)
+        let apiDefinition = APIGenerator().generate(for: swagger, withSwaggerFile: swaggerFile)
 
         let apiDefinitionFile = apiDefinition.toSwift(
             serviceName: swagger.serviceName,
