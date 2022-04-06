@@ -111,6 +111,9 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
                     return (.int, [])
                 case "int64":
                     return (.int64, [])
+                case "float64":
+                    print("⚠️ \(swagger.serviceName): `format: float64` format does not exist for type number in the Swagger spec. Please change it to specify `format: double` instead.", to: &stderr)
+                    return (.double, [])
                 case "decimal":
                     return (.double, [])
                 default:

@@ -14,25 +14,8 @@ struct GlobalHeadersModel {
                        required: true)
         }
 
-        let initParameterStrings: [String] = fields.map { field in
-            let defaultArg: String
-            if let defaultValue = field.defaultValue {
-                defaultArg = " = " + defaultValue
-            } else {
-                defaultArg = ""
-            }
-
-            let fieldType = "\(field.type.toString(required: field.required || field.defaultValue != nil))"
-
-            if field.isNamedAfterSwiftKeyword {
-                return "\(field.argumentLabel) \(field.safeParameterName): \(fieldType)\(defaultArg)"
-            } else {
-                return "\(field.safeParameterName): \(fieldType)\(defaultArg)"
-            }
-        }
-
         let initMethod = """
-public init(\(initParameterStrings.joined(separator: ", "))) {
+public init(\(fields.asInitParameter())) {
     \(fields.map { "self.\($0.safePropertyName) = \($0.safeParameterName)" }.joined(separator: "\n    "))
 }
 """

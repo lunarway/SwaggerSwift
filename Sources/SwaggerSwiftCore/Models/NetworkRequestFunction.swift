@@ -46,7 +46,9 @@ extension NetworkRequestFunction: Swiftable {
     }
 
     func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool, packagesToImport: [String]) -> String {
-        let arguments = parameters.map { "\($0.name.variableNameFormatted): \($0.typeName.toString(required: $0.required))" }.joined(separator: ", ")
+        let arguments = parameters.map {
+            "\($0.name.variableNameFormatted): \($0.typeName.toString(required: $0.required))\($0.required ? "" : " = nil")"
+        }.joined(separator: ", ")
 
         let servicePath = self.servicePath.split(separator: "/").map {
             let path = String($0)

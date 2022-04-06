@@ -22,7 +22,7 @@ final class SwaggerSwiftTests: XCTestCase {
 public struct Test: Codable {
     public let url: URL?
 
-    public init(url: URL?) {
+    public init(url: URL? = nil) {
         self.url = url
     }
 

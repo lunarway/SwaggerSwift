@@ -4,13 +4,18 @@ import Foundation
 struct ModelField {
     let description: String?
     let type: TypeType
-    let required: Bool
+    let isRequired: Bool
     let argumentLabel: String
     let safePropertyName: SafePropertyName
     let safeParameterName: SafeParameterName
     let defaultValue: String?
-    var isNamedAfterSwiftKeyword: Bool {
-        return argumentLabel != safeParameterName.value
+
+    /// Tells whether the field name present in the final Swift model is the same as the one used in the Swagger
+    var usesSwaggerFieldName: Bool {
+        let nameWasSafe = safeParameterName.value == argumentLabel
+        let nameMatchesVariableNameFormatting = safeParameterName.value.variableNameFormatted == argumentLabel
+
+        return nameWasSafe && nameMatchesVariableNameFormatting
     }
 
     init(description: String?, type: TypeType, name: String, required: Bool) {
@@ -19,7 +24,7 @@ struct ModelField {
         self.argumentLabel = name
         self.safePropertyName = SafePropertyName(name)
         self.safeParameterName = SafeParameterName(name)
-        self.required = required
+        self.isRequired = required
 
         switch type {
         case .boolean(let defaultValue):
@@ -40,7 +45,7 @@ struct ModelField {
 
 extension ModelField {
     var toSwift: String {
-        let declaration = "public let \(safePropertyName): \(type.toString(required: required || defaultValue != nil))"
+        let declaration = "public let \(safePropertyName.value.variableNameFormatted): \(type.toString(required: isRequired || defaultValue != nil))"
         if let desc = description {
             return """
 \(desc.components(separatedBy: "\n").filter { $0.isEmpty == false }.map { "// \($0)" }.joined(separator: "\n").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines))
@@ -49,5 +54,32 @@ extension ModelField {
         } else {
             return declaration
         }
+    }
+}
+
+extension Sequence where Element == ModelField {
+    func asInitParameter() -> String {
+        self.map { field in
+            let fieldType = "\(field.type.toString(required: field.isRequired || field.defaultValue != nil))"
+
+            var declaration: String
+            if field.argumentLabel.variableNameFormatted != field.safeParameterName.value.variableNameFormatted {
+                // MyFieldName myFieldName: FieldType
+                declaration = "\(field.argumentLabel.variableNameFormatted) \(field.safeParameterName.value.variableNameFormatted): \(fieldType)"
+            } else {
+                // myFieldName: FieldType
+                declaration = "\(field.safeParameterName.value.variableNameFormatted): \(fieldType)"
+            }
+
+            if let defaultValue = field.defaultValue {
+                declaration += " = " + defaultValue
+            }
+
+            if field.isRequired == false && field.defaultValue == nil {
+                declaration += " = nil"
+            }
+
+            return declaration
+        }.joined(separator: ", ")
     }
 }
