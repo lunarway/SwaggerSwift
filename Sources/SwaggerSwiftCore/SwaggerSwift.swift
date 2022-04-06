@@ -4,6 +4,14 @@ import SwaggerSwiftML
 public struct SwaggerSwift {
     public init() {}
 
+    /// Parse and generate the network layer for a SwaggerFile
+    /// - Parameters:
+    ///   - swaggerFilePath: The path to the SwaggerFile
+    ///   - githubToken: A GitHub token
+    ///   - destinationPath: The path to where the API Swift Package should be created
+    ///   - projectName: The api suite name
+    ///   - verbose: Should logs be shown
+    ///   - apiFilterList: A list of APIs that should be parsed - can be used to filter away other APIs
     public func parse(swaggerFilePath: String, githubToken: String, destinationPath: String, projectName: String, verbose: Bool = false, apiFilterList: [String]?) async throws {
         isVerboseMode = verbose
 
@@ -83,7 +91,7 @@ public struct SwaggerSwift {
         )
 
         try createCommonLibrary(
-            path: destinationPath,
+            path: swiftPackageSourcesDirectory,
             commonLibraryName: commonLibraryName,
             swaggerFile: swaggerFile,
             fileManager: fileManager
@@ -163,7 +171,7 @@ public struct SwaggerSwift {
     }
 
     private func createCommonLibrary(path: String, commonLibraryName: String, swaggerFile: SwaggerFile, fileManager: FileManager) throws {
-        let targetPath = [path, "Sources", commonLibraryName].joined(separator: "/")
+        let targetPath = path + "/" + commonLibraryName
 
         try fileManager.createDirectory(atPath: targetPath,
                                         withIntermediateDirectories: true,
