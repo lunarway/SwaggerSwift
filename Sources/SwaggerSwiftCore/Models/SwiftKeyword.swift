@@ -21,7 +21,7 @@ enum SwiftKeyword: String {
         case .kOperator:
             return "`operator`"
         case .kSelf:
-            return "_self"
+            return "this"
         case .kPrivate:
             return "`private`"
         case .kPublic:

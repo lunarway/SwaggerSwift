@@ -38,26 +38,9 @@ struct Model {
             comment = nil
         }
 
-        let initParameterStrings: [String] = fields.map { field in
-            let defaultArg: String
-            if let defaultValue = field.defaultValue {
-                defaultArg = " = " + defaultValue
-            } else {
-                defaultArg = ""
-            }
-
-            let fieldType = "\(field.type.toString(required: field.required || field.defaultValue != nil))"
-
-            if field.isNamedAfterSwiftKeyword {
-                return "\(field.argumentLabel) \(field.safeParameterName): \(fieldType)\(defaultArg)"
-            } else {
-                return "\(field.safeParameterName): \(fieldType)\(defaultArg)"
-            }
-        }
-
         let initMethod = """
-public init(\(initParameterStrings.joined(separator: ", "))) {
-    \(fields.map { "self.\($0.safePropertyName) = \($0.safeParameterName)" }.joined(separator: "\n    "))
+public init(\(fields.asInitParameter())) {
+    \(fields.map { "self.\($0.safePropertyName.value.variableNameFormatted) = \($0.safeParameterName.value.variableNameFormatted)" }.joined(separator: "\n    "))
 }
 """
 
@@ -75,16 +58,16 @@ public init(\(initParameterStrings.joined(separator: ", "))) {
 
         model += "\n\n" + initMethod.indentLines(1)
 
-        let fieldIsNamedAfterKeyword = fields.contains(where: { $0.isNamedAfterSwiftKeyword })
+        let fieldsChangesSwaggerFieldNames = fields.contains(where: { $0.usesSwaggerFieldName == false })
         let fieldHasDefaultValue = fields.contains(where: { $0.defaultValue != nil })
-        let fieldHasOptionalURL = fields.contains(where: { $0.type.toString(required: true) == "URL" && !$0.required })
+        let fieldHasOptionalURL = fields.contains(where: { $0.type.toString(required: true) == "URL" && !$0.isRequired })
 
-        if isCodable && (fieldIsNamedAfterKeyword || fieldHasDefaultValue || fieldHasOptionalURL) {
+        if isCodable && (fieldsChangesSwaggerFieldNames || fieldHasDefaultValue || fieldHasOptionalURL) {
             model += "\n\n"
-            model += encodeFunction().indentLines(1)
+            model += decodeFunction().indentLines(1)
         }
 
-        if isCodable && fieldIsNamedAfterKeyword {
+        if isCodable && fieldsChangesSwaggerFieldNames {
             model += "\n\n"
             model += codingKeysFunction().indentLines(1)
         }
@@ -105,7 +88,7 @@ public init(\(initParameterStrings.joined(separator: ", "))) {
     }
 
     private func codingKeysFunction() -> String {
-        let cases = fields.map { "case \($0.safeParameterName) = \"\($0.argumentLabel)\"" }.joined(separator: "\n").indentLines(1)
+        let cases = fields.map { "case \($0.safeParameterName.value.variableNameFormatted) = \"\($0.argumentLabel)\"" }.joined(separator: "\n").indentLines(1)
 
         return """
         enum CodingKeys: String, CodingKey {
@@ -114,12 +97,12 @@ public init(\(initParameterStrings.joined(separator: ", "))) {
         """
     }
 
-    private func encodeFunction() -> String {
+    private func decodeFunction() -> String {
         let decodeFields = fields.map {
-            let variableName = $0.safePropertyName
+            let variableName = $0.safePropertyName.value.variableNameFormatted
             let typeName = $0.type.toString(required: true)
             let decodeIfPresent: String
-            if $0.required == false || $0.defaultValue != nil {
+            if $0.isRequired == false || $0.defaultValue != nil {
                 decodeIfPresent = "IfPresent"
             } else {
                 decodeIfPresent = ""
@@ -132,7 +115,7 @@ public init(\(initParameterStrings.joined(separator: ", "))) {
                 defaultValue = ""
             }
 
-            if !$0.required, typeName == "URL" {
+            if !$0.isRequired, typeName == "URL" {
                 return """
             // Allows the backend to return badly formatted urls
             if let urlString = try container.decode\(decodeIfPresent)(String.self, forKey: .\(variableName))\(defaultValue) {

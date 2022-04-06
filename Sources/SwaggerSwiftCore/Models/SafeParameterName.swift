@@ -4,8 +4,8 @@ struct SafeParameterName: Equatable, Hashable {
     let value: String
 
     init(_ parameterName: String) {
-        if SwiftKeyword(rawValue: parameterName) != nil {
-            value = "_\(parameterName)"
+        if let keyword = SwiftKeyword(rawValue: parameterName) {
+            value = keyword.safePropertyName
         } else {
             value = parameterName
         }
