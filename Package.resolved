@@ -1,34 +1,32 @@
 {
-  "object": {
-    "pins": [
-      {
-        "package": "SwaggerSwiftML",
-        "repositoryURL": "https://github.com/lunarway/SwaggerSwiftML",
-        "state": {
-          "branch": null,
-          "revision": "a21ef0cae5c410b559f8607f6c857e633e7c20e5",
-          "version": "1.0.17"
-        }
-      },
-      {
-        "package": "swift-argument-parser",
-        "repositoryURL": "https://github.com/apple/swift-argument-parser",
-        "state": {
-          "branch": null,
-          "revision": "6b2aa2748a7881eebb9f84fb10c01293e15b52ca",
-          "version": "0.5.0"
-        }
-      },
-      {
-        "package": "Yams",
-        "repositoryURL": "https://github.com/jpsim/Yams.git",
-        "state": {
-          "branch": null,
-          "revision": "81a65c4069c28011ee432f2858ba0de49b086677",
-          "version": "3.0.1"
-        }
+  "pins" : [
+    {
+      "identity" : "swaggerswiftml",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/lunarway/SwaggerSwiftML",
+      "state" : {
+        "revision" : "a21ef0cae5c410b559f8607f6c857e633e7c20e5",
+        "version" : "1.0.17"
       }
-    ]
-  },
-  "version": 1
+    },
+    {
+      "identity" : "swift-argument-parser",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-argument-parser",
+      "state" : {
+        "revision" : "82905286cc3f0fa8adc4674bf49437cab65a8373",
+        "version" : "1.1.1"
+      }
+    },
+    {
+      "identity" : "yams",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/jpsim/Yams.git",
+      "state" : {
+        "revision" : "81a65c4069c28011ee432f2858ba0de49b086677",
+        "version" : "3.0.1"
+      }
+    }
+  ],
+  "version" : 2
 }

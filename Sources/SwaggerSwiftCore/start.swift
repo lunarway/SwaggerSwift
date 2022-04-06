@@ -231,12 +231,12 @@ public func dateDecodingStrategy(_ decoder: Decoder) throws -> Date {
 """
 
 // token
-public func start(swaggerFilePath: String, token: String, destinationPath: String, projectName: String = "Services", verbose: Bool = false, apiList: [String]? = nil) throws {
+public func start(swaggerFilePath: String, token: String, destinationPath: String, projectName: String = "Services", verbose: Bool = false, apiList: [String]? = nil) async throws {
     if verbose {
         print("Parsing swagger at \(swaggerFilePath)", to: &stdout)
     }
 
-    let (swaggers, swaggerFile) = try SwaggerFileParser.parse(path: swaggerFilePath, authToken: token, apiList: apiList, verbose: verbose)
+    let (swaggers, swaggerFile) = try await SwaggerFileParser.parse(path: swaggerFilePath, authToken: token, apiList: apiList, verbose: verbose)
 
     if verbose {
         print("Creating Swift Project at \(destinationPath)")
@@ -248,8 +248,8 @@ public func start(swaggerFilePath: String, token: String, destinationPath: Strin
     let sharedDirectory = [destinationPath, "Sources", sharedTargetName].joined(separator: "/")
 
     try FileManager.default.createDirectory(atPath: sharedDirectory,
-                                    withIntermediateDirectories: true,
-                                    attributes: nil)
+                                            withIntermediateDirectories: true,
+                                            attributes: nil)
     try! serviceError.write(toFile: "\(sharedDirectory)/ServiceError.swift", atomically: true, encoding: .utf8)
     try! urlQueryItemExtension.write(toFile: "\(sharedDirectory)/URLQueryExtension.swift", atomically: true, encoding: .utf8)
     try! parsingErrorExtension.write(toFile: "\(sharedDirectory)/ParsingError.swift", atomically: true, encoding: .utf8)
@@ -279,11 +279,11 @@ public func start(swaggerFilePath: String, token: String, destinationPath: Strin
 
         let serviceDefinition = parse(swagger: swagger, swaggerFile: swaggerFile, verbose: verbose)
 
-        try! serviceDefinition.toSwift(serviceName: swagger.serviceName, swaggerFile: swaggerFile, embedded: false, packagesToImport: [sharedTargetName])
+        try! serviceDefinition.toSwift(serviceName: swagger.serviceName, typePrefix: [], swaggerFile: swaggerFile, embedded: false, packagesToImport: [sharedTargetName])
             .write(toFile: "\(serviceDirectory)/\(serviceDefinition.typeName).swift", atomically: true, encoding: .utf8)
 
         for type in serviceDefinition.innerTypes {
-            let file = type.toSwift(serviceName: swagger.serviceName, swaggerFile: swaggerFile, embedded: false, packagesToImport: [sharedTargetName])
+            let file = type.toSwift(serviceName: swagger.serviceName, typePrefix: [], swaggerFile: swaggerFile, embedded: false, packagesToImport: [sharedTargetName])
             let filename = "\(modelDirectory)/\(serviceDefinition.typeName)_\(type.typeName).swift"
             try! file.write(toFile: filename, atomically: true, encoding: .utf8)
             if verbose {

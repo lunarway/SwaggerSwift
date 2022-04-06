@@ -27,8 +27,14 @@ struct StdErr: TextOutputStream {
 var stdout = StdOut()
 var stderr = StdErr()
 
+private struct SwaggerRequest {
+    let branchName: String?
+    let serviceName: String
+    let request: URLRequest
+}
+
 struct SwaggerFileParser {
-    static func parse(path: String, authToken: String, apiList: [String]? = nil, verbose: Bool) throws -> ([Swagger], SwaggerFile) {
+    static func parse(path: String, authToken: String, apiList: [String]? = nil, verbose: Bool) async throws -> ([Swagger], SwaggerFile) {
         guard let data = FileManager.default.contents(atPath: path) else {
             throw NSError(domain: "SwaggerFileParser", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to load SwaggerFile at \(path)"])
         }
@@ -41,7 +47,7 @@ struct SwaggerFileParser {
 
         let services = swaggerFile.services.filter { apiList?.contains($0.key) ?? true }
 
-        let requests = services.map { service -> (branch: String?, serviceName: String, request: URLRequest) in
+        let requests = services.map { service -> SwaggerRequest in
             let url = URL(string: "https://raw.githubusercontent.com/\(swaggerFile.organisation)/\(service.key)/\(service.value.branch ?? "master")/\(service.value.path ?? swaggerFile.path)")!
             if verbose {
                 print("Downloading Swagger at: \(url.absoluteString)", to: &stdout)
@@ -50,53 +56,57 @@ struct SwaggerFileParser {
             var request = URLRequest(url: url)
             request.addValue("token \(authToken)", forHTTPHeaderField: "Authorization")
             request.addValue("application/vnd.github.v3.raw", forHTTPHeaderField: "Accept")
-            return (service.value.branch, service.key, request)
+            return SwaggerRequest(branchName: service.value.branch, serviceName: service.key, request: request)
         }
 
-        let dispatchGroup = DispatchGroup()
+        let swaggers: [Swagger] = try await withThrowingTaskGroup(of: Swagger?.self) { group in
+            for request in requests {
+                group.addTask {
+                    do {
+                        let (data, response) = try await URLSession.shared.data(for: request.request)
+                        if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+                            print("[\(request.serviceName)]: Failed to download Swagger", to: &stderr)
+                            if let branch = request.branchName {
+                                print("[\(request.serviceName)]: ⚠️⚠️⚠️ The branch was defined as ´\(branch)´. Perhaps this branch is deleted now? ⚠️⚠️⚠️", to: &stderr)
+                            }
 
-        var swaggers = [Swagger]()
-        for request in requests {
-            dispatchGroup.enter()
-            URLSession.shared.dataTask(with: request.2) { data, response, error in
-                defer { dispatchGroup.leave() }
-                if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
-                    print("Failed to download Swagger for \(request.1)", to: &stderr)
-                    if let branch = request.branch {
-                        print("⚠️⚠️⚠️ The branch was defined as ´\(branch)´. Perhaps this branch is deleted now? ⚠️⚠️⚠️", to: &stderr)
+                            print("- If this is happening to all of your services your github token might not be valid", to: &stderr)
+                            print("- HTTP Status: \(httpResponse.statusCode)", to: &stderr)
+                            print("- HTTP URL: \(httpResponse.url!.absoluteString)", to: &stderr)
+                            return nil
+                        }
+
+                        let stringValue = String(data: data, encoding: .utf8)!
+
+                        do {
+                            let swagger = try SwaggerReader.read(text: stringValue)
+                            return swagger
+                        } catch let error {
+                            print("[\(request.serviceName)]: 🚨🚨🚨 Failed to read Swagger for service: \(request.serviceName) 🚨🚨🚨 ", to: &stderr)
+                            if let branch = request.branchName {
+                                print("[\(request.serviceName)]: ⚠️⚠️⚠️ The branch was defined as ´\(branch)´. Perhaps this branch is broken now? ⚠️⚠️⚠️", to: &stderr)
+                            }
+
+                            print("🚨🚨🚨 \(error.localizedDescription)", to: &stderr)
+                            return nil
+                        }
+                    } catch let error {
+                        print("[\(request.serviceName)]: 🚨 Failed to download Swagger", to: &stderr)
+                        print("[\(request.serviceName)]: 🚨 - \(error.localizedDescription)", to: &stderr)
+                        return nil
                     }
-
-                    print("- If this is happening to all of your services your github token might not be valid", to: &stderr)
-                    print("- HTTP Status: \(httpResponse.statusCode)", to: &stderr)
-                    print("- HTTP URL: \(httpResponse.url!.absoluteString)", to: &stderr)
-                    return
                 }
+            }
 
-                if let error = error {
-                    print("🚨 Failed to  download Swagger for \(request.1)", to: &stderr)
-                    print("🚨 - \(error.localizedDescription)", to: &stderr)
-                    return
-                }
-
-                guard let data = data else { return }
-
-                let stringValue = String(data: data, encoding: .utf8)!
-
-                do {
-                    let swagger = try SwaggerReader.read(text: stringValue)
+            var swaggers = [Swagger]()
+            for try await swagger in group {
+                if let swagger = swagger {
                     swaggers.append(swagger)
-                } catch let error {
-                    print("🚨🚨🚨 Failed to read Swagger for service: \(request.serviceName) 🚨🚨🚨 ", to: &stderr)
-                    if let branch = request.branch {
-                        print("⚠️⚠️⚠️ The branch was defined as ´\(branch)´. Perhaps this branch is broken now? ⚠️⚠️⚠️", to: &stderr)
-                    }
-
-                    print("🚨🚨🚨 \(error.localizedDescription)", to: &stderr)
                 }
-            }.resume()
-        }
+            }
 
-        dispatchGroup.wait()
+            return swaggers
+        }
 
         return (swaggers, swaggerFile)
     }

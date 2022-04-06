@@ -1,7 +1,8 @@
 import ArgumentParser
 import SwaggerSwiftCore
 
-struct SwaggerSwiftParser: ParsableCommand {
+@main
+struct SwaggerSwiftParser: AsyncParsableCommand {
     @Option(name: .shortAndLong, help: "Path to SwaggerFile")
     var swaggerFilePath: String = "./SwaggerFile"
 
@@ -22,14 +23,12 @@ struct SwaggerSwiftParser: ParsableCommand {
     })
     var apiList: [String]?
 
-    mutating func run() throws {
-        try start(swaggerFilePath: swaggerFilePath,
-                  token: gitHubToken,
-                  destinationPath: destinationPath,
-                  projectName: projectName,
-                  verbose: verbose,
-                  apiList: apiList)
+    mutating func run() async throws {
+        try await start(swaggerFilePath: swaggerFilePath,
+                        token: gitHubToken,
+                        destinationPath: destinationPath,
+                        projectName: projectName,
+                        verbose: verbose,
+                        apiList: apiList)
     }
 }
-
-SwaggerSwiftParser.main()
