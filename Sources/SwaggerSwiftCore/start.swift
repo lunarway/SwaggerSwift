@@ -279,11 +279,11 @@ public func start(swaggerFilePath: String, token: String, destinationPath: Strin
 
         let serviceDefinition = parse(swagger: swagger, swaggerFile: swaggerFile, verbose: verbose)
 
-        try! serviceDefinition.toSwift(serviceName: swagger.serviceName, typePrefix: [], swaggerFile: swaggerFile, embedded: false, packagesToImport: [sharedTargetName])
+        try! serviceDefinition.toSwift(serviceName: swagger.serviceName, swaggerFile: swaggerFile, embedded: false, packagesToImport: [sharedTargetName])
             .write(toFile: "\(serviceDirectory)/\(serviceDefinition.typeName).swift", atomically: true, encoding: .utf8)
 
         for type in serviceDefinition.innerTypes {
-            let file = type.toSwift(serviceName: swagger.serviceName, typePrefix: [], swaggerFile: swaggerFile, embedded: false, packagesToImport: [sharedTargetName])
+            let file = type.toSwift(serviceName: swagger.serviceName, swaggerFile: swaggerFile, embedded: false, packagesToImport: [sharedTargetName])
             let filename = "\(modelDirectory)/\(serviceDefinition.typeName)_\(type.typeName).swift"
             try! file.write(toFile: filename, atomically: true, encoding: .utf8)
             if verbose {
