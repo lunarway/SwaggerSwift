@@ -24,8 +24,8 @@ struct SwaggerSwiftParser: AsyncParsableCommand {
     var apiList: [String]?
 
     mutating func run() async throws {
-        let swaggerSwift = SwaggerSwiftCore.SwaggerSwift()
-        try await swaggerSwift.parse(
+        let swaggerParser = SwaggerSwiftCore.SwaggerParser()
+        try await swaggerParser.parse(
             swaggerFilePath: swaggerFilePath,
             githubToken: gitHubToken,
             destinationPath: destinationPath,

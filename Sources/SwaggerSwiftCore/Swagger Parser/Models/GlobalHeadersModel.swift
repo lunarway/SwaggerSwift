@@ -8,25 +8,25 @@ struct GlobalHeadersModel {
 
     func modelDefinition(serviceName: String?, swaggerFile: SwaggerFile) -> String {
         let fields = headerFields.map {
-            ModelField(description: nil,
-                       type: .string,
-                       name: makeHeaderFieldName(headerName: $0),
-                       required: true)
+            APIRequestHeaderField(
+                headerName: $0,
+                isRequired: true
+            )
         }
 
         let initMethod = """
 public init(\(fields.asInitParameter())) {
-    \(fields.map { "self.\($0.safePropertyName) = \($0.safeParameterName)" }.joined(separator: "\n    "))
+    \(fields.map { "self.\($0.swiftyName) = \($0.swiftyName)" }.joined(separator: "\n    "))
 }
 """
 
-        let properties = fields.sorted(by: { $0.safePropertyName < $1.safePropertyName }).flatMap { $0.toSwift.split(separator: "\n") }
+        let properties = fields.asPropertyList()
 
         var model = ""
 
         model += "public struct \(typeName) {\n"
 
-        model += properties.map { $0 }.joined(separator: "\n").indentLines(1)
+        model += properties.indentLines(1)
 
         model += "\n\n"
 
@@ -42,11 +42,18 @@ public init(\(fields.asInitParameter())) {
     }
 
     func addToRequestFunction() -> String {
+        let fields = headerFields.map {
+            APIRequestHeaderField(
+                headerName: $0,
+                isRequired: true
+            )
+        }
+
         var function = ""
 
         function += "public func add(to request: inout URLRequest) {\n"
 
-        function += headerFields.map { "request.addValue(\(makeHeaderFieldName(headerName: $0)), forHTTPHeaderField: \"\($0)\")" }.joined(separator: "\n").indentLines(1)
+        function += fields.map { "request.addValue(\($0.swiftyName)), forHTTPHeaderField: \"\($0.fullHeaderName)\")" }.joined(separator: "\n").indentLines(1)
         function += "\n"
 
         function += "}"

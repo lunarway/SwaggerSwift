@@ -1,7 +1,7 @@
 import SwaggerSwiftML
 
-extension DataFormat {
-    var toString: String {
+extension DataFormat: CustomStringConvertible {
+    public var description: String {
         switch self {
         case .int32:
             return "Int"

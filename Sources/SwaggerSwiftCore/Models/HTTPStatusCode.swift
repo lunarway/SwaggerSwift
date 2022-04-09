@@ -1,6 +1,6 @@
 import Foundation
 
-enum HTTPStatusCodes: Int, Codable {
+enum HTTPStatusCode: Int, Codable {
     case `continue` = 100
     case switchingProtocols = 101
     case processing = 102

@@ -33,7 +33,7 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
             case .byte: fallthrough
             case .boolean: fallthrough
             case .int32:
-                log("⚠️ \(swagger.serviceName): A string should not be defined to be a \(format.toString)", error: true)
+                log("⚠️ \(swagger.serviceName): A string should not be defined to be a \(format)", error: true)
                 return (.object(typeName: "String"), [])
             case .unsupported(let unsupported):
                 switch unsupported {
@@ -69,7 +69,7 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
             case .byte: fallthrough
             case .binary: fallthrough
             case .boolean:
-                log("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(format.toString)' for ints", error: true)
+                log("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(format)' for ints", error: true)
                 return (.int, [])
             case .unsupported(let unsupported):
                 switch unsupported {
@@ -103,7 +103,7 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
             case .byte: fallthrough
             case .binary: fallthrough
             case .boolean:
-                log("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(format.toString)' for number", error: true)
+                log("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(format)' for number", error: true)
                 return (.double, [])
             case .unsupported(let unsupported):
                 switch unsupported {
@@ -132,14 +132,16 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
                                typeNamePrefix: "\(typeNamePrefix)Item",
                                swagger: swagger)
         return (.array(typeName: type.0), type.1)
-    case .object(let properties, allOf: let allOf):
-        return parseObject(required: [],
-                           properties: properties,
-                           allOf: allOf,
-                           swagger: swagger,
-                           typeNamePrefix: typeNamePrefix,
-                           schema: schema,
-                           customFields: [:])
+    case .object(let properties, let allOf):
+        return ObjectModelFactory().make(
+            properties: properties,
+            requiredProperties: [],
+            allOf: allOf,
+            swagger: swagger,
+            typeNamePrefix: typeNamePrefix,
+            schema: schema,
+            customFields: [:]
+        )
     case .dictionary(valueType: let valueType, keys: _):
         switch valueType {
         case .any:
@@ -193,14 +195,16 @@ private func typeOfItems(schema: Schema, items: Node<Items>, typeNamePrefix: Str
             return (.boolean(defaultValue: nil), [])
         case .array(let items, collectionFormat: _, maxItems: _, minItems: _, uniqueItems: _):
             return typeOfItems(schema: schema, items: Node.node(items), typeNamePrefix: typeNamePrefix, swagger: swagger)
-        case .object(required: let required, properties: let properties, allOf: let allOf):
-            return parseObject(required: required,
-                               properties: properties,
-                               allOf: allOf,
-                               swagger: swagger,
-                               typeNamePrefix: typeNamePrefix,
-                               schema: schema,
-                               customFields: node.customFields)
+        case .object(let required, let properties, let allOf):
+            return ObjectModelFactory().make(
+                properties: properties,
+                requiredProperties: required,
+                allOf: allOf,
+                swagger: swagger,
+                typeNamePrefix: typeNamePrefix,
+                schema: schema,
+                customFields: node.customFields
+            )
         }
     }
 }

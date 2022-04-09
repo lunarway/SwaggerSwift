@@ -1,7 +1,7 @@
 import Foundation
 import SwaggerSwiftML
 
-public struct SwaggerSwift {
+public struct SwaggerParser {
     public init() {}
 
     /// Parse and generate the network layer for a SwaggerFile
@@ -137,16 +137,14 @@ public struct SwaggerSwift {
         // create directories
         try fileManager.createDirectory(atPath: modelDirectory, withIntermediateDirectories: true, attributes: nil)
 
-        let apiDefinition = APIGenerator().generate(for: swagger, withSwaggerFile: swaggerFile)
+        let (apiDefinition, apiModelDefinitions) = try APIFactory().generate(for: swagger, withSwaggerFile: swaggerFile)
 
         let apiDefinitionFile = apiDefinition.toSwift(
-            serviceName: swagger.serviceName,
             swaggerFile: swaggerFile,
-            embedded: false,
             packagesToImport: [commonLibraryName]
         )
 
-        let apiDefinitionFilename = "\(apiDirectory)/\(apiDefinition.typeName).swift"
+        let apiDefinitionFilename = "\(apiDirectory)/\(apiDefinition.serviceName).swift"
         try apiDefinitionFile.write(
             toFile: apiDefinitionFilename,
             atomically: true,
@@ -155,15 +153,15 @@ public struct SwaggerSwift {
 
         log("[\(swagger.serviceName)] 🖨 \(apiDefinitionFilename)")
 
-        for type in apiDefinition.innerTypes {
-            let file = type.toSwift(
+        for apiModel in apiModelDefinitions {
+            let file = apiModel.toSwift(
                 serviceName: swagger.serviceName,
                 swaggerFile: swaggerFile,
                 embedded: false,
                 packagesToImport: [commonLibraryName]
             )
 
-            let filename = "\(modelDirectory)/\(apiDefinition.typeName)_\(type.typeName).swift"
+            let filename = "\(modelDirectory)/\(apiDefinition.serviceName)_\(apiModel.typeName).swift"
             try file.write(toFile: filename, atomically: true, encoding: .utf8)
 
             log("[\(swagger.serviceName)] 🖨 \(filename)")
@@ -190,5 +188,39 @@ public struct SwaggerSwift {
             let globalHeadersFileContents = globalHeadersModel.toSwift(swaggerFile: swaggerFile)
             try globalHeadersFileContents.write(toFile: "\(targetPath)/GlobalHeaders.swift", atomically: true, encoding: .utf8)
         }
+    }
+
+    /// Creates the Package.swift file used in the Swift package
+    /// - Parameters:
+    ///   - path: the path to the swift package
+    ///   - name: the swift package name
+    ///   - commonLibraryName: The name of the common library. The common library is a library that contains the common SwaggerSwift files shared between the different API targets.
+    ///   - targets: the name of the API targets
+    ///   - fileManager: the file manager
+    /// - Throws: Throws if the files couldnt be created on disk
+    private func createPackageSwiftFile(at path: String, named name: String, commonLibraryName: String, apis: [String], fileManager: FileManager = FileManager.default) throws {
+        let commonTarget = SwiftPackageBuilder.Target(type: .target, name: commonLibraryName)
+        let apiTargets = apis.map {
+            SwiftPackageBuilder.Target(
+                type: .target,
+                name: $0,
+                dependencies: [commonTarget]
+            )
+        }
+
+        var targets = [commonTarget]
+        targets.append(contentsOf: apiTargets)
+
+        let product = SwiftPackageBuilder.Product(name: name, targets: targets)
+        let packageBuilder = SwiftPackageBuilder(projectName: name, platforms: "", products: [product])
+
+        let packageFile = packageBuilder.buildPackageFile()
+
+        let expandedPath = path.replacingOccurrences(of: "~", with: NSHomeDirectory())
+        // create the initial directory
+        try fileManager.createDirectory(atPath: expandedPath, withIntermediateDirectories: true)
+
+        // write package swift file
+        try packageFile.write(toFile: expandedPath + "/Package.swift", atomically: true, encoding: .utf8)
     }
 }

@@ -1,50 +1,7 @@
 import Foundation
 import SwaggerSwiftML
 
-enum NetworkRequestFunctionConsumes {
-    case json
-    case multiPartFormData
-}
-
-// describes a single network request function
-struct NetworkRequestFunction {
-    let description: String?
-    let functionName: String
-    let parameters: [FunctionParameter]
-    let `throws`: Bool
-    let consumes: NetworkRequestFunctionConsumes
-    let isInternalOnly: Bool
-    let isDeprecated: Bool
-
-    let httpMethod: String
-    let servicePath: String
-
-    /// URLQueryItems
-    let queries: [QueryElement]
-    let headers: [NetworkRequestFunctionHeaderField]
-    let responseTypes: [NetworkRequestFunctionResponseType]
-}
-
-struct NetworkRequestFunctionHeaderField {
-    /// is the field required
-    let required: Bool
-    /// The name of the field on the Swift type containing the object, e.g. xos
-    let headerModelName: String
-    /// The actual name of the header, e.g. x-OS
-    let fieldName: String
-
-    init(headerName: String, required: Bool) {
-        self.headerModelName = makeHeaderFieldName(headerName: headerName)
-        self.fieldName = headerName
-        self.required = required
-    }
-}
-
-extension NetworkRequestFunction: Swiftable {
-    var typeName: String {
-        return ""
-    }
-
+extension APIRequest {
     func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool, packagesToImport: [String]) -> String {
         let arguments = parameters.map {
             "\($0.name.variableNameFormatted): \($0.typeName.toString(required: $0.required))\($0.required ? "" : " = nil")"
@@ -115,14 +72,14 @@ extension NetworkRequestFunction: Swiftable {
         }
 
         var headerStatements: [String] = headers
-            .filter { !(swaggerFile.globalHeaders ?? []).map { $0.lowercased() }.contains($0.fieldName.lowercased()) }
+            .filter { !(swaggerFile.globalHeaders ?? []).map { $0.lowercased() }.contains($0.fullHeaderName.lowercased()) }
             .map {
-                if $0.required {
-                    return "request.addValue(headers.\($0.headerModelName), forHTTPHeaderField: \"\($0.fieldName)\")"
+                if $0.isRequired {
+                    return "request.addValue(headers.\($0.swiftyName), forHTTPHeaderField: \"\($0.fullHeaderName)\")"
                 } else {
                     return """
-if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
-        request.addValue(\(($0.headerModelName)), forHTTPHeaderField: \"\($0.fieldName)\")
+if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
+        request.addValue(\(($0.swiftyName)), forHTTPHeaderField: \"\($0.fullHeaderName)\")
     }
 """
                 }
@@ -220,7 +177,7 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
 
         declaration += """
         \(description?.documentationFormat() ?? "/// No description provided")
-        /// - Endpoint: \(self.httpMethod.uppercased()) \(self.servicePath)
+        /// - Endpoint: \(self.httpMethod.rawValue.uppercased()) \(self.servicePath)
         /// - Parameters:
         \(parameters.map { "///   - \($0.variableName): \($0.description?.replacingOccurrences(of: "\n", with: ". ").replacingOccurrences(of: "..", with: ".") ?? "No description")" }.joined(separator: "\n"))
         /// - Returns: the URLSession task. This can be used to cancel the request.
@@ -247,7 +204,7 @@ if let \(($0.headerModelName)) = headers.\($0.headerModelName) {
 \(queryStatement.indentLines(1))
     let requestUrl = urlComponents.url!
     var request = URLRequest(url: requestUrl)
-    request.httpMethod = "\(httpMethod.uppercased())"
+    request.httpMethod = "\(httpMethod.rawValue.uppercased())"
 \(requestPart)
     request = interceptor?.networkWillPerformRequest(request) ?? request
     let task = urlSession().\(urlSessionMethodName) { (data, response, error) in

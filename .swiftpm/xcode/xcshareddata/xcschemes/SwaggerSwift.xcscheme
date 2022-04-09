@@ -48,6 +48,34 @@
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "SwaggerSwiftCore"
+               BuildableName = "SwaggerSwiftCore"
+               BlueprintName = "SwaggerSwiftCore"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "SwaggerSwift"
+               BuildableName = "SwaggerSwift"
+               BlueprintName = "SwaggerSwift"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -63,6 +91,16 @@
                BlueprintIdentifier = "SwaggerSwiftTests"
                BuildableName = "SwaggerSwiftTests"
                BlueprintName = "SwaggerSwiftTests"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "SwaggerSwiftCoreTests"
+               BuildableName = "SwaggerSwiftCoreTests"
+               BlueprintName = "SwaggerSwiftCoreTests"
                ReferencedContainer = "container:">
             </BuildableReference>
          </TestableReference>
@@ -90,7 +128,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "-s /Users/madsbogeskov/Developer/lunar/ios-app/SwaggerFile.yml -p LunarServices -d /Users/madsbogeskov/Developer/lunar/ios-app/Common/LunarServices -v true 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"
+            argument = "-s /Users/madsbogeskov/Developer/lunar/ios-app/SwaggerFile.yml -p LunarServices -d /Users/madsbogeskov/Developer/lunar/ios-app/Common/LunarServices -v true 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"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

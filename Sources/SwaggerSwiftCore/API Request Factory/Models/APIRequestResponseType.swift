@@ -1,20 +1,16 @@
-private func toHttpCodeName(code: Int) -> String {
-    return HTTPStatusCodes(rawValue: code)!.name
-}
+enum APIRequestResponseType {
+    case textPlain(HTTPStatusCode, Bool)
+    case enumeration(HTTPStatusCode, Bool, _ typeName: String)
+    case object(HTTPStatusCode, Bool, _ typeName: String)
+    case int(HTTPStatusCode, Bool)
+    case array(HTTPStatusCode, Bool, _ typeName: String)
+    case double(HTTPStatusCode, Bool)
+    case float(HTTPStatusCode, Bool)
+    case boolean(HTTPStatusCode, Bool)
+    case int64(HTTPStatusCode, Bool)
+    case void(HTTPStatusCode, Bool)
 
-enum NetworkRequestFunctionResponseType {
-    case textPlain(HTTPStatusCodes, Bool)
-    case enumeration(HTTPStatusCodes, Bool, _ typeName: String)
-    case object(HTTPStatusCodes, Bool, _ typeName: String)
-    case int(HTTPStatusCodes, Bool)
-    case array(HTTPStatusCodes, Bool, _ typeName: String)
-    case double(HTTPStatusCodes, Bool)
-    case float(HTTPStatusCodes, Bool)
-    case boolean(HTTPStatusCodes, Bool)
-    case int64(HTTPStatusCodes, Bool)
-    case void(HTTPStatusCodes, Bool)
-
-    var statusCode: HTTPStatusCodes {
+    var statusCode: HTTPStatusCode {
         switch self {
         case .textPlain(let statusCode, _):
             return statusCode

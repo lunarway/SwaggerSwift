@@ -4,7 +4,10 @@ import SwaggerSwiftML
 extension Swagger {
     /// The name of the service the Swagger file exposes
     var serviceName: String {
-        info.title.components(separatedBy: CharacterSet.whitespaces.union(CharacterSet(charactersIn: "-"))).map { $0.uppercasingFirst }.joined()
+        info.title
+            .components(separatedBy: CharacterSet.whitespaces.union(CharacterSet(charactersIn: "-")))
+            .map { $0.uppercasingFirst }
+            .joined()
     }
 
     func findParameter(node: Node<Parameter>) -> Parameter {

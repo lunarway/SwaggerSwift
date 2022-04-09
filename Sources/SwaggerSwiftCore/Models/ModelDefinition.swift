@@ -1,10 +1,9 @@
 import SwaggerSwiftML
 
-/// The types used by the service types, such as models, and enums
+/// The types used in the apis. This is the response types, parameter types and so on
 enum ModelDefinition {
     case enumeration(Enumeration)
-    case model(Model)
-    case interface(Interface)
+    case object(Model)
 }
 
 extension ModelDefinition: Swiftable {
@@ -12,9 +11,7 @@ extension ModelDefinition: Swiftable {
         switch self {
         case .enumeration(let enumeration):
             return enumeration.typeName
-        case .model(let model):
-            return model.typeName
-        case .interface(let model):
+        case .object(let model):
             return model.typeName
         }
     }
@@ -26,23 +23,18 @@ extension ModelDefinition: Swiftable {
                                        swaggerFile: swaggerFile,
                                        embedded: embedded,
                                        packagesToImport: packagesToImport)
-        case .model(let model):
+        case .object(let model):
             return model.toSwift(serviceName: serviceName,
                                  swaggerFile: swaggerFile,
                                  embedded: embedded,
                                  packagesToImport: packagesToImport)
-        case .interface(let interface):
-            return interface.toSwift(serviceName: serviceName,
-                                     swaggerFile: swaggerFile,
-                                     embedded: embedded,
-                                     packagesToImport: packagesToImport)
         }
     }
 
-    func resolveInherits(_ def: [Model]) -> ModelDefinition {
+    func resolveInheritanceTree(with models: [Model]) -> ModelDefinition {
         switch self {
-        case .model(let model):
-            return .model(model.resolveInherits(def))
+        case .object(let model):
+            return .object(model.resolveInheritanceTree(withModels: models))
         default:
             return self
         }

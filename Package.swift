@@ -1,4 +1,4 @@
-// swift-tools-version:5.6
+// swift-tools-version:5.5
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -10,6 +10,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", .upToNextMajor(from: "1.1.1")),
         .package(url: "https://github.com/lunarway/SwaggerSwiftML", from: "1.0.16")
+//        .package(name: "SwaggerSwiftML", path: "/Users/madsbogeskov/Developer/lunar/swaggerswiftml")
     ],
     targets: [
         .executableTarget(

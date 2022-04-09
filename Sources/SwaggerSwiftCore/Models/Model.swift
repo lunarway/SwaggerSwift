@@ -11,9 +11,9 @@ struct Model {
     let embeddedDefinitions: [ModelDefinition]
     let isCodable: Bool
 
-    func resolveInherits(_ definitions: [Model]) -> Model {
+    func resolveInheritanceTree(withModels models: [Model]) -> Model {
         let inherits = inheritsFrom.compactMap { definitionName in
-            definitions.first(where: { $0.typeName == definitionName })
+            models.first(where: { $0.typeName == definitionName })
         }
 
         let inheritedFields = inherits.flatMap { $0.fields }
@@ -44,8 +44,6 @@ public init(\(fields.asInitParameter())) {
 }
 """
 
-        let modelFields = fields.sorted(by: { $0.safePropertyName < $1.safePropertyName }).flatMap { $0.toSwift.split(separator: "\n") }
-
         var model = ""
 
         if let comment = comment {
@@ -54,7 +52,7 @@ public init(\(fields.asInitParameter())) {
 
         model += "public struct \(typeName)\(isCodable ? ": Codable" : "") {\n"
 
-        model += modelFields.map { $0 }.joined(separator: "\n").indentLines(1)
+        model += fields.asPropertyList().indentLines(1)
 
         model += "\n\n" + initMethod.indentLines(1)
 
