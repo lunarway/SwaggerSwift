@@ -2,7 +2,7 @@ import SwaggerSwiftML
 
 func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, swagger: Swagger) -> (TypeType, [ModelDefinition]) {
     switch schema.type {
-    case .string(format: let format, let enumValues, _, _, _):
+    case .string(let format, let enumValues, _, _, _):
         if let enumValues = enumValues {
             let enumTypename = typeNamePrefix.modelNamed
             let def = ModelDefinition.enumeration(Enumeration(serviceName: swagger.serviceName,
@@ -127,11 +127,12 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
     case .boolean(let defaultValue):
         return (.boolean(defaultValue: defaultValue), [])
     case .array(let items, _, _, _, _):
-        let type = typeOfItems(schema: schema,
-                               items: items,
-                               typeNamePrefix: "\(typeNamePrefix)Item",
-                               swagger: swagger)
-        return (.array(typeName: type.0), type.1)
+        let (type, inlineModels) = typeOfItems(schema: schema,
+                                               items: items,
+                                               typeNamePrefix: "\(typeNamePrefix)Item",
+                                               swagger: swagger)
+
+        return (.array(typeName: type), inlineModels)
     case .object(let properties, let allOf):
         return ObjectModelFactory().make(
             properties: properties,
@@ -142,25 +143,22 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
             schema: schema,
             customFields: [:]
         )
-    case .dictionary(valueType: let valueType, keys: _):
+    case .dictionary(let valueType, _):
         switch valueType {
         case .any:
             return (.object(typeName: "[String: AdditionalProperty]"), [])
-        case .reference(let ref):
-            let schema = swagger.findSchema(node: .reference(ref))
-            let valueType = getType(forSchema: schema,
-                                    typeNamePrefix: typeNamePrefix,
-                                    swagger: swagger)
-            let valueString = valueType.0.toString(required: true)
-            let valueModelDefinitions = valueType.1
-            return (.object(typeName: "[String: " + valueString + "]"), valueModelDefinitions)
+        case .reference(let reference):
+            guard let modelReference = ModelReference(rawValue: reference) else {
+                return (.void, [])
+            }
+
+            return (.object(typeName: "[String: " + modelReference.typeName + "]"), [])
         case .schema(let schema):
-            let valueType = getType(forSchema: schema,
-                                    typeNamePrefix: typeNamePrefix,
-                                    swagger: swagger)
-            let valueString = valueType.0.toString(required: true)
-            let valueModelDefinitions = valueType.1
-            return (.object(typeName: "[String: " + valueString + "]"), valueModelDefinitions)
+            let (type, inlineDefinitions) = getType(forSchema: schema,
+                                                    typeNamePrefix: typeNamePrefix,
+                                                    swagger: swagger)
+            let valueString = type.toString(required: true)
+            return (.object(typeName: "[String: " + valueString + "]"), inlineDefinitions)
         }
     case .file:
         return (.void, [])
@@ -171,17 +169,25 @@ func getType(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, sw
 
 private func typeOfItems(schema: Schema, items: Node<Items>, typeNamePrefix: String, swagger: Swagger) -> (TypeType, [ModelDefinition]) {
     switch items {
-    case .reference(let ref):
-        let schema = swagger.findSchema(node: .reference(ref))
+    case .reference(let reference):
+        guard let schema = swagger.findSchema(reference: reference) else {
+            log("[\(swagger.serviceName)] Failed to find definition named: \(reference)", error: true)
+            return (.void, [])
+        }
+
         switch schema.type {
         case .object:
-            let typeName = ref.components(separatedBy: "/").last!.modelNamed
-
-            return (.object(typeName: typeName), [])
+            if let typeName = ModelReference(rawValue: reference)?.typeName {
+                return (.object(typeName: typeName), [])
+            } else {
+                log("[\(swagger.serviceName)] Invalid reference found: \(reference)", error: true)
+                return (.void, [])
+            }
         case .string:
             return (.string, [])
         default:
-            fatalError()
+            log("[\(swagger.serviceName)] Unsupported schema type: \(schema.type)")
+            return (.void, [])
         }
     case .node(let node):
         switch node.type {

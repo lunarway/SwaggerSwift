@@ -1,9 +1,10 @@
+/// A given response type for a API request. The response type is first and foremost the data type that is returned, and then the HTTP status code
 enum APIRequestResponseType {
     case textPlain(HTTPStatusCode, Bool)
-    case enumeration(HTTPStatusCode, Bool, _ typeName: String)
-    case object(HTTPStatusCode, Bool, _ typeName: String)
+    case enumeration(HTTPStatusCode, Bool, typeName: String)
+    case object(HTTPStatusCode, Bool, typeName: String)
     case int(HTTPStatusCode, Bool)
-    case array(HTTPStatusCode, Bool, _ typeName: String)
+    case array(HTTPStatusCode, Bool, typeName: String)
     case double(HTTPStatusCode, Bool)
     case float(HTTPStatusCode, Bool)
     case boolean(HTTPStatusCode, Bool)

@@ -28,12 +28,15 @@ extension DataFormat: CustomStringConvertible {
         case .email:
             return "String"
         case .unsupported(let type):
+            let type = type.lowercased()
             if type == "int64" {
                 return "Int64"
             } else if type == "decimal" {
                 return "Double"
             } else if type == "ISO8601" {
                 return "Date"
+            } else if type == "uri" {
+                return "URL"
             } else {
                 fatalError("Unsupported type: \(type)")
             }

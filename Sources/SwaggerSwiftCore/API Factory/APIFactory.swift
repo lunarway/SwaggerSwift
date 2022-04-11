@@ -2,6 +2,8 @@ import Foundation
 import SwaggerSwiftML
 
 struct APIFactory {
+    let apiRequestFactory: APIRequestFactory
+    
     func generate(for swagger: Swagger, withSwaggerFile swaggerFile: SwaggerFile) throws -> (APIDefinition, [ModelDefinition]) {
         let (apiFunctions, inlineModelDefinitions) = try getApiList(fromSwagger: swagger, swaggerFile: swaggerFile)
         let modelDefinitions = getModelDefinitions(fromSwagger: swagger)
@@ -43,9 +45,9 @@ struct APIFactory {
         var inlineModelDefinitions = [ModelDefinition]()
         for swaggerPath in swagger.paths {
             let (pathNetworkRequestFunctions, pathCurrentInlineDefinitions) = try apisAndModels(fromPath: swaggerPath.value,
-                                                                                            servicePath: swaggerPath.key,
-                                                                                            swagger: swagger,
-                                                                                            swaggerFile: swaggerFile)
+                                                                                                servicePath: swaggerPath.key,
+                                                                                                swagger: swagger,
+                                                                                                swaggerFile: swaggerFile)
 
             networkRequestFunctions.append(contentsOf: pathNetworkRequestFunctions)
             inlineModelDefinitions.append(contentsOf: pathCurrentInlineDefinitions)
@@ -66,13 +68,13 @@ struct APIFactory {
             guard let operation = path.operationForMethod(httpMethod)
             else { continue }
 
-            let (requestFunctions, inlineModelDefinitions) = try APIRequestFactory().generateRequest(
+            let (requestFunctions, inlineModelDefinitions) = try apiRequestFactory.generateRequest(
                 for: operation,
                 httpMethod: httpMethod,
                 servicePath: servicePath,
                 swagger: swagger,
                 swaggerFile: swaggerFile,
-                parameters: parameters
+                pathParameters: parameters
             )
 
             apis.append(requestFunctions)
@@ -86,14 +88,17 @@ struct APIFactory {
     /// - Parameter swagger: the swagger
     /// - Returns: model definitions
     private func getModelDefinitions(fromSwagger swagger: Swagger) -> [ModelDefinition] {
-        return swagger.definitions?.map { definition -> [ModelDefinition] in
+        guard let definitions = swagger.definitions else {
+            return []
+        }
+
+        return definitions.map { definition -> [ModelDefinition] in
             // we dont need the type part as it just represents the primary model definition returned from this function
             let (_, modelDefinitions) = getType(forSchema: definition.value,
                                                 typeNamePrefix: definition.key,
                                                 swagger: swagger)
-
             return modelDefinitions
-        }.flatMap { $0 } ?? []
+        }.flatMap { $0 }
     }
 
     /// Get the global set of response model definitions
@@ -123,7 +128,6 @@ struct APIFactory {
                     let (_, modelDefinitions) = getType(forSchema: typeSchema,
                                                         typeNamePrefix: typeName,
                                                         swagger: swagger)
-
                     return modelDefinitions
                 } else {
                     log("[\(swagger.serviceName)] Failed to find definition for reference: \(reference)", error: true)
@@ -131,7 +135,9 @@ struct APIFactory {
                 }
             case .node(let schema):
                 // we dont need the type part as it just represents the primary model definition returned from this function
-                let (_, modelDefinitions) = getType(forSchema: schema, typeNamePrefix: response.key, swagger: swagger)
+                let (_, modelDefinitions) = getType(forSchema: schema,
+                                                    typeNamePrefix: response.key,
+                                                    swagger: swagger)
                 return modelDefinitions
             }
         }.flatMap { $0 } ?? []
@@ -146,14 +152,14 @@ struct APIFactory {
                                description: "the underlying URLSession. This is an autoclosure to allow updated instances to come into this instance.",
                                typeName: "() -> URLSession",
                                isRequired: true,
-                               typeIsAutoclosure: true,
+                               typeIsAutoclosure: false,
                                typeIsBlock: true,
                                defaultValue: nil),
             APIDefinitionField(name: "baseUrl",
                                description: "the block provider for the baseUrl of the service. The reason this is a block is that this enables automatically updating the network layer on backend environment change.",
                                typeName: "() -> URL",
                                isRequired: true,
-                               typeIsAutoclosure: true,
+                               typeIsAutoclosure: false,
                                typeIsBlock: true,
                                defaultValue: nil)
         ]

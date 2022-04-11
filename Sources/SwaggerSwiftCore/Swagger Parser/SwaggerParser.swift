@@ -2,7 +2,11 @@ import Foundation
 import SwaggerSwiftML
 
 public struct SwaggerParser {
-    public init() {}
+    let apiRequestFactory: APIRequestFactory
+
+    public init(apiRequestFactory: APIRequestFactory) {
+        self.apiRequestFactory = apiRequestFactory
+    }
 
     /// Parse and generate the network layer for a SwaggerFile
     /// - Parameters:
@@ -137,7 +141,7 @@ public struct SwaggerParser {
         // create directories
         try fileManager.createDirectory(atPath: modelDirectory, withIntermediateDirectories: true, attributes: nil)
 
-        let (apiDefinition, apiModelDefinitions) = try APIFactory().generate(for: swagger, withSwaggerFile: swaggerFile)
+        let (apiDefinition, apiModelDefinitions) = try APIFactory(apiRequestFactory: apiRequestFactory).generate(for: swagger, withSwaggerFile: swaggerFile)
 
         let apiDefinitionFile = apiDefinition.toSwift(
             swaggerFile: swaggerFile,

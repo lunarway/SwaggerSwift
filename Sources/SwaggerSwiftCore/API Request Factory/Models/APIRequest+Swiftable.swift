@@ -19,51 +19,7 @@ extension APIRequest {
             }
         }.joined(separator: "/")
 
-        let queryStatement: String
-        if queries.count > 0 {
-            let queryItems = queries.map {
-                let fieldName = $0.fieldName.camelized
-                if $0.isOptional {
-                    let fieldValue: String
-                    switch $0.valueType {
-                    case .enum:
-                        fieldValue = "\($0.fieldValue)?.rawValue"
-                    case .date:
-                        return """
-                            if let \(fieldName)Value = \($0.fieldName) {
-                                queryItems.append(URLQueryItem(name: \"\($0.fieldName)\", value: \(fieldName)Value))
-                            }
-                            """
-                    default:
-                        fieldValue = "\($0.fieldValue)"
-                    }
-
-                    return """
-                        if let \(fieldName)Value = \(fieldValue) {
-                            queryItems.append(URLQueryItem(name: \"\($0.fieldName)\", value: \(fieldName)Value))
-                        }
-                        """
-                } else {
-                    let fieldValue: String
-                    switch $0.valueType {
-                    case .enum:
-                        fieldValue = "\($0.fieldValue).rawValue"
-                    default:
-                        fieldValue = "\($0.fieldValue)"
-                    }
-
-                    return "queryItems.append(URLQueryItem(name: \"\($0.fieldName)\", value: \(fieldValue)))"
-                }
-            }.joined(separator: "\n")
-
-            queryStatement = """
-                var queryItems = [URLQueryItem]()
-                \(queryItems)
-                urlComponents.queryItems = queryItems\n
-                """
-        } else {
-            queryStatement = ""
-        }
+        let queryStatement: String = queries.toQueryItems()
 
         var globalHeaders = [String]()
         if let globalHeaderFields = swaggerFile.globalHeaders, globalHeaderFields.count > 0 {
@@ -72,6 +28,7 @@ extension APIRequest {
         }
 
         var headerStatements: [String] = headers
+            .sorted(by: { $0.swiftyName < $1.swiftyName })
             .filter { !(swaggerFile.globalHeaders ?? []).map { $0.lowercased() }.contains($0.fullHeaderName.lowercased()) }
             .map {
                 if $0.isRequired {
@@ -79,7 +36,7 @@ extension APIRequest {
                 } else {
                     return """
 if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
-        request.addValue(\(($0.swiftyName)), forHTTPHeaderField: \"\($0.fullHeaderName)\")
+        request.addValue(\($0.swiftyName), forHTTPHeaderField: \"\($0.fullHeaderName)\")
     }
 """
                 }

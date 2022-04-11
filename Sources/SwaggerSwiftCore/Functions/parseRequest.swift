@@ -1,6 +1,6 @@
 import SwaggerSwiftML
 
-func parse(request requestNode: Node<SwaggerSwiftML.Response>, httpMethod: HTTPMethod, servicePath: String, statusCode: Int, swagger: Swagger) -> (TypeType, [ModelDefinition]) {
+func parse(request requestNode: Node<SwaggerSwiftML.Response>, httpMethod: HTTPMethod, servicePath: String, statusCode: Int, swagger: Swagger) -> (TypeType, [ModelDefinition])? {
     let requestName = servicePath
         .replacingOccurrences(of: "{", with: "")
         .replacingOccurrences(of: "}", with: "")
@@ -15,28 +15,25 @@ func parse(request requestNode: Node<SwaggerSwiftML.Response>, httpMethod: HTTPM
 
     let request: SwaggerSwiftML.Response
     switch requestNode {
-    case .reference(let ref):
-		let pathParts = ref.split(separator: "/").map { String($0) }
-		guard pathParts.count == 3 else { fatalError( "Invalid reference found: \(ref)" ) }
+    case .reference(let reference):
+        guard let modelReference = ModelReference(rawValue: reference) else {
+            log("[\(swagger.serviceName) \(httpMethod) \(servicePath)]: Failed to parse reference: \(reference)")
+            return nil
+        }
 
-		let pathType = pathParts[1].lowercased()
-		let typeName = pathParts[2]
-
-		switch pathType {
-		case "definitions":
-			guard let schema = swagger.definitions?[typeName] else {
-				fatalError("\(swagger.serviceName): Failed to find referenced object: \(ref)")
+        switch modelReference {
+        case .definitions:
+            guard let schema = swagger.definitions?[modelReference.typeName] else {
+				fatalError("\(swagger.serviceName): Failed to find referenced object: \(reference)")
 			}
 
             request = SwaggerSwiftML.Response(schema: schema)
-		case "responses":
-			guard let req = swagger.responses?[typeName] else {
-				fatalError("\(swagger.serviceName): Failed to find referenced object: \(ref)")
+        case .responses:
+			guard let req = swagger.responses?[modelReference.typeName] else {
+				fatalError("\(swagger.serviceName): Failed to find referenced object: \(reference)")
 			}
 
 			request = req
-		default:
-			fatalError("\(swagger.serviceName): Unsupported path ('\(pathType)') provided in reference: '\(ref)'")
 		}
     case .node(let node):
         request = node
@@ -45,19 +42,54 @@ func parse(request requestNode: Node<SwaggerSwiftML.Response>, httpMethod: HTTPM
     if let schemaNode = request.schema {
         switch schemaNode {
         case .node(let schema):
-            let (type, embeddedDefinitions) = getType(forSchema: schema, typeNamePrefix: prefix, swagger: swagger)
+            let (type, embeddedDefinitions) = getType(forSchema: schema,
+                                                      typeNamePrefix: prefix,
+                                                      swagger: swagger)
             return (type, embeddedDefinitions)
         case .reference(let ref):
-            let schema = swagger.findSchema(node: .reference(ref))
-            let typeName = (ref.components(separatedBy: "/").last ?? "").uppercasingFirst
-
-            if case SchemaType.object = schema.type {
-                return (.object(typeName: typeName), [])
-            } else {
-                return getType(forSchema: schema, typeNamePrefix: prefix, swagger: swagger)
+            guard let schema = swagger.findSchema(reference: ref) else {
+                log("[\(swagger.serviceName) \(httpMethod) \(servicePath)] Failed to find definition named: \(ref)", error: true)
+                return nil
             }
+
+            guard let modelReference = ModelReference(rawValue: ref) else {
+                return nil
+            }
+
+            return (schema.type(named: modelReference.typeName), [])
         }
     } else {
         return (.void, [])
+    }
+}
+
+extension Schema {
+    /// Provides the `TypeType` for a schema - this is different from `getType` is in it doesnt parse the schema tree
+    /// - Parameter name: the name of the type
+    func type(named name: String) -> TypeType {
+        switch self.type {
+        case .string(_, let enumValues, _, _, _):
+            if let enumValues = enumValues, enumValues.count > 0 {
+                return TypeType.object(typeName: name)
+            } else {
+                return TypeType.string
+            }
+        case .number:
+            return .int
+        case .integer:
+            return .int
+        case .boolean(let defaultValue):
+            return .boolean(defaultValue: defaultValue)
+        case .array:
+            return .array(typeName: .object(typeName: name))
+        case .object:
+            return .object(typeName: name)
+        case .freeform:
+            return .object(typeName: name)
+        case .file:
+            return .object(typeName: name)
+        case .dictionary:
+            return .object(typeName: name)
+        }
     }
 }

@@ -16,7 +16,7 @@ struct GlobalHeadersModel {
 
         let initMethod = """
 public init(\(fields.asInitParameter())) {
-    \(fields.map { "self.\($0.swiftyName) = \($0.swiftyName)" }.joined(separator: "\n    "))
+\(fields.asInitAssignments().indentLines(1))
 }
 """
 
@@ -53,7 +53,12 @@ public init(\(fields.asInitParameter())) {
 
         function += "public func add(to request: inout URLRequest) {\n"
 
-        function += fields.map { "request.addValue(\($0.swiftyName)), forHTTPHeaderField: \"\($0.fullHeaderName)\")" }.joined(separator: "\n").indentLines(1)
+        function += fields
+            .sorted(by: { $0.swiftyName < $1.swiftyName })
+            .map { "request.addValue(\($0.swiftyName), forHTTPHeaderField: \"\($0.fullHeaderName)\")" }
+            .joined(separator: "\n")
+            .indentLines(1)
+
         function += "\n"
 
         function += "}"

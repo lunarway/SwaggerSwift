@@ -7,7 +7,7 @@ struct APIRequestHeaderField {
 
     /// The name of the field on the Swift type containing the object, e.g. xos
     var swiftyName: String {
-        return APIRequestFactory().convertApiHeader(fullHeaderName)
+        return convertApiHeader(fullHeaderName)
     }
 
     init(headerName: String, isRequired: Bool) {
@@ -18,23 +18,35 @@ struct APIRequestHeaderField {
 
 extension Sequence where Element == APIRequestHeaderField {
     func asInitParameter() -> String {
-        self.map { field in
-            var declaration: String
-            // myFieldName: FieldType
-            declaration = "\(field.swiftyName): String"
+        self
+            .sorted(by: { $0.swiftyName < $1.swiftyName })
+            .map { field in
+                var declaration: String
+                // myFieldName: FieldType
+                declaration = "\(field.swiftyName): String"
 
-            if field.isRequired == false {
-                declaration += " = nil"
-            }
+                if field.isRequired == false {
+                    declaration += " = nil"
+                }
 
-            return declaration
-        }.joined(separator: ", ")
+                return declaration
+            }.joined(separator: ", ")
+    }
+
+    func asInitAssignments() -> String {
+        self
+            .sorted(by: { $0.swiftyName < $1.swiftyName })
+            .map {
+                "self.\($0.swiftyName) = \($0.swiftyName)"
+            }.joined(separator: "\n")
     }
 
     func asPropertyList() -> String {
-        self.sorted(by: { $0.swiftyName < $1.swiftyName }).map { field in
-            let declaration = "public let \(field.swiftyName): String\(field.isRequired ? "" : "?")"
-            return declaration
-        }.joined(separator: "\n")
+        self
+            .sorted(by: { $0.swiftyName < $1.swiftyName })
+            .map { field in
+                let declaration = "public let \(field.swiftyName): String\(field.isRequired ? "" : "?")"
+                return declaration
+            }.joined(separator: "\n")
     }
 }

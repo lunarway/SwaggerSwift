@@ -1,16 +1,26 @@
 import Foundation
 import SwaggerSwiftML
 
-struct APIRequestFactory {
+public struct APIRequestFactory {
+    let apiResponseTypeFactory: APIResponseTypeFactory
+    let requestParameterFactory: RequestParameterFactory
+
+    public init(apiResponseTypeFactory: APIResponseTypeFactory, requestParameterFactory: RequestParameterFactory) {
+        self.apiResponseTypeFactory = apiResponseTypeFactory
+        self.requestParameterFactory = requestParameterFactory
+    }
+
     enum APIRequestFactoryError: Swift.Error {
         case unsupportedMimeType(String)
         case missingConsumeType
     }
 
-    func generateRequest(for operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, servicePath: String, swagger: Swagger, swaggerFile: SwaggerFile, parameters: [Parameter]) throws -> (APIRequest, [ModelDefinition]) {
+    func generateRequest(for operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, servicePath: String, swagger: Swagger, swaggerFile: SwaggerFile, pathParameters: [Parameter]) throws -> (APIRequest, [ModelDefinition]) {
         let functionName = resolveFunctionName(httpMethod: httpMethod.rawValue,
                                                servicePath: servicePath,
                                                operationId: operation.operationId)
+
+        var inlineResponseModels = [ModelDefinition]()
 
         let responses: [Response] = operation.responses.compactMap {
             let statusCodeString = $0.key
@@ -20,34 +30,41 @@ struct APIRequestFactory {
 
             guard let requestResponse = $0.value else { return nil }
 
-            let (responseType, embeddedDefinition) = parse(
+            if let (responseType, embeddedDefinitions) = parse(
                 request: requestResponse,
                 httpMethod: httpMethod,
                 servicePath: servicePath,
                 statusCode: statusCodeString,
-                swagger: swagger
-            )
-
-            return .init(statusCode: statusCode,
-                         responseType: responseType,
-                         embeddedDefinitions: embeddedDefinition)
+                swagger: swagger) {
+                return .init(statusCode: statusCode,
+                             responseType: responseType,
+                             inlineModels: embeddedDefinitions)
+            } else {
+                return nil
+            }
         }
+
+        let responseInlineModels = responses.flatMap { $0.inlineModels }
+        inlineResponseModels.append(contentsOf: responseInlineModels)
 
         let responseMap: [ResponseTypeMap] = responses.map { ($0.statusCode, $0.responseType) }
 
-        let (requestParameters, inlineModels) = resolveInputParameters(
-            for: operation,
+        let (functionParameters, inlineModels) = requestParameterFactory.make(
+            forOperation: operation,
             functionName: functionName,
             responseTypes: responseMap,
+            pathParameters: pathParameters,
             swagger: swagger,
             swaggerFile: swaggerFile
         )
 
-        let operationParameters: [Parameter] = (operation.parameters ?? []).map {
-            swagger.findParameter(node: $0)
-        } + parameters
+        inlineResponseModels.append(contentsOf: inlineModels)
 
-        let headers = operationParameters.compactMap { param -> APIRequestHeaderField? in
+        let allParameters: [Parameter] = (operation.parameters ?? []).map {
+            swagger.findParameter(node: $0)
+        } + pathParameters
+
+        let headers = allParameters.compactMap { param -> APIRequestHeaderField? in
             if case ParameterLocation.header = param.location {
                 return APIRequestHeaderField(headerName: param.name,
                                              isRequired: param.required)
@@ -56,88 +73,41 @@ struct APIRequestFactory {
             }
         }
 
+        let queryItems = resolveQueries(forOperation: operation, parameters: allParameters, swagger: swagger)
+
+        let apiResponseTypes = apiResponseTypeFactory.make(forResponses: responses,
+                                                           forHTTPMethod: httpMethod,
+                                                           at: servicePath,
+                                                           swagger: swagger)
+
+        inlineResponseModels.append(contentsOf: inlineModels)
+
         let apiRequest = APIRequest(
             description: operation.description,
             functionName: functionName,
-            parameters: requestParameters,
+            parameters: functionParameters,
             throws: false,
             consumes: try consumeMimeType(forOperation: operation, swagger: swagger),
             isInternalOnly: operation.isInternalOnly,
             isDeprecated: operation.deprecated,
             httpMethod: httpMethod,
             servicePath: servicePath,
-            queries: resolveQueries(forOperation: operation, parameters: parameters, swagger: swagger),
+            queries: queryItems,
             headers: headers,
-            responseTypes: resolveResponseTypes(forOperation: operation, forHTTPMethod: httpMethod, at: servicePath, swagger: swagger)
+            responseTypes: apiResponseTypes
         )
 
-        return (apiRequest, inlineModels)
+        return (apiRequest, inlineResponseModels)
     }
 
-    private func resolveResponseTypes(forOperation operation: SwaggerSwiftML.Operation, forHTTPMethod httpMethod: HTTPMethod, at servicePath: String, swagger: Swagger) -> [APIRequestResponseType] {
-        let responses: [SwaggerSwiftCore.Response] = operation.responses.compactMap {
-            let statusCodeString = $0.key
-            guard let statusCode = HTTPStatusCode(rawValue: statusCodeString) else {
-                fatalError("Unknown status code received: \(statusCodeString)")
-            }
-            guard let requestResponse = $0.value else { return nil }
-            let (responseType, embeddedDefinition) = parse(
-                request: requestResponse,
-                httpMethod: httpMethod,
-                servicePath: servicePath,
-                statusCode: statusCodeString,
-                swagger: swagger
-            )
-            return .init(statusCode: statusCode,
-                         responseType: responseType,
-                         embeddedDefinitions: embeddedDefinition)
-        }
-
-        let errorResponses = responses.filter { !$0.statusCode.isSuccess }
-        let successResponses = responses.filter { $0.statusCode.isSuccess }
-
-        return responses
-            .sorted(by: { $0.statusCode.rawValue < $1.statusCode.rawValue })
-            .map {
-                let statusCode = $0.statusCode
-                let isSuccessResponse = $0.statusCode.isSuccess ? successResponses.count > 1 : errorResponses.count > 1
-                switch $0.responseType {
-                case .string:
-                    return APIRequestResponseType.textPlain(statusCode, isSuccessResponse)
-                case .int:
-                    return APIRequestResponseType.int(statusCode, isSuccessResponse)
-                case .double:
-                    return APIRequestResponseType.double(statusCode, isSuccessResponse)
-                case .float:
-                    return APIRequestResponseType.float(statusCode, isSuccessResponse)
-                case .boolean:
-                    return APIRequestResponseType.boolean(statusCode, isSuccessResponse)
-                case .int64:
-                    return APIRequestResponseType.int64(statusCode, isSuccessResponse)
-                case .array(let type):
-                    if case .object(let typeName) = type {
-                        return APIRequestResponseType.array($0.statusCode, $0.statusCode.isSuccess ? successResponses.count > 1 : errorResponses.count > 1, typeName)
-                    } else {
-                        fatalError("Unsupported type inside array: \(type)")
-                    }
-                case .object(typeName: let typeName):
-                    if let embeddedType = $0.embeddedDefinitions.first(where: { $0.typeName == typeName }) {
-                        switch embeddedType {
-                        case .enumeration:
-                            return .enumeration($0.statusCode, $0.statusCode.isSuccess ? successResponses.count > 1 : errorResponses.count > 1, typeName)
-                        default: break
-                        }
-                    }
-
-                    return APIRequestResponseType.object($0.statusCode, $0.statusCode.isSuccess ? successResponses.count > 1 : errorResponses.count > 1, typeName)
-                case .void:
-                    return APIRequestResponseType.void($0.statusCode, $0.statusCode.isSuccess ? successResponses.count > 1 : errorResponses.count > 1)
-                case .date:
-                    fatalError("Not implemented")
-                }
-            }
-    }
-
+    /// Create the list of URLQueryItem assignments that needs to be performed in the body of the request. This is not to
+    /// be confused with the function parameters, which only represent the input of the function from all places, e.g. query,
+    /// path, body, and so on.
+    /// - Parameters:
+    ///   - operation: the swagger operation
+    ///   - parameters: the total set of parameters available to the api request
+    ///   - swagger: the swagger spec
+    /// - Returns: the list of query elements that should be set in the request
     private func resolveQueries(forOperation operation: SwaggerSwiftML.Operation, parameters: [Parameter], swagger: Swagger) -> [QueryElement] {
         let operationParameters: [Parameter] = (operation.parameters ?? []).map {
             swagger.findParameter(node: $0)
@@ -281,13 +251,13 @@ struct APIRequestFactory {
 
         return functionName
     }
+}
 
-    /// Convert the Header name, e.g. `X-AppDeviceVersion` to the field name that is used on the object in the Swift code, e.g. `appDeviceVersion`
-    /// - Parameter headerName:
-    /// - Returns: the field name to use in the Swift struct
-    func convertApiHeader(_ headerName: String) -> String {
-        headerName.replacingOccurrences(of: "X-", with: "")
-            .replacingOccurrences(of: "x-", with: "")
-            .variableNameFormatted
-    }
+/// Convert the Header name, e.g. `X-AppDeviceVersion` to the field name that is used on the object in the Swift code, e.g. `appDeviceVersion`
+/// - Parameter headerName:
+/// - Returns: the field name to use in the Swift struct
+func convertApiHeader(_ headerName: String) -> String {
+    headerName.replacingOccurrences(of: "X-", with: "")
+        .replacingOccurrences(of: "x-", with: "")
+        .variableNameFormatted
 }

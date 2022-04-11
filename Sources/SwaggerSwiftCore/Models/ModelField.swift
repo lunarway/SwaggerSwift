@@ -18,13 +18,13 @@ struct ModelField {
         return nameWasSafe && nameMatchesVariableNameFormatting
     }
 
-    init(description: String?, type: TypeType, name: String, required: Bool) {
+    init(description: String?, type: TypeType, name: String, isRequired: Bool) {
         self.description = description
         self.type = type
         self.argumentLabel = name
         self.safePropertyName = SafePropertyName(name)
         self.safeParameterName = SafeParameterName(name)
-        self.isRequired = required
+        self.isRequired = isRequired
 
         switch type {
         case .boolean(let defaultValue):

@@ -26,26 +26,26 @@ extension Swagger {
         }
     }
 
-    func findSchema(node: Node<Schema>) -> Schema {
-        switch node {
-        case .reference(let reference):
-            for (key, value) in self.definitions ?? [:] {
-                let searchName = "#/definitions/\(key)"
-                if reference == searchName {
-                    return value
-                }
+    func findSchema(reference: String) -> Schema? {
+        for (key, value) in self.definitions ?? [:] {
+            let searchName = "#/definitions/\(key)"
+            if reference == searchName {
+                return value
             }
-
-            for (key, value) in self.responses ?? [:] {
-                let searchName = "#/responses/\(key)"
-                if reference == searchName, let schemaNode = value.schema {
-                    return findSchema(node: schemaNode)
-                }
-            }
-
-            fatalError("Failed to find definition named: \(reference)")
-        case .node(let node):
-            return node
         }
+
+        for (key, value) in self.responses ?? [:] {
+            let searchName = "#/responses/\(key)"
+            if reference == searchName, let schemaNode = value.schema {
+                switch schemaNode {
+                case .reference(let reference):
+                    return findSchema(reference: reference)
+                case .node(let schema):
+                    return schema
+                }
+            }
+        }
+
+        return nil
     }
 }
