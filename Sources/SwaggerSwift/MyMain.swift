@@ -21,7 +21,7 @@ struct SwaggerSwiftParser: AsyncParsableCommand {
     @Option(name: .shortAndLong, help: "List of APIs to generate, e.g. --api-list lunar-way-onboarding-service", transform: { (arg: String) in
         arg.split(separator: ",").map(String.init)
     })
-    var apiList: [String]?s
+    var apiList: [String]?
 
     mutating func run() async throws {
         let apiResponseTypeFactory = APIResponseTypeFactory()
