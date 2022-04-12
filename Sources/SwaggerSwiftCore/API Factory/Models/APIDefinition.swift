@@ -43,7 +43,7 @@ public init(\(fields.map { $0.initProperty }.joined(separator: ", "))) {
             .trimmingCharacters(in: CharacterSet.newlines)
 
         serviceDefinition += """
-public struct \(serviceName) {
+public struct \(serviceName): APIInitialize {
 \(properties)
 
 \(initMethod)

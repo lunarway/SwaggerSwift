@@ -23,7 +23,7 @@ struct Enumeration {
         return str
     }
 
-    func modelDefinition(swaggerFile: SwaggerFile, embeddedFile: Bool) -> String {
+    func modelDefinition(embeddedFile: Bool) -> String {
         let valueNames = values
             .sorted(by: { $0 < $1 })
             .map { isCodable ? $0.camelized : $0 }
@@ -126,10 +126,10 @@ public var rawValue: String {
     }
 }
 
-extension Enumeration: Swiftable {
-    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool, packagesToImport: [String]) -> String {
+extension Enumeration {
+    func toSwift(serviceName: String?, embedded: Bool, packagesToImport: [String]) -> String {
         if embedded {
-            return modelDefinition(swaggerFile: swaggerFile, embeddedFile: true)
+            return modelDefinition(embeddedFile: true)
         }
 
         var fileSections = ""
@@ -138,7 +138,7 @@ extension Enumeration: Swiftable {
             fileSections += "\n\nextension \(serviceName) {\n"
         }
 
-        let modelDef = modelDefinition(swaggerFile: swaggerFile, embeddedFile: false)
+        let modelDef = modelDefinition(embeddedFile: false)
         if let description = description, description.count > 0 {
             let comment = "// \(description)"
             fileSections += "\(comment)\n\(modelDef)".indentLines(1) + "\n"

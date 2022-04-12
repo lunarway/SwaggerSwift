@@ -37,6 +37,10 @@ extension DataFormat: CustomStringConvertible {
                 return "Date"
             } else if type == "uri" {
                 return "URL"
+            } else if type == "int" {
+                return "Int"
+            } else if type == "integer" {
+                return "Int"
             } else {
                 fatalError("Unsupported type: \(type)")
             }

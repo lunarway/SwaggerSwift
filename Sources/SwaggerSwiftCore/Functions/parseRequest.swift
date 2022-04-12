@@ -1,6 +1,6 @@
 import SwaggerSwiftML
 
-func parse(request requestNode: Node<SwaggerSwiftML.Response>, httpMethod: HTTPMethod, servicePath: String, statusCode: Int, swagger: Swagger) -> (TypeType, [ModelDefinition])? {
+func parse(request requestNode: Node<SwaggerSwiftML.Response>, httpMethod: HTTPMethod, servicePath: String, statusCode: Int, swagger: Swagger, modelTypeResolver: ModelTypeResolver) -> (TypeType, [ModelDefinition])? {
     let requestName = servicePath
         .replacingOccurrences(of: "{", with: "")
         .replacingOccurrences(of: "}", with: "")
@@ -23,17 +23,19 @@ func parse(request requestNode: Node<SwaggerSwiftML.Response>, httpMethod: HTTPM
 
         switch modelReference {
         case .definitions:
-            guard let schema = swagger.definitions?[modelReference.typeName] else {
-				fatalError("\(swagger.serviceName): Failed to find referenced object: \(reference)")
+            guard let schema = swagger.definitions?.first(where: { $0.key.lowercased() == modelReference.typeName.lowercased() })?.value else {
+				log("[\(swagger.serviceName) \(httpMethod) \(servicePath)] : Failed to find referenced definitions object: \(reference)", error: true)
+                return nil
 			}
 
             request = SwaggerSwiftML.Response(schema: schema)
         case .responses:
-			guard let req = swagger.responses?[modelReference.typeName] else {
-				fatalError("\(swagger.serviceName): Failed to find referenced object: \(reference)")
+            guard let responseObject = swagger.responses?.first(where: { $0.key.lowercased() == modelReference.typeName.lowercased() })?.value else {
+                log("[\(swagger.serviceName) \(httpMethod) \(servicePath)]: Failed to find referenced response object: \(reference)", error: true)
+                return nil
 			}
 
-			request = req
+			request = responseObject
 		}
     case .node(let node):
         request = node
@@ -42,10 +44,11 @@ func parse(request requestNode: Node<SwaggerSwiftML.Response>, httpMethod: HTTPM
     if let schemaNode = request.schema {
         switch schemaNode {
         case .node(let schema):
-            let (type, embeddedDefinitions) = getType(forSchema: schema,
-                                                      typeNamePrefix: prefix,
-                                                      swagger: swagger)
-            return (type, embeddedDefinitions)
+            let resolvedType = modelTypeResolver.resolve(forSchema: schema,
+                                                         typeNamePrefix: prefix,
+                                                         namespace: swagger.serviceName,
+                                                         swagger: swagger)
+            return (resolvedType.propertyType, resolvedType.inlineModelDefinitions)
         case .reference(let ref):
             guard let schema = swagger.findSchema(reference: ref) else {
                 log("[\(swagger.serviceName) \(httpMethod) \(servicePath)] Failed to find definition named: \(ref)", error: true)
@@ -63,33 +66,3 @@ func parse(request requestNode: Node<SwaggerSwiftML.Response>, httpMethod: HTTPM
     }
 }
 
-extension Schema {
-    /// Provides the `TypeType` for a schema - this is different from `getType` is in it doesnt parse the schema tree
-    /// - Parameter name: the name of the type
-    func type(named name: String) -> TypeType {
-        switch self.type {
-        case .string(_, let enumValues, _, _, _):
-            if let enumValues = enumValues, enumValues.count > 0 {
-                return TypeType.object(typeName: name)
-            } else {
-                return TypeType.string
-            }
-        case .number:
-            return .int
-        case .integer:
-            return .int
-        case .boolean(let defaultValue):
-            return .boolean(defaultValue: defaultValue)
-        case .array:
-            return .array(typeName: .object(typeName: name))
-        case .object:
-            return .object(typeName: name)
-        case .freeform:
-            return .object(typeName: name)
-        case .file:
-            return .object(typeName: name)
-        case .dictionary:
-            return .object(typeName: name)
-        }
-    }
-}

@@ -3,6 +3,7 @@ import SwaggerSwiftML
 
 struct APIFactory {
     let apiRequestFactory: APIRequestFactory
+    let modelTypeResolver: ModelTypeResolver
     
     func generate(for swagger: Swagger, withSwaggerFile swaggerFile: SwaggerFile) throws -> (APIDefinition, [ModelDefinition]) {
         let (apiFunctions, inlineModelDefinitions) = try getApiList(fromSwagger: swagger, swaggerFile: swaggerFile)
@@ -92,22 +93,51 @@ struct APIFactory {
             return []
         }
 
-        return definitions.map { definition -> [ModelDefinition] in
-            // we dont need the type part as it just represents the primary model definition returned from this function
-            let (_, modelDefinitions) = getType(forSchema: definition.value,
-                                                typeNamePrefix: definition.key,
-                                                swagger: swagger)
-            return modelDefinitions
-        }.flatMap { $0 }
+        var allDefinitions = [ModelDefinition]()
+        for (typeName, schema) in definitions {
+            let resolved = modelTypeResolver.resolve(forSchema: schema,
+                                                     typeNamePrefix: typeName,
+                                                     namespace: swagger.serviceName,
+                                                     swagger: swagger)
+
+            allDefinitions.append(contentsOf: resolved.inlineModelDefinitions)
+
+            switch resolved.propertyType {
+            case .array(let containsType):
+                let arrayModel = ModelDefinition.array(.init(description: schema.description, typeName: typeName, containsType: containsType.toString(required: true)))
+                allDefinitions.append(arrayModel)
+            case .string:
+                break
+            case .int:
+                break
+            case .double:
+                break
+            case .float:
+                break
+            case .boolean:
+                break
+            case .int64:
+                break
+            case .date:
+                break
+            case .void:
+                break
+            case .object:
+                break
+            }
+        }
+
+        return allDefinitions
     }
 
     /// Get the global set of response model definitions
     /// - Parameter swagger: the swagger
     /// - Returns: the set of global response model definitions
     private func getResponseModelDefinitions(fromSwagger swagger: Swagger) -> [ModelDefinition] {
-        return swagger.responses?.map { response -> [ModelDefinition] in
-            guard let schema = response.value.schema else {
-                if response.value.headers != nil {
+        var modelDefinitions = [ModelDefinition]()
+        for (typeName, response) in swagger.responses ?? [:] {
+            guard let schema = response.schema else {
+                if response.headers != nil {
                     log("SwaggerSwift does currently not support models without schema but with defined headers")
                     /// TODO: Add support for this
                     /// Example:
@@ -118,29 +148,33 @@ struct APIFactory {
                     ///        type: string
                 }
 
-                return []
+                continue
             }
 
             switch schema {
             case .reference(let reference):
-                if let (typeName, typeSchema) = swagger.definitions?.first(where: { reference == "#/definitions/\($0.key)" }) {
+                if let (_, typeSchema) = swagger.definitions?.first(where: { reference == "#/definitions/\($0.key)" }) {
                     // we dont need the type part as it just represents the primary model definition returned from this function
-                    let (_, modelDefinitions) = getType(forSchema: typeSchema,
-                                                        typeNamePrefix: typeName,
-                                                        swagger: swagger)
-                    return modelDefinitions
+                    let resolvedModel = modelTypeResolver.resolve(forSchema: typeSchema,
+                                                                  typeNamePrefix: typeName,
+                                                                  namespace: swagger.serviceName,
+                                                                  swagger: swagger)
+                    modelDefinitions.append(contentsOf: resolvedModel.inlineModelDefinitions)
                 } else {
                     log("[\(swagger.serviceName)] Failed to find definition for reference: \(reference)", error: true)
-                    return []
+                    continue
                 }
             case .node(let schema):
                 // we dont need the type part as it just represents the primary model definition returned from this function
-                let (_, modelDefinitions) = getType(forSchema: schema,
-                                                    typeNamePrefix: response.key,
-                                                    swagger: swagger)
-                return modelDefinitions
+                let resolvedModel = modelTypeResolver.resolve(forSchema: schema,
+                                                              typeNamePrefix: typeName,
+                                                              namespace: swagger.serviceName,
+                                                              swagger: swagger)
+                modelDefinitions.append(contentsOf: resolvedModel.inlineModelDefinitions)
             }
-        }.flatMap { $0 } ?? []
+        }
+
+        return modelDefinitions
     }
 
     /// The model fields for the API definition

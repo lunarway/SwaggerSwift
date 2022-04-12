@@ -4,15 +4,17 @@ import SwaggerSwiftML
 public struct APIRequestFactory {
     let apiResponseTypeFactory: APIResponseTypeFactory
     let requestParameterFactory: RequestParameterFactory
+    let modelTypeResolver: ModelTypeResolver
 
-    public init(apiResponseTypeFactory: APIResponseTypeFactory, requestParameterFactory: RequestParameterFactory) {
+    public init(apiResponseTypeFactory: APIResponseTypeFactory, requestParameterFactory: RequestParameterFactory, modelTypeResolver: ModelTypeResolver) {
         self.apiResponseTypeFactory = apiResponseTypeFactory
         self.requestParameterFactory = requestParameterFactory
+        self.modelTypeResolver = modelTypeResolver
     }
 
-    enum APIRequestFactoryError: Swift.Error {
-        case unsupportedMimeType(String)
-        case missingConsumeType
+    public enum APIRequestFactoryError: Swift.Error {
+        case unsupportedMimeType(httpMethod: String, servicePath: String, mimeType: String)
+        case missingConsumeType(httpMethod: String, servicePath: String)
     }
 
     func generateRequest(for operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, servicePath: String, swagger: Swagger, swaggerFile: SwaggerFile, pathParameters: [Parameter]) throws -> (APIRequest, [ModelDefinition]) {
@@ -30,12 +32,12 @@ public struct APIRequestFactory {
 
             guard let requestResponse = $0.value else { return nil }
 
-            if let (responseType, embeddedDefinitions) = parse(
-                request: requestResponse,
-                httpMethod: httpMethod,
-                servicePath: servicePath,
-                statusCode: statusCodeString,
-                swagger: swagger) {
+            if let (responseType, embeddedDefinitions) = parse(request: requestResponse,
+                                                               httpMethod: httpMethod,
+                                                               servicePath: servicePath,
+                                                               statusCode: statusCodeString,
+                                                               swagger: swagger,
+                                                               modelTypeResolver: modelTypeResolver) {
                 return .init(statusCode: statusCode,
                              responseType: responseType,
                              inlineModels: embeddedDefinitions)
@@ -87,7 +89,7 @@ public struct APIRequestFactory {
             functionName: functionName,
             parameters: functionParameters,
             throws: false,
-            consumes: try consumeMimeType(forOperation: operation, swagger: swagger),
+            consumes: try consumeMimeType(forOperation: operation, swagger: swagger, httpMethod: httpMethod.rawValue, servicePath: servicePath),
             isInternalOnly: operation.isInternalOnly,
             isDeprecated: operation.deprecated,
             httpMethod: httpMethod,
@@ -218,16 +220,16 @@ public struct APIRequestFactory {
         return queries
     }
 
-    private func consumeMimeType(forOperation operation: SwaggerSwiftML.Operation, swagger: Swagger) throws -> APIRequestConsumes {
+    private func consumeMimeType(forOperation operation: SwaggerSwiftML.Operation, swagger: Swagger, httpMethod: String, servicePath: String) throws -> APIRequestConsumes {
         if let rawConsume = operation.consumes?.first ?? swagger.consumes?.first {
             if let consume = APIRequestConsumes(rawValue: rawConsume) {
                 return consume
             } else {
-                log("[\(swagger.serviceName)] ⚠️ SwaggerSwift does not support consume mime type '\(rawConsume)'")
-                throw APIRequestFactoryError.unsupportedMimeType(rawConsume)
+                log("[\(swagger.serviceName) \(httpMethod) \(servicePath)] ⚠️ SwaggerSwift does not support consume mime type '\(rawConsume)'")
+                throw APIRequestFactoryError.unsupportedMimeType(httpMethod: httpMethod, servicePath: servicePath, mimeType: rawConsume)
             }
         } else {
-            throw APIRequestFactoryError.missingConsumeType
+            throw APIRequestFactoryError.missingConsumeType(httpMethod: httpMethod, servicePath: servicePath)
         }
     }
 

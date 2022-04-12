@@ -4,7 +4,11 @@ import SwaggerSwiftML
 typealias ResponseTypeMap = (statusCode: HTTPStatusCode, type: TypeType)
 
 public struct RequestParameterFactory {
-    public init() {}
+    let modelTypeResolver: ModelTypeResolver
+
+    public init(modelTypeResolver: ModelTypeResolver) {
+        self.modelTypeResolver = modelTypeResolver
+    }
 
     /// Get a list of all the types of parameters that should be supplied to the API request function
     /// - Parameters:
@@ -46,7 +50,10 @@ public struct RequestParameterFactory {
         resolvedModelDefinitions.append(contentsOf: queryModels)
 
         // Body
-        if let (bodyParameter, bodyModels) = resolveBodyParameters(parameters: parameters, typePrefix: typeName, swagger: swagger) {
+        if let (bodyParameter, bodyModels) = resolveBodyParameters(parameters: parameters,
+                                                                   typePrefix: typeName,
+                                                                   namespace: swagger.serviceName,
+                                                                   swagger: swagger) {
             resolvedParameters.append(bodyParameter)
             resolvedModelDefinitions.append(contentsOf: bodyModels)
         }
@@ -223,7 +230,7 @@ public struct RequestParameterFactory {
         return (functionParameters, modelDefinitions)
     }
 
-    private func resolveBodyParameters(parameters: [SwaggerSwiftML.Parameter], typePrefix: String, swagger: Swagger) -> (FunctionParameter, [ModelDefinition])? {
+    private func resolveBodyParameters(parameters: [SwaggerSwiftML.Parameter], typePrefix: String, namespace: String, swagger: Swagger) -> (FunctionParameter, [ModelDefinition])? {
         var schemaNode: Node<Schema>? = nil
         var parameter: Parameter? = nil
         for param in parameters {
@@ -240,18 +247,19 @@ public struct RequestParameterFactory {
 
         switch schemaNode {
         case .node(let schema):
-            let (modelType, inlineModelDefinitions) = getType(forSchema: schema,
-                                                              typeNamePrefix: typePrefix,
-                                                              swagger: swagger)
+            let resolvedType = modelTypeResolver.resolve(forSchema: schema,
+                                                         typeNamePrefix: typePrefix,
+                                                         namespace: namespace,
+                                                         swagger: swagger)
 
             let param = FunctionParameter(description: parameter.description,
                                           name: "body",
-                                          typeName: modelType,
+                                          typeName: resolvedType.propertyType,
                                           required: parameter.required,
                                           in: .body,
                                           isEnum: false)
 
-            return (param, inlineModelDefinitions)
+            return (param, resolvedType.inlineModelDefinitions)
         case .reference(let reference):
             guard let schema = swagger.findSchema(reference: reference) else {
                 return nil

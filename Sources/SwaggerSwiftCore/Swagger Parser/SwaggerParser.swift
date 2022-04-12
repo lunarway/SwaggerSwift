@@ -3,9 +3,11 @@ import SwaggerSwiftML
 
 public struct SwaggerParser {
     let apiRequestFactory: APIRequestFactory
+    let modelTypeResolver: ModelTypeResolver
 
-    public init(apiRequestFactory: APIRequestFactory) {
+    public init(apiRequestFactory: APIRequestFactory, modelTypeResolver: ModelTypeResolver) {
         self.apiRequestFactory = apiRequestFactory
+        self.modelTypeResolver = modelTypeResolver
     }
 
     /// Parse and generate the network layer for a SwaggerFile
@@ -16,7 +18,7 @@ public struct SwaggerParser {
     ///   - projectName: The api suite name
     ///   - verbose: Should logs be shown
     ///   - apiFilterList: A list of APIs that should be parsed - can be used to filter away other APIs
-    public func parse(swaggerFilePath: String, githubToken: String, destinationPath: String, projectName: String, verbose: Bool = false, apiFilterList: [String]?) async throws {
+    public func parse(swaggerFilePath: String, githubToken: String, destinationPath: String, projectName: String, verbose: Bool = false, dummyMode: Bool = false, apiFilterList: [String]?) async throws {
         isVerboseMode = verbose
 
         let fileManager = FileManager.default
@@ -59,13 +61,21 @@ public struct SwaggerParser {
                             swaggerFile: swaggerFile,
                             swiftPackageSourcesDirectory: swiftPackageSourcesDirectory,
                             commonLibraryName: commonLibraryName,
-                            fileManager: fileManager
+                            fileManager: fileManager,
+                            dummyMode: dummyMode
                         )
 
                         return try await swagger
                     } catch let error {
                         if let error = error as? FetchSwaggerError {
                             error.logError()
+                        } else if let error = error as? APIRequestFactory.APIRequestFactoryError {
+                            switch error {
+                            case .unsupportedMimeType(let httpMethod, let servicePath, let mimeType):
+                                log("[\(service.key) \(httpMethod) \(servicePath)] Swagger is using invalid mime type: \(mimeType)", error: true)
+                            case .missingConsumeType(let httpMethod, let servicePath):
+                                log("[\(service.key) \(httpMethod) \(servicePath)] Swagger is not specifying the mimetype", error: true)
+                            }
                         } else {
                             log("[\(service.key)] Failed to download Swagger: \(error.localizedDescription)", error: true)
                         }
@@ -126,22 +136,24 @@ public struct SwaggerParser {
         }
     }
 
-    private func parse(swagger: Swagger, swaggerFile: SwaggerFile, swiftPackageSourcesDirectory: String, commonLibraryName: String, fileManager: FileManager) throws {
+    private func parse(swagger: Swagger, swaggerFile: SwaggerFile, swiftPackageSourcesDirectory: String, commonLibraryName: String, fileManager: FileManager, dummyMode: Bool) throws {
         log("Parsing contents of Swagger: \(swagger.serviceName)")
 
         let apiDirectory = swiftPackageSourcesDirectory + "/" + swagger.serviceName
         let modelDirectory = "\(apiDirectory)/Models"
 
-        // remove existing files
-        var trueValue = ObjCBool(true)
-        if fileManager.fileExists(atPath: modelDirectory, isDirectory: &trueValue) {
-            try fileManager.removeItem(atPath: apiDirectory)
+        if !dummyMode {
+            // remove existing files
+            var trueValue = ObjCBool(true)
+            if fileManager.fileExists(atPath: modelDirectory, isDirectory: &trueValue) {
+                try fileManager.removeItem(atPath: apiDirectory)
+            }
+
+            // create directories
+            try fileManager.createDirectory(atPath: modelDirectory, withIntermediateDirectories: true, attributes: nil)
         }
 
-        // create directories
-        try fileManager.createDirectory(atPath: modelDirectory, withIntermediateDirectories: true, attributes: nil)
-
-        let (apiDefinition, apiModelDefinitions) = try APIFactory(apiRequestFactory: apiRequestFactory).generate(for: swagger, withSwaggerFile: swaggerFile)
+        let (apiDefinition, apiModelDefinitions) = try APIFactory(apiRequestFactory: apiRequestFactory, modelTypeResolver: modelTypeResolver).generate(for: swagger, withSwaggerFile: swaggerFile)
 
         let apiDefinitionFile = apiDefinition.toSwift(
             swaggerFile: swaggerFile,
@@ -160,7 +172,6 @@ public struct SwaggerParser {
         for apiModel in apiModelDefinitions {
             let file = apiModel.toSwift(
                 serviceName: swagger.serviceName,
-                swaggerFile: swaggerFile,
                 embedded: false,
                 packagesToImport: [commonLibraryName]
             )
@@ -186,6 +197,7 @@ public struct SwaggerParser {
         try additionalPropertyUtil.write(toFile: "\(targetPath)/AdditionalProperty.swift", atomically: true, encoding: .utf8)
         try formData.write(toFile: "\(targetPath)/FormData.swift", atomically: true, encoding: .utf8)
         try dateDecodingStrategy.write(toFile: "\(targetPath)/DateDecodingStrategy.swift", atomically: true, encoding: .utf8)
+        try apiInitializeFile.write(toFile: "\(targetPath)/APIInitialize.swift", atomically: true, encoding: .utf8)
 
         if let globalHeaderFields = swaggerFile.globalHeaders {
             let globalHeadersModel = GlobalHeadersModel(headerFields: globalHeaderFields)

@@ -116,6 +116,7 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
             headerStatements.append("request.addValue(\"application/json\", forHTTPHeaderField: \"Content-Type\")")
             returnStatement = " -> URLSessionDataTask"
 
+        case .formUrlEncoded: fallthrough
         case .multiPartFormData:
             urlSessionMethodName = "uploadTask(with: request, from: requestData as Data)"
             returnStatement = " -> URLSessionUploadTask"

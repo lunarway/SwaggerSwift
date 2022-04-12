@@ -49,4 +49,8 @@ extension String {
 
         return ([first] + rest).joined(separator: "")
     }
+
+    mutating func appendLine(_ str: String = "") {
+        self += str + "\n"
+    }
 }

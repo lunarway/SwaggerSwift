@@ -4,30 +4,33 @@ import SwaggerSwiftML
 enum ModelDefinition {
     case enumeration(Enumeration)
     case object(Model)
+    case array(ArrayModel)
 }
 
-extension ModelDefinition: Swiftable {
+extension ModelDefinition {
     var typeName: String {
         switch self {
         case .enumeration(let enumeration):
             return enumeration.typeName
         case .object(let model):
             return model.typeName
+        case .array(let model):
+            return model.typeName
         }
     }
 
-    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool, packagesToImport: [String]) -> String {
+    func toSwift(serviceName: String?, embedded: Bool, packagesToImport: [String]) -> String {
         switch self {
         case .enumeration(let enumeration):
             return enumeration.toSwift(serviceName: serviceName,
-                                       swaggerFile: swaggerFile,
                                        embedded: embedded,
                                        packagesToImport: packagesToImport)
         case .object(let model):
             return model.toSwift(serviceName: serviceName,
-                                 swaggerFile: swaggerFile,
                                  embedded: embedded,
                                  packagesToImport: packagesToImport)
+        case .array(let model):
+            return model.toSwift(serviceName: serviceName, embedded: embedded, packagesToImport: packagesToImport)
         }
     }
 
