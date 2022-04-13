@@ -1,48 +1,43 @@
 import SwaggerSwiftML
 
-/// The types used by the service types, such as models, and enums
+/// The types used in the apis. This is the response types, parameter types and so on
 enum ModelDefinition {
     case enumeration(Enumeration)
-    case model(Model)
-    case interface(Interface)
+    case object(Model)
+    case array(ArrayModel)
 }
 
-extension ModelDefinition: Swiftable {
+extension ModelDefinition {
     var typeName: String {
         switch self {
         case .enumeration(let enumeration):
             return enumeration.typeName
-        case .model(let model):
+        case .object(let model):
             return model.typeName
-        case .interface(let model):
+        case .array(let model):
             return model.typeName
         }
     }
 
-    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool, packagesToImport: [String]) -> String {
+    func toSwift(serviceName: String?, embedded: Bool, packagesToImport: [String]) -> String {
         switch self {
         case .enumeration(let enumeration):
             return enumeration.toSwift(serviceName: serviceName,
-                                       swaggerFile: swaggerFile,
                                        embedded: embedded,
                                        packagesToImport: packagesToImport)
-        case .model(let model):
+        case .object(let model):
             return model.toSwift(serviceName: serviceName,
-                                 swaggerFile: swaggerFile,
                                  embedded: embedded,
                                  packagesToImport: packagesToImport)
-        case .interface(let interface):
-            return interface.toSwift(serviceName: serviceName,
-                                     swaggerFile: swaggerFile,
-                                     embedded: embedded,
-                                     packagesToImport: packagesToImport)
+        case .array(let model):
+            return model.toSwift(serviceName: serviceName, embedded: embedded, packagesToImport: packagesToImport)
         }
     }
 
-    func resolveInherits(_ def: [Model]) -> ModelDefinition {
+    func resolveInheritanceTree(with models: [Model]) -> ModelDefinition {
         switch self {
-        case .model(let model):
-            return .model(model.resolveInherits(def))
+        case .object(let model):
+            return .object(model.resolveInheritanceTree(withModels: models))
         default:
             return self
         }

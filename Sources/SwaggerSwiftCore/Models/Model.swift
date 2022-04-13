@@ -11,9 +11,9 @@ struct Model {
     let embeddedDefinitions: [ModelDefinition]
     let isCodable: Bool
 
-    func resolveInherits(_ definitions: [Model]) -> Model {
+    func resolveInheritanceTree(withModels models: [Model]) -> Model {
         let inherits = inheritsFrom.compactMap { definitionName in
-            definitions.first(where: { $0.typeName == definitionName })
+            models.first(where: { $0.typeName == definitionName })
         }
 
         let inheritedFields = inherits.flatMap { $0.fields }
@@ -28,7 +28,7 @@ struct Model {
                      isCodable: isCodable)
     }
 
-    func modelDefinition(serviceName: String?, swaggerFile: SwaggerFile) -> String {
+    func modelDefinition(serviceName: String?) -> String {
         let comment: String?
         if let description = description {
             comment = description.split(separator: "\n").map {
@@ -44,8 +44,6 @@ public init(\(fields.asInitParameter())) {
 }
 """
 
-        let modelFields = fields.sorted(by: { $0.safePropertyName < $1.safePropertyName }).flatMap { $0.toSwift.split(separator: "\n") }
-
         var model = ""
 
         if let comment = comment {
@@ -54,7 +52,7 @@ public init(\(fields.asInitParameter())) {
 
         model += "public struct \(typeName)\(isCodable ? ": Codable" : "") {\n"
 
-        model += modelFields.map { $0 }.joined(separator: "\n").indentLines(1)
+        model += fields.asPropertyList().indentLines(1)
 
         model += "\n\n" + initMethod.indentLines(1)
 
@@ -78,7 +76,7 @@ public init(\(fields.asInitParameter())) {
 
         model += embeddedDefinitions
             .sorted(by: { $0.typeName < $1.typeName })
-            .map { $0.toSwift(serviceName: serviceName, swaggerFile: swaggerFile, embedded: true, packagesToImport: []) }
+            .map { $0.toSwift(serviceName: serviceName, embedded: true, packagesToImport: []) }
             .joined(separator: "\n\n")
             .indentLines(1)
 
@@ -142,14 +140,14 @@ public init(from decoder: Decoder) throws {
     }
 }
 
-extension Model: Swiftable {
-    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool, packagesToImport: [String]) -> String {
+extension Model {
+    func toSwift(serviceName: String?, embedded: Bool, packagesToImport: [String]) -> String {
         precondition(inheritsFrom.count == 0)
 
         let isInExtension = serviceName != nil
 
         if embedded {
-            return modelDefinition(serviceName: serviceName, swaggerFile: swaggerFile)
+            return modelDefinition(serviceName: serviceName)
         }
 
         var model = ""
@@ -166,7 +164,7 @@ extension Model: Swiftable {
             model.appendLine("extension \(serviceName) {")
         }
 
-        model += modelDefinition(serviceName: serviceName, swaggerFile: swaggerFile).indentLines(isInExtension ? 1 : 0)
+        model += modelDefinition(serviceName: serviceName).indentLines(isInExtension ? 1 : 0)
 
         if let _ = serviceName {
             model.appendLine()
@@ -179,11 +177,5 @@ extension Model: Swiftable {
         }
 
         return model
-    }
-}
-
-extension String {
-    mutating func appendLine(_ str: String = "") {
-        self += str + "\n"
     }
 }
