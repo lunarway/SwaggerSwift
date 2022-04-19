@@ -2,21 +2,16 @@ import XCTest
 @testable import SwaggerSwiftCore
 
 final class SwaggerSwiftTests: XCTestCase {
-
-    let swaggerFile = SwaggerFile(path: "", organisation: "", services: [:], globalHeaders: nil)
-
     func testOptionalURLDecodeFormat() {
-
         let model = Model(description: nil,
                           typeName: "Test",
-                          fields: [.init(description: nil, type: .object(typeName: "URL"), name: "url", required: false)],
+                          fields: [.init(description: nil, type: .object(typeName: "URL"), name: "url", isRequired: false)],
                           inheritsFrom: [],
                           isInternalOnly: false,
                           embeddedDefinitions: [],
                           isCodable: true)
 
-        let result = model.modelDefinition(serviceName: nil,
-                                           swaggerFile: swaggerFile)
+        let result = model.modelDefinition(serviceName: nil)
 
         XCTAssertEqual(result, """
 public struct Test: Codable {
@@ -40,17 +35,15 @@ public struct Test: Codable {
     }
 
     func testURLDecodeFormat() {
-
         let model = Model(description: nil,
                           typeName: "Test",
-                          fields: [.init(description: nil, type: .object(typeName: "URL"), name: "url", required: true)],
+                          fields: [.init(description: nil, type: .object(typeName: "URL"), name: "url", isRequired: true)],
                           inheritsFrom: [],
                           isInternalOnly: false,
                           embeddedDefinitions: [],
                           isCodable: true)
 
-        let result = model.modelDefinition(serviceName: nil,
-                                           swaggerFile: swaggerFile)
+        let result = model.modelDefinition(serviceName: nil)
 
         XCTAssertEqual(result, """
 public struct Test: Codable {

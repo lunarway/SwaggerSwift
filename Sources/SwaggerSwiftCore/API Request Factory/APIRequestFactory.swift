@@ -236,7 +236,7 @@ public struct APIRequestFactory {
     private func resolveFunctionName(httpMethod: String, servicePath: String, operationId: String?) -> String {
         var functionName: String
         if let overrideName = operationId {
-            functionName = overrideName.lowercasingFirst
+            functionName = overrideName.modelNamed.lowercasingFirst
         } else {
             functionName = httpMethod + servicePath
                 .replacingOccurrences(of: "{", with: "")
