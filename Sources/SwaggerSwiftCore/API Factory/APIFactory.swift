@@ -189,7 +189,7 @@ struct APIFactory {
                                typeIsAutoclosure: false,
                                typeIsBlock: true,
                                defaultValue: nil),
-            APIDefinitionField(name: "baseUrl",
+            APIDefinitionField(name: "baseUrlProvider",
                                description: "the block provider for the baseUrl of the service. The reason this is a block is that this enables automatically updating the network layer on backend environment change.",
                                typeName: "() -> URL",
                                isRequired: true,
