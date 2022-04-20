@@ -156,7 +156,7 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
         var body =
             """
 \(declaration)
-    let endpointUrl = self.baseUrl().appendingPathComponent("\(servicePath)")
+    let endpointUrl = self.baseUrlProvider().appendingPathComponent("\(servicePath)")
 
     \(queryStatement.count > 0 ? "var" : "let") urlComponents = URLComponents(url: endpointUrl, resolvingAgainstBaseURL: true)!
 \(queryStatement.indentLines(1))
