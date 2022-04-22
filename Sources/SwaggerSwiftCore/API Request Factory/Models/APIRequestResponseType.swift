@@ -70,6 +70,7 @@ case \(statusCode.rawValue):
 
         completion(.\(swiftResult)(\(resultType("result", resultIsEnum))))
     } catch let error {
+        interceptor?.networkFailedToParseObject(urlRequest: request, urlResponse: response, data: data, error: error)
         completion(.failure(.requestFailed(error: error)))
     }
 """
