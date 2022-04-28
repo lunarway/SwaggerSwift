@@ -6,12 +6,20 @@ on:
 
 jobs:
   build:
-
     runs-on: macos-12
-
     steps:
     - uses: actions/checkout@v2
     - name: Build
       run: swift build -v
+
+  test:
+   runs-on: macos-12
+   steps:
+    - uses: actions/checkout@v2
     - name: Run tests
-      run: swift test -v
+      run: swift test -v --parallel --xunit-output test.xml
+    - name: Publish Unit Test Results
+      uses: EnricoMi/publish-unit-test-result-action/composite@v1
+      if: always()
+      with:
+        files: "test.xml"
