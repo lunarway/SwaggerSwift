@@ -16,7 +16,7 @@ jobs:
     - name: Run tests
       run: swift test -v --xunit-output test.xml
     - name: Publish Unit Test Results
-      uses: EnricoMi/publish-unit-test-result-action@v1
+      uses: EnricoMi/publish-unit-test-result-action/composite@v1
       if: always()
       with:
         files: "test.xml"
