@@ -17,7 +17,7 @@ jobs:
    steps:
     - uses: actions/checkout@v2
     - name: Run tests
-      run: swift test -v --xunit-output /test.xml
+      run: swift test -v --parallel --xunit-output ~/test.xml
     - name: Publish Unit Test Results
       uses: EnricoMi/publish-unit-test-result-action/composite@v1
       if: always()
