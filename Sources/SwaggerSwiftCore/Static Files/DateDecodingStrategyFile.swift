@@ -5,7 +5,24 @@ public func dateDecodingStrategy(_ decoder: Decoder) throws -> Date {
     let container = try decoder.singleValueContainer()
     let stringValue = try container.decode(String.self)
 
-    // first try decoding date time format (yyyy-MM-ddTHH:mm:ssZ)
+    // first try decoding date time format (yyyy-MM-ddTHH:mm:ss.fffZ)
+    let dateFractionalTimeFormatter: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [
+            .withFullDate,
+            .withDashSeparatorInDate,
+            .withTime,
+            .withColonSeparatorInTime,
+            .withFractionalSeconds
+        ]
+        return formatter
+    }()
+
+    if let date = dateFractionalTimeFormatter.date(from: stringValue) {
+        return date
+    }
+
+    // then try decoding date time format (yyyy-MM-ddTHH:mm:ssZ)
     let dateTimeFormatter: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [
