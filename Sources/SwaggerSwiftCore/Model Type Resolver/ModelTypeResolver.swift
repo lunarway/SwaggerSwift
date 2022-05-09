@@ -167,13 +167,13 @@ public struct ModelTypeResolver {
             return .init(.array(typeName: type), inlineModels)
         case .object(let properties, let allOf):
             let resolvedType = objectModelFactory.make(properties: properties,
-                                                                   requiredProperties: [],
-                                                                   allOf: allOf,
-                                                                   swagger: swagger,
-                                                                   typeNamePrefix: typeNamePrefix,
-                                                                   schema: schema,
-                                                                   namespace: namespace,
-                                                                   customFields: [:])
+                                                       requiredProperties: [],
+                                                       allOf: allOf,
+                                                       swagger: swagger,
+                                                       typeNamePrefix: typeNamePrefix,
+                                                       schema: schema,
+                                                       namespace: namespace,
+                                                       customFields: [:])
             return .init(resolvedType.0, resolvedType.1)
         case .dictionary(let valueType, _):
             switch valueType {
@@ -226,8 +226,32 @@ public struct ModelTypeResolver {
             switch node.type {
             case .string(format: _, enumValues: _, maxLength: _, minLength: _, pattern: _):
                 return (.string, [])
-            case .number(format: _, maximum: _, exclusiveMaximum: _, minimum: _, exclusiveMinimum: _, multipleOf: _):
-                return (.int, [])
+            case .number(let format, maximum: _, exclusiveMaximum: _, minimum: _, exclusiveMinimum: _, multipleOf: _):
+                if let format = format {
+                    switch format {
+                    case .int32:
+                        return (TypeType.int, [])
+                    case .long:
+                        return (TypeType.int64, [])
+                    case .float:
+                        return (TypeType.float, [])
+                    case .double:
+                        return (TypeType.double, [])
+                    case .string: fallthrough
+                    case .byte: fallthrough
+                    case .binary: fallthrough
+                    case .boolean: fallthrough
+                    case .date: fallthrough
+                    case .dateTime: fallthrough
+                    case .password: fallthrough
+                    case .email: fallthrough
+                    case .unsupported:
+                        log("[\(swagger.serviceName)] Unsupported schema type: \(format)")
+                        return (.void, [])
+                    }
+                } else {
+                    return (.int, [])
+                }
             case .integer(format: _, maximum: _, exclusiveMaximum: _, minimum: _, exclusiveMinimum: _, multipleOf: _):
                 return (.int, [])
             case .boolean:
