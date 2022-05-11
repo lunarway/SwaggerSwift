@@ -75,7 +75,7 @@ public struct APIRequestFactory {
             }
         }
 
-        let queryItems = resolveQueries(forOperation: operation, parameters: allParameters, swagger: swagger)
+        let queryItems = resolveQueries(parameters: allParameters, swagger: swagger)
 
         let apiResponseTypes = apiResponseTypeFactory.make(forResponses: responses,
                                                            forHTTPMethod: httpMethod,
@@ -110,12 +110,16 @@ public struct APIRequestFactory {
     ///   - parameters: the total set of parameters available to the api request
     ///   - swagger: the swagger spec
     /// - Returns: the list of query elements that should be set in the request
-    private func resolveQueries(forOperation operation: SwaggerSwiftML.Operation, parameters: [Parameter], swagger: Swagger) -> [QueryElement] {
-        let operationParameters: [Parameter] = (operation.parameters ?? []).map {
-            swagger.findParameter(node: $0)
-        } + parameters
+    private func resolveQueries(parameters: [Parameter], swagger: Swagger) -> [QueryElement] {
+        let queryParameters = parameters.filter {
+            if case ParameterLocation.query = $0.location {
+                return true
+            } else {
+                return false
+            }
+        }
 
-        let queries: [QueryElement] = operationParameters.compactMap {
+        let queries: [QueryElement] = queryParameters.compactMap {
             guard case ParameterLocation.query = $0.location else {
                 return nil
             }
@@ -175,45 +179,8 @@ public struct APIRequestFactory {
                         valueType: .default
                     )
                 }
-            case .header:
-                return QueryElement(
-                    fieldName: $0.name,
-                    fieldValue: $0.name.camelized,
-                    isOptional: $0.required == false,
-                    valueType: .default
-                )
-            case .path(let type):
-                switch type {
-                case .string(_, let enumValues, _, _, _):
-                    let valueType: QueryElement.ValueType = (enumValues?.count ?? 0) > 0 ? .enum : .default
-                    return QueryElement(
-                        fieldName: $0.name,
-                        fieldValue: $0.name.camelized,
-                        isOptional: $0.required == false,
-                        valueType: valueType
-                    )
-                default:
-                    return QueryElement(
-                        fieldName: $0.name,
-                        fieldValue: $0.name.camelized,
-                        isOptional: $0.required == false,
-                        valueType: .default
-                    )
-                }
-            case .formData:
-                return QueryElement(
-                    fieldName: $0.name,
-                    fieldValue: $0.name.camelized,
-                    isOptional: $0.required == false,
-                    valueType: .default
-                )
-            case .body:
-                return QueryElement(
-                    fieldName: $0.name,
-                    fieldValue: $0.name.camelized,
-                    isOptional: $0.required == false,
-                    valueType: .default
-                )
+            default:
+                fatalError("This should not happen")
             }
         }
 

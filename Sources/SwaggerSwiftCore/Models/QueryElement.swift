@@ -14,6 +14,7 @@ struct QueryElement {
 extension QueryElement {
     func toString() -> String {
         let fieldName = self.fieldName.camelized
+
         if self.isOptional {
             let fieldValue: String
             switch self.valueType {
@@ -50,18 +51,16 @@ extension QueryElement {
 
 extension Sequence where Element == QueryElement {
     func toQueryItems() -> String {
-        if self.underestimatedCount > 0 {
-            let queryItems = self.map {
-                $0.toString()
-            }.joined(separator: "\n")
+        guard self.underestimatedCount > 0 else { return "" }
 
-            return """
+        let queryItems = self.map {
+            $0.toString()
+        }.joined(separator: "\n")
+
+        return """
         var queryItems = [URLQueryItem]()
         \(queryItems)
         urlComponents.queryItems = queryItems
         """
-        } else {
-            return ""
-        }
     }
 }
