@@ -124,6 +124,8 @@ struct APIFactory {
                 break
             case .object:
                 break
+            case .enumeration:
+                break
             }
         }
 

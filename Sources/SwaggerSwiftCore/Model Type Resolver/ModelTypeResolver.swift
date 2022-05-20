@@ -35,7 +35,7 @@ public struct ModelTypeResolver {
                                                                     values: enumValues,
                                                                     isCodable: true))
 
-                return .init(.object(typeName: enumTypename), [model])
+                return ResolvedModel(.enumeration(typeName: enumTypename), [model])
             }
 
             if let format = format {

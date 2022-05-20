@@ -23,7 +23,7 @@ extension Schema {
         switch self.type {
         case .string(_, let enumValues, _, _, _):
             if let enumValues = enumValues, enumValues.count > 0 {
-                return TypeType.object(typeName: name)
+                return TypeType.enumeration(typeName: name)
             } else {
                 return TypeType.string
             }
