@@ -208,10 +208,12 @@ public class ObjectModelFactory {
                                                              typeNamePrefix: typeName,
                                                              namespace: namespace,
                                                              swagger: swagger)
+
                 let field = ModelField(description: schema.description,
                                        type: resolvedType.propertyType,
                                        name: name,
                                        isRequired: isRequired)
+
                 return (field, resolvedType.inlineModelDefinitions)
             }
         case .node(let schema):

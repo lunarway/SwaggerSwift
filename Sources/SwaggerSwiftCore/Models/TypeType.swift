@@ -11,6 +11,7 @@ indirect enum TypeType {
     case int64
     case array(typeName: TypeType)
     case object(typeName: String)
+    case enumeration(typeName: String)
     case date
     case void
 
@@ -23,9 +24,9 @@ indirect enum TypeType {
                 return "Int"
             case .double:
                 return "Double"
-            case .array(typeName: let typeName):
+            case .array(let typeName):
                 return "[\(typeName.toString(required: true))]"
-            case .object(typeName: let typeName):
+            case .object(let typeName):
                 return typeName
             case .void:
                 return "Void"
@@ -37,6 +38,8 @@ indirect enum TypeType {
                 return "Int64"
             case .date:
                 return "Date"
+            case .enumeration(let typeName):
+                return typeName
             }
         }(self) + (required ? "" : "?")
     }

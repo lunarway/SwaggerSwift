@@ -57,6 +57,10 @@ public struct APIResponseTypeFactory {
                     return APIRequestResponseType.object(response.statusCode,
                                                          response.statusCode.isSuccess ? successResponses.count > 1 : errorResponses.count > 1,
                                                          typeName: typeName)
+                case .enumeration(let typeName):
+                    return .enumeration(response.statusCode,
+                                        response.statusCode.isSuccess ? successResponses.count > 1 : errorResponses.count > 1,
+                                        typeName: typeName)
                 case .void:
                     return APIRequestResponseType.void(response.statusCode,
                                                        response.statusCode.isSuccess ? successResponses.count > 1 : errorResponses.count > 1)

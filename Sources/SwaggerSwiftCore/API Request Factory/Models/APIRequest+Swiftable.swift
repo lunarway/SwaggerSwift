@@ -81,7 +81,8 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
                     fatalError("not implemented")
                 case .array:
                     fatalError("not implemented")
-                case .object(typeName: let typeName):
+                case .enumeration(let typeName): fallthrough
+                case .object(let typeName):
                     if typeName == "FormData" {
                         return "requestData.append(\($0.name).toRequestData(named: \"\($0.name)\", using: boundary))"
                     } else if $0.isEnum {
