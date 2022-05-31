@@ -1,6 +1,7 @@
 name: Build Docker Image
 
 on:
+  workflow_dispatch:
   push:
     branches: 
      - main
@@ -15,7 +16,7 @@ jobs:
       run: docker build . --file Dockerfile --tag quay.io/lunarway/swaggerswift:latest 
       
     - name: Quay login
-      run: docker docker login -u="$QUAY_USERNAME" -p="$QUAY_TOKEN" quay.io
+      run: docker docker login -u="$(QUAY_USERNAME)" -p="$(QUAY_TOKEN)" quay.io
       env:
         QUAY_TOKEN: ${{ secrets.quay_token }}
         QUAY_USERNAME: ${{ secrets.quay_username }}
