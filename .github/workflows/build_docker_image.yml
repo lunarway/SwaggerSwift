@@ -12,8 +12,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     
+    - name: Init buildx
+      run: docker buildx create --use
     - name: Build docker image
-      run: docker build . --file Dockerfile --tag quay.io/lunarway/swaggerswift:latest 
+      run: docker buildx build --platform linux/amd64,linux/arm64 ./ --tag quay.io/lunarway/swaggerswift:latest 
       
     - name: Quay login
       run: docker docker login -u="$(QUAY_USERNAME)" -p="$(QUAY_TOKEN)" quay.io
