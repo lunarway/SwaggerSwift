@@ -1,4 +1,4 @@
-FROM --platform linux/arm64/v8 swift:amazonlinux2 as builder
+FROM --platform=linux/arm64/v8 swift:amazonlinux2 as builder
 WORKDIR /swaggerswift
 COPY . .
 
