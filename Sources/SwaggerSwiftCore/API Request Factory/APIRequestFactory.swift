@@ -51,7 +51,7 @@ public struct APIRequestFactory {
 
         let responseMap: [ResponseTypeMap] = responses.map { ($0.statusCode, $0.responseType) }
 
-        let (functionParameters, inlineModels) = requestParameterFactory.make(
+        let (functionParameters, inlineModels) = try requestParameterFactory.make(
             forOperation: operation,
             functionName: functionName,
             responseTypes: responseMap,
