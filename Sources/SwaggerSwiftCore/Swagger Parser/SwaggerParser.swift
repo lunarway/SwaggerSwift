@@ -1,5 +1,8 @@
 import Foundation
 import SwaggerSwiftML
+#if canImport(FoundationNetworking)
+    import FoundationNetworking
+#endif
 
 public struct SwaggerParser {
     let apiRequestFactory: APIRequestFactory
@@ -112,6 +115,21 @@ public struct SwaggerParser {
         )
     }
 
+    private func fetchSwagger(_ request: URLRequest) async throws -> (Data, URLResponse) {
+        enum FetchError: Error {
+            case noData
+        }
+        return try await withCheckedThrowingContinuation { continuation in
+            URLSession.shared.dataTask(with: request) { data, response, error in
+                guard let data = data, let response = response else {
+                    continuation.resume(throwing: FetchError.noData)
+                    return
+                }
+                continuation.resume(returning: (data, response))
+            }.resume()
+        }
+    }
+
     private func downloadSwagger(githubToken: String, organisation: String, serviceName: String, branch: String, swaggerPath: String, urlSession: URLSession = .shared) async throws -> Swagger {
         let url = URL(string: "https://raw.githubusercontent.com/\(organisation)/\(serviceName)/\(branch)/\(swaggerPath)")!
         var request = URLRequest(url: url)
@@ -119,7 +137,7 @@ public struct SwaggerParser {
         request.addValue("application/vnd.github.v3.raw", forHTTPHeaderField: "Accept")
 
         log("Downloading Swagger at: \(url.absoluteString)")
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await fetchSwagger(request)
         if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
             throw FetchSwaggerError.requestFailed(serviceName: serviceName, branch: branch, statusCode: httpResponse.statusCode)
         }
