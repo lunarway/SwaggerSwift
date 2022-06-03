@@ -61,7 +61,13 @@ case \(statusCode.rawValue):
     completion(.\(swiftResult)(\(resultType("result", resultIsEnum))))
 """
         case .object(let statusCode, let resultIsEnum, let responseType):
-            return """
+            if responseType == "Data" {
+                return """
+    case \(statusCode.rawValue):
+        completion(.\(swiftResult)(data))
+    """
+            } else {
+                return """
 case \(statusCode.rawValue):
     do {
         let decoder = JSONDecoder()
@@ -74,6 +80,7 @@ case \(statusCode.rawValue):
         completion(.failure(.requestFailed(error: error)))
     }
 """
+            }
         case .void(let statusCode, let resultIsEnum):
             if resultIsEnum {
                 return """
