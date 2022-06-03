@@ -44,7 +44,8 @@ extension ParameterType {
         case .boolean:
             return (.boolean(defaultValue: nil), [])
         case .array(let items, collectionFormat: _, maxItems: _, minItems: _, uniqueItems: _):
-            return try typeOfItems(items.type, typePrefix: typePrefix, swagger: swagger)
+            let (type, embedddedDefinitions) = try typeOfItems(items.type, typePrefix: typePrefix, swagger: swagger)
+            return (.array(typeName: type), embedddedDefinitions)
         case .file:
             return (.object(typeName: "FormData"), [])
         }
