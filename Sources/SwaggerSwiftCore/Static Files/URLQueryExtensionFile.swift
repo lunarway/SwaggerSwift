@@ -21,5 +21,9 @@ public extension URLQueryItem {
     init(name: String, value: Date) {
         self.init(name: name, value: ISO8601DateFormatter().string(from: value))
     }
+
+    init(name: String, value: [String]) {
+        self.init(name: name, value: value.joined(separator: ","))
+    }
 }
 """

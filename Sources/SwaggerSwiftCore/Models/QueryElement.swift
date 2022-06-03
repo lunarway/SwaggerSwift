@@ -2,6 +2,7 @@ struct QueryElement {
     enum ValueType {
         case date
         case `enum`
+        case array
         case `default`
     }
 
@@ -26,7 +27,13 @@ extension QueryElement {
                         queryItems.append(URLQueryItem(name: \"\(self.fieldName)\", value: \(fieldName)Value))
                     }
                     """
-            default:
+            case .array:
+                return """
+                    if let \(fieldName)Value = \(self.fieldName) {
+                        queryItems.append(URLQueryItem(name: \"\(self.fieldName)\", value: \(fieldName)Value))
+                    }
+                    """
+            case .`default`:
                 fieldValue = "\(self.fieldValue)"
             }
 
