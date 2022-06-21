@@ -93,8 +93,21 @@ public class ObjectModelFactory {
                 typeName = modelReference.typeName
             }
 
-            // since this is a referenced object is must be something that is available from the top level nested types
-            typeName = "\(swagger.serviceName).\(typeName)"
+            // Should probably be formalized
+            if case SchemaType.string(_,
+                                      let enumValues,
+                                      let maxLength,
+                                      let minLength,
+                                      let pattern) = schema.type,
+               enumValues == nil,
+               maxLength == nil,
+               minLength == nil,
+               pattern == nil {
+                typeName = "String"
+            } else {
+                // since this is a referenced object is must be something that is available from the top level nested types
+                typeName = "\(swagger.serviceName).\(typeName)"
+            }
 
             // since this is a referenced object that is globally defined,
             // then the global reference will always be a typealias (or an object), and
