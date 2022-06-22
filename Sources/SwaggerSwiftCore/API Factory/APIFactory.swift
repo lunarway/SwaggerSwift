@@ -108,6 +108,8 @@ struct APIFactory {
                         return field
                     }
                 }
+                
+                
                 return .object(.init(description: model.description,
                                      typeName: model.typeName,
                                      fields: fields,
