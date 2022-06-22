@@ -4,11 +4,6 @@ import SwaggerSwiftML
 struct APIFactory {
     let apiRequestFactory: APIRequestFactory
     let modelTypeResolver: ModelTypeResolver
-
-
-    func resolvePrimitiveAliasesIn(_ modelDefinitions: [ModelDefinition]) {
-
-    }
     
     func generate(for swagger: Swagger, withSwaggerFile swaggerFile: SwaggerFile) throws -> (APIDefinition, [ModelDefinition]) {
         let (apiFunctions, inlineModelDefinitions) = try getApiList(fromSwagger: swagger, swaggerFile: swaggerFile)
