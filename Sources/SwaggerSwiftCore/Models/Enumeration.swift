@@ -140,7 +140,7 @@ extension Enumeration {
 
         let modelDef = modelDefinition(embeddedFile: false)
         if let description = description, description.count > 0 {
-            let comment = "// \(description)"
+            let comment = "// \(description.replacingOccurrences(of: "\n", with: "\n//"))"
             fileSections += "\(comment)\n\(modelDef)".indentLines(1) + "\n"
         } else {
             fileSections += modelDef.indentLines(1) + "\n"
