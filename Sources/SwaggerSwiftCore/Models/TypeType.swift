@@ -14,6 +14,7 @@ indirect enum TypeType {
     case enumeration(typeName: String)
     case date
     case void
+    case typeAlias(typeName: String, type: TypeType)
 
     func toString(required: Bool) -> String {
         return { obj -> String in
@@ -39,6 +40,8 @@ indirect enum TypeType {
             case .date:
                 return "Date"
             case .enumeration(let typeName):
+                return typeName
+            case .typeAlias(let typeName, _):
                 return typeName
             }
         }(self) + (required ? "" : "?")

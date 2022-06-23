@@ -72,7 +72,7 @@ public struct ModelTypeResolver {
                         return .init(.object(typeName: "URL"))
                     default:
                         log("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(unsupported)' for strings", error: true)
-                        return .init(.string)
+                        return .init(.typeAlias(typeName: typeNamePrefix, type: .string))
                     }
                 }
             } else {

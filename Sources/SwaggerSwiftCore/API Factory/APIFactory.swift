@@ -85,45 +85,6 @@ struct APIFactory {
         return (apis, modelDefinitions)
     }
 
-
-
-    /// Resolve and replace type definitions in fields of all models that turned out to be primitive aliases.
-    /// A primitive alias is a definition of a primitive type, that is not an enum or does not have a handled format.
-    ///  E.g. a primitive type alias is a definition of type `string` with format `Decimal` where we don't have a handle for decimal,
-    /// - Parameters:
-    ///   - modelDefinitions: A list of model definitions that still contains aliases
-    ///   - primitiveAliasTypeMapping: the mapping from type name to type
-    /// - Returns: a list of model definitions with all primitive aliases resolved to primitive types.
-    private func resolveAliasesFor(_ modelDefinitions: [ModelDefinition], with primitiveAliasTypeMapping: [String: TypeType]) -> [ModelDefinition] {
-        return modelDefinitions.map { definition in
-            if case ModelDefinition.object(let model) = definition {
-                let fields = model.fields.map { field -> ModelField in
-                    if case TypeType.object(let typeName) = field.type,
-                       let type = primitiveAliasTypeMapping[typeName] {
-                        return ModelField(description: field.description,
-                                          type: type,
-                                          name: field.argumentLabel,
-                                          isRequired: field.isRequired)
-                    } else {
-                        return field
-                    }
-                }
-                
-                
-                return .object(.init(description: model.description,
-                                     typeName: model.typeName,
-                                     fields: fields,
-                                     inheritsFrom: model.inheritsFrom,
-                                     isInternalOnly: model.isInternalOnly,
-                                     embeddedDefinitions: model.embeddedDefinitions,
-                                     isCodable: model.isCodable))
-
-            } else {
-                return definition
-            }
-        }
-    }
-
     /// Get the global set of model definitions. This is the normal specified list, and not the inline definitions that are defined in e.g. path definitions and other places
     /// - Parameter swagger: the swagger
     /// - Returns: model definitions
@@ -133,7 +94,6 @@ struct APIFactory {
         }
 
         var allDefinitions = [ModelDefinition]()
-        var primitiveAliasTypeMapping = [String: TypeType]()
         for (typeName, schema) in definitions {
             let resolved = modelTypeResolver.resolve(forSchema: schema,
                                                      typeNamePrefix: typeName,
@@ -143,11 +103,13 @@ struct APIFactory {
             allDefinitions.append(contentsOf: resolved.inlineModelDefinitions)
 
             switch resolved.propertyType {
+            case .typeAlias(let typeName, let type):
+                allDefinitions.append(.typeAlias(.init(typeName: typeName, type: type.toString(required: true))))
             case .array(let containsType):
                 let arrayModel = ModelDefinition.array(.init(description: schema.description, typeName: typeName, containsType: containsType.toString(required: true)))
                 allDefinitions.append(arrayModel)
             case .string:
-                primitiveAliasTypeMapping[swagger.serviceName + "." + typeName] = .string
+                break
             case .int:
                 break
             case .double:
@@ -168,7 +130,7 @@ struct APIFactory {
                 break
             }
         }
-        return resolveAliasesFor(allDefinitions, with: primitiveAliasTypeMapping)
+        return allDefinitions
     }
 
     /// Get the global set of response model definitions

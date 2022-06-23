@@ -98,6 +98,8 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
                     fatalError("not implemented")
                 case .void:
                     fatalError("not implemented")
+                case .typeAlias:
+                    fatalError("not implemented")
                 }
             }.joined(separator: "\n")
 

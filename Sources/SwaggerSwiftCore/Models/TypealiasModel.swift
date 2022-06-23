@@ -35,3 +35,37 @@ extension ArrayModel {
         }
     }
 }
+
+
+struct TypeAliasModel {
+    let typeName: String
+    let type: String
+}
+
+extension TypeAliasModel {
+    func toSwift(serviceName: String?, embedded: Bool, packagesToImport: [String]) -> String {
+        let typeString = "public typealias \(typeName) = \(type)"
+
+        if !embedded {
+            var model = ""
+            model.appendLine("import Foundation")
+            packagesToImport.forEach { model.appendLine("import \($0)") }
+            model.appendLine()
+
+            if let serviceName = serviceName {
+                model.appendLine("extension \(serviceName) {")
+            }
+
+            model += typeString.indentLines(1)
+
+            if let _ = serviceName {
+                model.appendLine()
+                model.appendLine("}")
+            }
+
+            return model
+        } else {
+            return typeString
+        }
+    }
+}
