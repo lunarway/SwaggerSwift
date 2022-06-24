@@ -271,6 +271,16 @@ public struct RequestParameterFactory {
 
             let type = schema.type(named: modelDefinition.typeName)
 
+            if case TypeType.array(let typeName) = type {
+                let param = FunctionParameter(description: parameter.description,
+                                              name: "body",
+                                              typeName: typeName,
+                                              required: parameter.required,
+                                              in: .body,
+                                              isEnum: false)
+                return (param, [])
+            }
+
             let param = FunctionParameter(description: parameter.description,
                                           name: "body",
                                           typeName: type,
