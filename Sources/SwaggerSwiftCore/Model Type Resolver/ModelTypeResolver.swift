@@ -26,137 +26,28 @@ public struct ModelTypeResolver {
     func resolve(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, namespace: String, swagger: Swagger) -> ResolvedModel {
         switch schema.type {
         case .string(let format, let enumValues, _, _, _):
-            if let enumValues = enumValues {
-                let enumTypename = typeNamePrefix.modelNamed
+            let type = StringResolver.resolve(format: format, enumValues: enumValues, typeNamePrefix: typeNamePrefix)
 
+            if case .enumeration(let enumTypeName) = type {
                 let model = ModelDefinition.enumeration(Enumeration(serviceName: swagger.serviceName,
                                                                     description: schema.description,
-                                                                    typeName: enumTypename,
-                                                                    values: enumValues,
+                                                                    typeName: enumTypeName,
+                                                                    values: enumValues ?? [],
                                                                     isCodable: true))
-
-                return ResolvedModel(.enumeration(typeName: enumTypename), [model])
+                return ResolvedModel(.enumeration(typeName: enumTypeName), [model])
             }
 
-            if let format = format {
-                switch format {
-                case .string:
-                    return .init(.string)
-                case .date:
-                    return .init(.object(typeName: "Date"))
-                case .dateTime:
-                    return .init(.object(typeName: "Date"))
-                case .password:
-                    return .init(.string)
-                case .email:
-                    return .init(.string)
-                case .binary:
-                    return .init(.object(typeName: "Data"))
-                case .long: fallthrough
-                case .float: fallthrough
-                case .double: fallthrough
-                case .byte: fallthrough
-                case .boolean: fallthrough
-                case .int32:
-                    log("⚠️ \(swagger.serviceName): A string should not be defined to be a \(format)", error: true)
-                    return .init(.object(typeName: "String"))
-                case .unsupported(let unsupported):
-                    switch unsupported {
-                    case "ISO8601":
-                        return .init(.date, [])
-                    case "uuid":
-                        return .init(.object(typeName: "String"))
-                    case "datetime":
-                        return .init(.object(typeName: "Date"))
-                    case "uri":
-                        return .init(.object(typeName: "URL"))
-                    default:
-                        log("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(unsupported)' for strings", error: true)
-                        return .init(.typeAlias(typeName: typeNamePrefix, type: .string))
-                    }
-                }
-            } else {
-                return .init(.string, [])
-            }
+            return .init(type)
         case .integer(let format, _, _, _, _, _):
-            if let format = format {
-                switch format {
-                case .long:
-                    return .init(.double)
-                case .float:
-                    return .init(.float)
-                case .int32:
-                    return .init(.int)
-                case .double:
-                    return .init(.double)
-                case .date: fallthrough
-                case .dateTime: fallthrough
-                case .password: fallthrough
-                case .email: fallthrough
-                case .string: fallthrough
-                case .byte: fallthrough
-                case .binary: fallthrough
-                case .boolean:
-                    log("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(format)' for integer type", error: true)
-                    return .init(.int)
-                case .unsupported(let unsupported):
-                    switch unsupported {
-                    case "int":
-                        return .init(.int)
-                    case "int64":
-                        return .init(.int64)
-                    case "decimal":
-                        return .init(.double)
-                    default:
-                        log("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(unsupported)' for integer type. Use ", error: true)
-                        return .init(.int)
-                    }
-                }
-            }
+            let type = IntegerResolver.resolve(format: format)
+            return .init(type)
 
-            return .init(.int)
         case .number(let format, _, _, _, _, _):
-            if let format = format {
-                switch format {
-                case .long:
-                    return .init(.double)
-                case .float:
-                    return .init(.float)
-                case .int32:
-                    return .init(.int)
-                case .double:
-                    return .init(.double)
-                case .date: fallthrough
-                case .dateTime: fallthrough
-                case .password: fallthrough
-                case .email: fallthrough
-                case .string: fallthrough
-                case .byte: fallthrough
-                case .binary: fallthrough
-                case .boolean:
-                    log("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(format)' for number", error: true)
-                    return .init(.double)
-                case .unsupported(let unsupported):
-                    switch unsupported {
-                    case "int", "integer":
-                        return .init(.int)
-                    case "int64":
-                        return .init(.int64)
-                    case "float64":
-                        log("⚠️ \(swagger.serviceName): `format: float64` format does not exist for type number in the Swagger spec. Please change it to specify `format: double` instead.", error: true)
-                        return .init(.double)
-                    case "decimal":
-                        return .init(.double)
-                    default:
-                        log("⚠️ \(swagger.serviceName): SwaggerSwift does not support '\(unsupported)' for number", error: true)
-                        return .init(.double)
-                    }
-                }
-            }
-
-            return .init(.double)
+            let type = NumberResolver.resolve(format: format)
+            return .init(type)
         case .boolean(let defaultValue):
-            return .init(.boolean(defaultValue: defaultValue))
+            let type = BooleanResolver.resolve(with: defaultValue)
+            return .init(type)
         case .array(let items, _, _, _, _):
             let (type, inlineModels) = typeOfItems(schema: schema,
                                                    items: items,
@@ -217,15 +108,27 @@ public struct ModelTypeResolver {
                     return (.void, [])
                 }
             case .string:
-                return (.string, [])
+                let resolved = resolve(forSchema: schema, typeNamePrefix: typeNamePrefix, namespace: namespace, swagger: swagger)
+                return (resolved.propertyType, resolved.inlineModelDefinitions)
             default:
                 log("[\(swagger.serviceName)] Unsupported schema type: \(schema.type)")
                 return (.void, [])
             }
         case .node(let node):
             switch node.type {
-            case .string(format: _, enumValues: _, maxLength: _, minLength: _, pattern: _):
-                return (.string, [])
+            case .string(let format, let enumValues, _, _, _):
+                let type = StringResolver.resolve(format: format, enumValues: enumValues, typeNamePrefix: typeNamePrefix)
+
+                if case .enumeration(let enumTypeName) = type {
+                    let model = ModelDefinition.enumeration(Enumeration(serviceName: swagger.serviceName,
+                                                                        description: schema.description,
+                                                                        typeName: enumTypeName,
+                                                                        values: enumValues ?? [],
+                                                                        isCodable: true))
+                    return (.enumeration(typeName: enumTypeName), [model])
+                } else {
+                    return (type, [])
+                }
             case .number(let format, maximum: _, exclusiveMaximum: _, minimum: _, exclusiveMinimum: _, multipleOf: _):
                 if let format = format {
                     switch format {
