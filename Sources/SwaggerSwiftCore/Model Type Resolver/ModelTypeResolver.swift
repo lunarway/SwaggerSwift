@@ -116,9 +116,19 @@ public struct ModelTypeResolver {
             }
         case .node(let node):
             switch node.type {
-            case .string:
-                let resolved = resolve(forSchema: schema, typeNamePrefix: typeNamePrefix, namespace: namespace, swagger: swagger)
-                return (resolved.propertyType, resolved.inlineModelDefinitions)
+            case .string(let format, let enumValues, _, _, _):
+                let type = StringResolver.resolve(format: format, enumValues: enumValues, typeNamePrefix: typeNamePrefix)
+
+                if case .enumeration(let enumTypeName) = type {
+                    let model = ModelDefinition.enumeration(Enumeration(serviceName: swagger.serviceName,
+                                                                        description: schema.description,
+                                                                        typeName: enumTypeName,
+                                                                        values: enumValues ?? [],
+                                                                        isCodable: true))
+                    return (.enumeration(typeName: enumTypeName), [model])
+                } else {
+                    return (type, [])
+                }
             case .number(let format, maximum: _, exclusiveMaximum: _, minimum: _, exclusiveMinimum: _, multipleOf: _):
                 if let format = format {
                     switch format {
