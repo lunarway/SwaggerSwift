@@ -14,6 +14,18 @@ indirect enum TypeType {
     case enumeration(typeName: String)
     case date
     case void
+    // represents a type that has a declared type alias in the Swagger, e.g.
+    // MyType:
+    //   type: string
+    // or:
+    // MyOtherType:
+    //   $ref: '#/definitions/SomeType'
+    // These types can only be declared on the top level of definitions or responses in the Swagger as inline type alias' just resolves to the "type alias name" being the property name, e.g.
+    // MyResponseType:
+    //   properties:
+    //     - coolString:
+    //         type: string
+    // in this case `coolString` will just be a property named `coolString` with type `String`
     case typeAlias(typeName: String, type: TypeType)
 
     func toString(required: Bool) -> String {
