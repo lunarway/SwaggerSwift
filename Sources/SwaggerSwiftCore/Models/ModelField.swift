@@ -69,9 +69,9 @@ extension Sequence where Element == ModelField {
         }.joined(separator: ", ")
     }
 
-    func asPropertyList() -> String {
+    func asPropertyList(accessControl: APIAccessControl) -> String {
         self.sorted(by: { $0.argumentLabel < $1.argumentLabel }).map { field in
-            let declaration = "public let \(field.safePropertyName.value.variableNameFormatted): \(field.type.toString(required: field.isRequired || field.defaultValue != nil))"
+            let declaration = "\(accessControl.rawValue) let \(field.safePropertyName.value.variableNameFormatted): \(field.type.toString(required: field.isRequired || field.defaultValue != nil))"
             if let description = field.description {
                 return """
     \(description.components(separatedBy: "\n").filter { $0.isEmpty == false }.map { "// \($0)" }.joined(separator: "\n").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines))

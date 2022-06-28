@@ -1,7 +1,7 @@
 let urlQueryItemExtension = """
 import Foundation
 
-public extension URLQueryItem {
+<ACCESSCONTROL> extension URLQueryItem {
     init(name: String, value: Bool) {
         self.init(name: name, value: value ? "true" : "false")
     }

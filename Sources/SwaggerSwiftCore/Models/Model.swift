@@ -28,7 +28,7 @@ struct Model {
                      isCodable: isCodable)
     }
 
-    func modelDefinition(serviceName: String?) -> String {
+    func modelDefinition(serviceName: String?, accessControl: APIAccessControl) -> String {
         let comment: String?
         if let description = description {
             comment = description.split(separator: "\n").map {
@@ -39,7 +39,7 @@ struct Model {
         }
 
         let initMethod = """
-public init(\(fields.asInitParameter())) {
+\(accessControl.rawValue) init(\(fields.asInitParameter())) {
     \(fields.map { "self.\($0.safePropertyName.value.variableNameFormatted) = \($0.safeParameterName.value.variableNameFormatted)" }.joined(separator: "\n    "))
 }
 """
@@ -50,9 +50,9 @@ public init(\(fields.asInitParameter())) {
             model += comment + "\n"
         }
 
-        model += "public struct \(typeName)\(isCodable ? ": Codable" : "") {\n"
+        model += "\(accessControl.rawValue) struct \(typeName)\(isCodable ? ": Codable" : "") {\n"
 
-        model += fields.asPropertyList().indentLines(1)
+        model += fields.asPropertyList(accessControl: accessControl).indentLines(1)
 
         model += "\n\n" + initMethod.indentLines(1)
 
@@ -76,7 +76,7 @@ public init(\(fields.asInitParameter())) {
 
         model += embeddedDefinitions
             .sorted(by: { $0.typeName < $1.typeName })
-            .map { $0.toSwift(serviceName: serviceName, embedded: true, packagesToImport: []) }
+            .map { $0.toSwift(serviceName: serviceName, embedded: true, accessControl: accessControl, packagesToImport: []) }
             .joined(separator: "\n\n")
             .indentLines(1)
 
@@ -141,13 +141,13 @@ public init(from decoder: Decoder) throws {
 }
 
 extension Model {
-    func toSwift(serviceName: String?, embedded: Bool, packagesToImport: [String]) -> String {
+    func toSwift(serviceName: String?, embedded: Bool, accessControl: APIAccessControl, packagesToImport: [String]) -> String {
         precondition(inheritsFrom.count == 0)
 
         let isInExtension = serviceName != nil
 
         if embedded {
-            return modelDefinition(serviceName: serviceName)
+            return modelDefinition(serviceName: serviceName, accessControl: accessControl)
         }
 
         var model = ""
@@ -164,7 +164,7 @@ extension Model {
             model.appendLine("extension \(serviceName) {")
         }
 
-        model += modelDefinition(serviceName: serviceName).indentLines(isInExtension ? 1 : 0)
+        model += modelDefinition(serviceName: serviceName, accessControl: accessControl).indentLines(isInExtension ? 1 : 0)
 
         if let _ = serviceName {
             model.appendLine()

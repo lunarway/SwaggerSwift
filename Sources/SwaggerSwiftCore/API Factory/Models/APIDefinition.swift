@@ -8,14 +8,14 @@ struct APIDefinition {
     let fields: [APIDefinitionField]
     let functions: [APIRequest]
 
-    func toSwift(swaggerFile: SwaggerFile, packagesToImport: [String]) -> String {
+    func toSwift(swaggerFile: SwaggerFile, accessControl: String, packagesToImport: [String]) -> String {
         let importStatements = (["Foundation"]  + packagesToImport).map { "import \($0)" }.joined(separator: "\n")
 
         let initMethod = """
 /// Create an instance of \(serviceName)
 /// - Parameters:
 \(fields.map { $0.documentationString }.joined(separator: "\n"))
-public init(\(fields.map { $0.initProperty }.joined(separator: ", "))) {
+\(accessControl) init(\(fields.map { $0.initProperty }.joined(separator: ", "))) {
 \(fields.map { $0.initAssignment }.joined(separator: "\n").indentLines(1))
 }
 """.indentLines(1)
@@ -37,13 +37,14 @@ public init(\(fields.map { $0.initProperty }.joined(separator: ", "))) {
                 $0.toSwift(serviceName: serviceName,
                            swaggerFile: swaggerFile,
                            embedded: false,
+                           accessControl: accessControl,
                            packagesToImport: packagesToImport)
             }.joined(separator: "\n")
             .indentLines(1)
             .trimmingCharacters(in: CharacterSet.newlines)
 
         serviceDefinition += """
-public struct \(serviceName): APIInitialize {
+\(accessControl) struct \(serviceName): APIInitialize {
 \(properties)
 
 \(initMethod)

@@ -8,8 +8,8 @@ struct ArrayModel {
 }
 
 extension ArrayModel {
-    func toSwift(serviceName: String?, embedded: Bool, packagesToImport: [String]) -> String {
-        let typeString = "public typealias \(typeName) = [\(containsType)]"
+    func toSwift(serviceName: String?, embedded: Bool, accessControl: APIAccessControl, packagesToImport: [String]) -> String {
+        let typeString = "\(accessControl.rawValue) typealias \(typeName) = [\(containsType)]"
 
         if !embedded {
             var model = ""

@@ -6,7 +6,7 @@ struct GlobalHeadersModel {
     let typeName = "GlobalHeaders"
     let headerFields: [String]
 
-    func modelDefinition(serviceName: String?, swaggerFile: SwaggerFile) -> String {
+    func modelDefinition(serviceName: String?, accessControl: APIAccessControl, swaggerFile: SwaggerFile) -> String {
         let fields = headerFields.map {
             APIRequestHeaderField(
                 headerName: $0,
@@ -20,11 +20,11 @@ public init(\(fields.asInitParameter())) {
 }
 """
 
-        let properties = fields.asPropertyList()
+        let properties = fields.asPropertyList(accessControl: accessControl)
 
         var model = ""
 
-        model += "public struct \(typeName) {\n"
+        model += "\(accessControl.rawValue) struct \(typeName) {\n"
 
         model += properties.indentLines(1)
 
@@ -34,14 +34,14 @@ public init(\(fields.asInitParameter())) {
 
         model += "\n\n"
 
-        model += addToRequestFunction().indentLines(1)
+        model += addToRequestFunction(accessControl: accessControl.rawValue).indentLines(1)
 
         model += "\n}"
 
         return model
     }
 
-    func addToRequestFunction() -> String {
+    func addToRequestFunction(accessControl: String) -> String {
         let fields = headerFields.map {
             APIRequestHeaderField(
                 headerName: $0,
@@ -51,7 +51,7 @@ public init(\(fields.asInitParameter())) {
 
         var function = ""
 
-        function += "public func add(to request: inout URLRequest) {\n"
+        function += "\(accessControl) func add(to request: inout URLRequest) {\n"
 
         function += fields
             .sorted(by: { $0.swiftyName < $1.swiftyName })
@@ -68,12 +68,12 @@ public init(\(fields.asInitParameter())) {
 }
 
 extension GlobalHeadersModel {
-    func toSwift(swaggerFile: SwaggerFile) -> String {
+    func toSwift(swaggerFile: SwaggerFile, accessControl: APIAccessControl) -> String {
         var model = ""
         model.appendLine("import Foundation")
         model.appendLine()
 
-        model += modelDefinition(serviceName: nil, swaggerFile: swaggerFile)
+        model += modelDefinition(serviceName: nil, accessControl: accessControl, swaggerFile: swaggerFile)
 
         return model
     }
