@@ -1,7 +1,7 @@
 let additionalPropertyUtil = """
 import Foundation
 
-public enum AdditionalProperty: Codable {
+<ACCESSCONTROL> enum AdditionalProperty: Codable {
     case string(String)
     case integer(Int)
     case double(Double)
@@ -10,7 +10,7 @@ public enum AdditionalProperty: Codable {
     case bool(Bool)
     case null
 
-    public init(from decoder: Decoder) throws {
+    <ACCESSCONTROL> init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
 
         if let stringValue = try? container.decode(String.self) {
@@ -36,7 +36,7 @@ public enum AdditionalProperty: Codable {
         }
     }
 
-    public func encode(to encoder: Encoder) throws {
+    <ACCESSCONTROL> func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         switch self {
         case .string(let stringValue):

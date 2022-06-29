@@ -11,7 +11,7 @@ final class SwaggerSwiftTests: XCTestCase {
                           embeddedDefinitions: [],
                           isCodable: true)
 
-        let result = model.modelDefinition(serviceName: nil)
+        let result = model.modelDefinition(serviceName: nil, accessControl: .public)
 
         XCTAssertEqual(result, """
 public struct Test: Codable {
@@ -43,7 +43,7 @@ public struct Test: Codable {
                           embeddedDefinitions: [],
                           isCodable: true)
 
-        let result = model.modelDefinition(serviceName: nil)
+        let result = model.modelDefinition(serviceName: nil, accessControl: .public)
 
         XCTAssertEqual(result, """
 public struct Test: Codable {

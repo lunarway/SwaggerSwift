@@ -1,28 +1,28 @@
 let formData = """
 import Foundation
 
-public struct FormData {
+<ACCESSCONTROL> struct FormData {
     private let crlf = "\\r\\n"
 
     /// the data representation of the object
-    public let data: Data
+    <ACCESSCONTROL> let data: Data
     /// the mime type for the data, e.g. `image/png`
-    public let mimeType: String?
+    <ACCESSCONTROL> let mimeType: String?
     /// a filename representing the input - e.g. `image.png`
-    public let filename: String?
+    <ACCESSCONTROL> let filename: String?
 
     /// Creates the data part of a multi part request
     /// - Parameters:
     ///   - data: the piece of data being sent
     ///   - mimeType: the mime type for the data, e.g. `image/png`
     ///   - fileName: a filename representing the input - e.g. `image.png`
-    public init(data: Data, mimeType: String? = nil, fileName: String? = nil) {
+    <ACCESSCONTROL> init(data: Data, mimeType: String? = nil, fileName: String? = nil) {
         self.data = data
         self.mimeType = mimeType
         self.filename = fileName
     }
 
-    public func toRequestData(named fieldName: String, using boundary: String) -> Data {
+    <ACCESSCONTROL> func toRequestData(named fieldName: String, using boundary: String) -> Data {
         func append(string: String, toData data: inout Data) {
             guard let strData = string.data(using: .utf8) else { return }
             data.append(strData)

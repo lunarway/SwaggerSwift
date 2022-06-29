@@ -1,7 +1,7 @@
 let dateDecodingStrategy = """
 import Foundation
 
-public func dateDecodingStrategy(_ decoder: Decoder) throws -> Date {
+<ACCESSCONTROL> func dateDecodingStrategy(_ decoder: Decoder) throws -> Date {
     let container = try decoder.singleValueContainer()
     let stringValue = try container.decode(String.self)
 

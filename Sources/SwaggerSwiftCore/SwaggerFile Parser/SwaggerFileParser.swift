@@ -4,6 +4,10 @@ import SwaggerSwiftML
 
 struct SwaggerFileParser {
     static func parse(at path: String, fileManager: FileManager) throws -> SwaggerFile {
+        guard fileManager.fileExists(atPath: path) else {
+            throw NSError(domain: "SwaggerFileParser", code: 0, userInfo: [NSLocalizedDescriptionKey: "No SwaggerFile found"])
+        }
+
         guard let data = fileManager.contents(atPath: path) else {
             throw NSError(domain: "SwaggerFileParser", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to load SwaggerFile at \(path)"])
         }

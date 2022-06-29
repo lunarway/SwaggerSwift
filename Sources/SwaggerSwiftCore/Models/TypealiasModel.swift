@@ -20,8 +20,8 @@ struct TypeAliasModel {
 }
 
 extension TypeAliasModel {
-    func toSwift(serviceName: String?, embedded: Bool, packagesToImport: [String]) -> String {
-        let typeString = "public typealias \(typeName) = \(type)"
+    func toSwift(serviceName: String?, embedded: Bool, accessControl: APIAccessControl, packagesToImport: [String]) -> String {
+        let typeString = "\(accessControl.rawValue) typealias \(typeName) = \(type)"
 
         if !embedded {
             var model = ""
