@@ -22,10 +22,12 @@ public struct Generator {
     ///   - createPackage: should the files just be written to a directory, or should a swift package be generated?
     ///   - verbose: Should logs be shown
     ///   - apiFilterList: A list of APIs that should be parsed - can be used to filter away other APIs
-    public func parse(swaggerFilePath: String, githubToken: String, verbose: Bool = false, dummyMode: Bool = false, apiFilterList: [String]?) async throws {
+    public func parse(swaggerFilePath: String?, githubToken: String, verbose: Bool = false, dummyMode: Bool = false, apiFilterList: [String]?) async throws {
         isVerboseMode = verbose
 
         let fileManager = FileManager.default
+
+        let swaggerFilePath = swaggerFilePath ?? "./SwaggerFile.yml"
 
         log("Parsing SwaggerFile at: \(swaggerFilePath)")
         let swaggerFile = try SwaggerFileParser.parse(
