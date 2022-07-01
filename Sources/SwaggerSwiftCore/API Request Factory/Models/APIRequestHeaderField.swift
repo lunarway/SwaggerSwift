@@ -26,7 +26,7 @@ extension Sequence where Element == APIRequestHeaderField {
                 declaration = "\(field.swiftyName): String"
 
                 if field.isRequired == false {
-                    declaration += " = nil"
+                    declaration += "? = nil"
                 }
 
                 return declaration

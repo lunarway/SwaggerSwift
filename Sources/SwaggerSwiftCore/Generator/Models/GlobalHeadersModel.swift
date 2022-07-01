@@ -10,7 +10,7 @@ struct GlobalHeadersModel {
         let fields = headerFields.map {
             APIRequestHeaderField(
                 headerName: $0,
-                isRequired: true
+                isRequired: false
             )
         }
 
@@ -45,7 +45,7 @@ public init(\(fields.asInitParameter())) {
         let fields = headerFields.map {
             APIRequestHeaderField(
                 headerName: $0,
-                isRequired: true
+                isRequired: false
             )
         }
 
@@ -55,7 +55,11 @@ public init(\(fields.asInitParameter())) {
 
         function += fields
             .sorted(by: { $0.swiftyName < $1.swiftyName })
-            .map { "request.addValue(\($0.swiftyName), forHTTPHeaderField: \"\($0.fullHeaderName)\")" }
+            .map { """
+if let \($0.swiftyName) = \($0.swiftyName) {
+    request.addValue(\($0.swiftyName), forHTTPHeaderField: \"\($0.fullHeaderName)\")
+}
+""" }
             .joined(separator: "\n")
             .indentLines(1)
 
