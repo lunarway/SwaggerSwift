@@ -14,29 +14,26 @@ struct GlobalHeadersModel {
             )
         }
 
-        let initMethod = """
-public init(\(fields.asInitParameter())) {
-\(fields.asInitAssignments().indentLines(1))
-}
-"""
-
-        let properties = fields.asPropertyList(accessControl: accessControl)
+        let properties = fields
+            .sorted(by: { $0.swiftyName < $1.swiftyName })
+            .map { "var \($0.swiftyName): String\($0.isRequired ? "" : "?") { get }" }
+            .joined(separator: "\n")
 
         var model = ""
 
-        model += "\(accessControl.rawValue) struct \(typeName) {\n"
+        model += "\(accessControl.rawValue) protocol \(typeName) {\n"
 
         model += properties.indentLines(1)
 
-        model += "\n\n"
-
-        model += initMethod.indentLines(1)
+        model += "\n}"
 
         model += "\n\n"
+
+        model += "internal extension \(typeName) {\n"
 
         model += addToRequestFunction(accessControl: accessControl.rawValue).indentLines(1)
 
-        model += "\n}"
+        model += "\n}\n"
 
         return model
     }
@@ -51,7 +48,7 @@ public init(\(fields.asInitParameter())) {
 
         var function = ""
 
-        function += "\(accessControl) func add(to request: inout URLRequest) {\n"
+        function += "func add(to request: inout URLRequest) {\n"
 
         function += fields
             .sorted(by: { $0.swiftyName < $1.swiftyName })
@@ -60,7 +57,7 @@ if let \($0.swiftyName) = \($0.swiftyName) {
     request.addValue(\($0.swiftyName), forHTTPHeaderField: \"\($0.fullHeaderName)\")
 }
 """ }
-            .joined(separator: "\n")
+            .joined(separator: "\n\n")
             .indentLines(1)
 
         function += "\n"

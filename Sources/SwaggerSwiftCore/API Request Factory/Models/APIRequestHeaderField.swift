@@ -17,7 +17,7 @@ struct APIRequestHeaderField {
 }
 
 extension Sequence where Element == APIRequestHeaderField {
-    func asInitParameter() -> String {
+    func asInitParameter(defaultToNil: Bool = true) -> String {
         self
             .sorted(by: { $0.swiftyName < $1.swiftyName })
             .map { field in
@@ -26,7 +26,11 @@ extension Sequence where Element == APIRequestHeaderField {
                 declaration = "\(field.swiftyName): String"
 
                 if field.isRequired == false {
-                    declaration += "? = nil"
+                    declaration += "?"
+
+                    if defaultToNil {
+                        declaration += " = nil"
+                    }
                 }
 
                 return declaration
