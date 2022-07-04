@@ -48,7 +48,7 @@ struct GlobalHeadersModel {
 
         var function = ""
 
-        function += "func add(to request: inout URLRequest) {\n"
+        function += "public func add(to request: inout URLRequest) {\n"
 
         function += fields
             .sorted(by: { $0.swiftyName < $1.swiftyName })
