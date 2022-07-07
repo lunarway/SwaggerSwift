@@ -36,7 +36,7 @@ private let dateFormatter: ISO8601DateFormatter = {
     return formatter
 }()
 
-<ACCESSCONTROL> func dateDecodingStrategy(_ decoder: Decoder) throws -> Date {
+@Sendable <ACCESSCONTROL> func dateDecodingStrategy(_ decoder: Decoder) throws -> Date {
     let container = try decoder.singleValueContainer()
     let stringValue = try container.decode(String.self)
 
