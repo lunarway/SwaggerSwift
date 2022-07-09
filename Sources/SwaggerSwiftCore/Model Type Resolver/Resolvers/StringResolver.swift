@@ -2,7 +2,7 @@ import Foundation
 import SwaggerSwiftML
 
 enum StringResolver {
-    static func resolve(format: DataFormat?, enumValues: [String]?, typeNamePrefix: String) -> TypeType {
+    static func resolve(format: DataFormat?, enumValues: [String]?, typeNamePrefix: String, defaultValue: String?) -> TypeType {
         if enumValues != nil {
             let enumTypename = typeNamePrefix.modelNamed
             return .enumeration(typeName: enumTypename)
@@ -11,15 +11,15 @@ enum StringResolver {
         if let format = format {
             switch format {
             case .string:
-                return .string
+                return .string(defaultValue: defaultValue)
             case .date:
                 return .object(typeName: "Date")
             case .dateTime:
                 return .object(typeName: "Date")
             case .password:
-                return .string
+                return .string(defaultValue: defaultValue)
             case .email:
-                return .string
+                return .string(defaultValue: defaultValue)
             case .binary:
                 return .object(typeName: "Data")
             case .long: fallthrough
@@ -42,11 +42,11 @@ enum StringResolver {
                     return .object(typeName: "URL")
                 default:
                     log("⚠️: SwaggerSwift does not support '\(unsupported)' for strings", error: true)
-                    return .typeAlias(typeName: typeNamePrefix, type: .string)
+                    return .typeAlias(typeName: typeNamePrefix, type: .string(defaultValue: defaultValue))
                 }
             }
         } else {
-            return .string
+            return .string(defaultValue: defaultValue)
         }
     }
 }

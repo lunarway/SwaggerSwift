@@ -27,6 +27,36 @@ struct ModelField {
         self.isRequired = isRequired
 
         switch type {
+        case .string(let defaultValue):
+            if let defaultValue = defaultValue {
+                self.defaultValue = "\"\(defaultValue)\""
+            } else {
+                self.defaultValue = nil
+            }
+        case .int(let defaultValue):
+            if let defaultValue = defaultValue {
+                self.defaultValue = String(defaultValue)
+            } else {
+                self.defaultValue = nil
+            }
+        case .int64(let defaultValue):
+            if let defaultValue = defaultValue {
+                self.defaultValue = String(defaultValue)
+            } else {
+                self.defaultValue = nil
+            }
+        case .double(let defaultValue):
+            if let defaultValue = defaultValue {
+                self.defaultValue = String(defaultValue)
+            } else {
+                self.defaultValue = nil
+            }
+        case .float(let defaultValue):
+            if let defaultValue = defaultValue {
+                self.defaultValue = String(defaultValue)
+            } else {
+                self.defaultValue = nil
+            }
         case .boolean(let defaultValue):
             if let defaultValue = defaultValue {
                 if defaultValue {
@@ -37,7 +67,17 @@ struct ModelField {
             } else {
                 self.defaultValue = nil
             }
-        default:
+        case .array:
+            self.defaultValue = nil
+        case .object:
+            self.defaultValue = nil
+        case .enumeration:
+            self.defaultValue = nil
+        case .date:
+            self.defaultValue = nil
+        case .void:
+            self.defaultValue = nil
+        case .typeAlias:
             self.defaultValue = nil
         }
     }

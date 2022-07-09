@@ -3,12 +3,12 @@ import SwaggerSwiftML
 
 /// Describes the types that can be returned from a function
 indirect enum TypeType {
-    case string
-    case int
-    case double
-    case float
+    case string(defaultValue: String?)
+    case int(defaultValue: Int?)
+    case double(defaultValue: Double?)
+    case float(defaultValue: Float?)
     case boolean(defaultValue: Bool?)
-    case int64
+    case int64(defaultValue: Int64?)
     case array(typeName: TypeType)
     case object(typeName: String)
     case enumeration(typeName: String)

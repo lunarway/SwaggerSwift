@@ -25,8 +25,11 @@ public struct ModelTypeResolver {
     /// - Returns:the resolved models
     func resolve(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, namespace: String, swagger: Swagger) -> ResolvedModel {
         switch schema.type {
-        case .string(let format, let enumValues, _, _, _):
-            let type = StringResolver.resolve(format: format, enumValues: enumValues, typeNamePrefix: typeNamePrefix)
+        case .string(let format, let enumValues, _, _, _, let defaultValue):
+            let type = StringResolver.resolve(format: format,
+                                              enumValues: enumValues,
+                                              typeNamePrefix: typeNamePrefix,
+                                              defaultValue: defaultValue)
 
             if case .enumeration(let enumTypeName) = type {
                 let model = ModelDefinition.enumeration(Enumeration(serviceName: swagger.serviceName,
@@ -38,12 +41,12 @@ public struct ModelTypeResolver {
             }
 
             return .init(type)
-        case .integer(let format, _, _, _, _, _):
-            let type = IntegerResolver.resolve(format: format)
+        case .integer(let format, _, _, _, _, _, let defaultValue):
+            let type = IntegerResolver.resolve(format: format, defaultValue: defaultValue)
             return .init(type)
 
-        case .number(let format, _, _, _, _, _):
-            let type = NumberResolver.resolve(format: format)
+        case .number(let format, _, _, _, _, _, let defaultValue):
+            let type = NumberResolver.resolve(format: format, defaultValue: defaultValue)
             return .init(type)
         case .boolean(let defaultValue):
             let type = BooleanResolver.resolve(with: defaultValue)
@@ -117,7 +120,7 @@ public struct ModelTypeResolver {
         case .node(let node):
             switch node.type {
             case .string(let format, let enumValues, _, _, _):
-                let type = StringResolver.resolve(format: format, enumValues: enumValues, typeNamePrefix: typeNamePrefix)
+                let type = StringResolver.resolve(format: format, enumValues: enumValues, typeNamePrefix: typeNamePrefix, defaultValue: nil)
 
                 if case .enumeration(let enumTypeName) = type {
                     let model = ModelDefinition.enumeration(Enumeration(serviceName: swagger.serviceName,
@@ -133,13 +136,13 @@ public struct ModelTypeResolver {
                 if let format = format {
                     switch format {
                     case .int32:
-                        return (TypeType.int, [])
+                        return (TypeType.int(defaultValue: nil), [])
                     case .long:
-                        return (TypeType.int64, [])
+                        return (TypeType.int64(defaultValue: nil), [])
                     case .float:
-                        return (TypeType.float, [])
+                        return (TypeType.float(defaultValue: nil), [])
                     case .double:
-                        return (TypeType.double, [])
+                        return (TypeType.double(defaultValue: nil), [])
                     case .string: fallthrough
                     case .byte: fallthrough
                     case .binary: fallthrough
@@ -153,10 +156,10 @@ public struct ModelTypeResolver {
                         return (.void, [])
                     }
                 } else {
-                    return (.int, [])
+                    return (.int(defaultValue: nil), [])
                 }
             case .integer(format: _, maximum: _, exclusiveMaximum: _, minimum: _, exclusiveMinimum: _, multipleOf: _):
-                return (.int, [])
+                return (.int(defaultValue: nil), [])
             case .boolean:
                 return (.boolean(defaultValue: nil), [])
             case .array(let items, collectionFormat: _, maxItems: _, minItems: _, uniqueItems: _):

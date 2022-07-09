@@ -62,7 +62,11 @@ public class ObjectModelFactory {
         var totalModels = [ModelDefinition]()
 
         for (name, schemaNode) in properties {
-            if let (field, models) = resolveProperty(named: name, namespace: namespace, schemaNode: schemaNode, withRequiredProperties: requiredProperties, swagger: swagger) {
+            if let (field, models) = resolveProperty(named: name,
+                                                     namespace: namespace,
+                                                     schemaNode: schemaNode,
+                                                     withRequiredProperties: requiredProperties,
+                                                     swagger: swagger) {
                 totalFields.append(field)
                 totalModels.append(contentsOf: models)
             }
