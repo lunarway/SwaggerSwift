@@ -2,7 +2,7 @@ import Foundation
 import SwaggerSwiftML
 
 extension APIRequest {
-    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool, packagesToImport: [String]) -> String {
+    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool, accessControl: String, packagesToImport: [String]) -> String {
         let arguments = parameters.map {
             "\($0.name.variableNameFormatted): \($0.typeName.toString(required: $0.required))\($0.required ? "" : " = nil")"
         }.joined(separator: ", ")
@@ -98,6 +98,8 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
                     fatalError("not implemented")
                 case .void:
                     fatalError("not implemented")
+                case .typeAlias:
+                    fatalError("not implemented")
                 }
             }.joined(separator: "\n")
 
@@ -143,7 +145,7 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
 
         """
 
-        declaration += "public func \(functionName)(\(arguments))\(`throws` ? " throws" : "")\(returnStatement) {"
+        declaration += "\(accessControl) func \(functionName)(\(arguments))\(`throws` ? " throws" : "")\(returnStatement) {"
 
         let responseTypes = self.responseTypes.map { $0.print() }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n            ")
 

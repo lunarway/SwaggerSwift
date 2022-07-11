@@ -18,7 +18,7 @@ public struct RequestParameterFactory {
     ///   - swagger: the swagger spec
     ///   - swaggerFile: the swagger file
     /// - Returns: the list of all parameters to the API request
-    func make(forOperation operation: SwaggerSwiftML.Operation, functionName: String, responseTypes: [ResponseTypeMap], pathParameters: [Parameter], swagger: Swagger, swaggerFile: SwaggerFile) -> ([FunctionParameter], [ModelDefinition]) {
+    func make(forOperation operation: SwaggerSwiftML.Operation, functionName: String, responseTypes: [ResponseTypeMap], pathParameters: [Parameter], swagger: Swagger, swaggerFile: SwaggerFile) throws -> ([FunctionParameter], [ModelDefinition]) {
         let parameters = (operation.parameters ?? []).map {
             swagger.findParameter(node: $0)
         } + pathParameters
@@ -30,22 +30,22 @@ public struct RequestParameterFactory {
             .map { $0.capitalizingFirstLetter() }
             .joined()
 
-        if let (headerParameter, headerModels) = resolveInputHeadersToApi(parameters: parameters,
-                                                                          typePrefix: typeName,
-                                                                          isInternalOnly: operation.isInternalOnly,
-                                                                          swagger: swagger,
-                                                                          swaggerFile: swaggerFile) {
+        if let (headerParameter, headerModels) = try resolveInputHeadersToApi(parameters: parameters,
+                                                                              typePrefix: typeName,
+                                                                              isInternalOnly: operation.isInternalOnly,
+                                                                              swagger: swagger,
+                                                                              swaggerFile: swaggerFile) {
             resolvedParameters.append(headerParameter)
             resolvedModelDefinitions.append(contentsOf: headerModels)
         }
 
         // Path
-        let (pathParameters, pathModels) = resolvePathParameters(parameters: parameters, typePrefix: typeName, swagger: swagger)
+        let (pathParameters, pathModels) = try resolvePathParameters(parameters: parameters, typePrefix: typeName, swagger: swagger)
         resolvedParameters.append(contentsOf: pathParameters)
         resolvedModelDefinitions.append(contentsOf: pathModels)
 
         // Query
-        let (queryParameters, queryModels) = resolveQueryParameters(parameters: parameters, typePrefix: typeName, swagger: swagger)
+        let (queryParameters, queryModels) = try resolveQueryParameters(parameters: parameters, typePrefix: typeName, swagger: swagger)
         resolvedParameters.append(contentsOf: queryParameters)
         resolvedModelDefinitions.append(contentsOf: queryModels)
 
@@ -58,7 +58,7 @@ public struct RequestParameterFactory {
             resolvedModelDefinitions.append(contentsOf: bodyModels)
         }
 
-        let (formDataParameters, formDataModels) = resolveFormDataParameters(parameters: parameters, typePrefix: typeName, swagger: swagger)
+        let (formDataParameters, formDataModels) = try resolveFormDataParameters(parameters: parameters, typePrefix: typeName, swagger: swagger)
         resolvedParameters.append(contentsOf: formDataParameters)
         resolvedModelDefinitions.append(contentsOf: formDataModels)
 
@@ -118,15 +118,15 @@ public struct RequestParameterFactory {
         }
     }
 
-    private func resolveInputHeadersToApi(parameters: [SwaggerSwiftML.Parameter], typePrefix: String, isInternalOnly: Bool, swagger: Swagger, swaggerFile: SwaggerFile) -> (FunctionParameter, [ModelDefinition])? {
+    private func resolveInputHeadersToApi(parameters: [SwaggerSwiftML.Parameter], typePrefix: String, isInternalOnly: Bool, swagger: Swagger, swaggerFile: SwaggerFile) throws -> (FunctionParameter, [ModelDefinition])? {
         let headerParameters = parameters.parameters(of: .header)
 
         let globalHeaderFieldNames = (swaggerFile.globalHeaders ?? []).map(convertApiHeader)
 
         var modelDefinitions = [ModelDefinition]()
 
-        let headerFields: [ModelField] = headerParameters.compactMap { param, type, _ in
-            let (type, inlineModelDefinitions) = type.toType(
+        let headerFields: [ModelField] = try headerParameters.compactMap { param, type, _ in
+            let (type, inlineModelDefinitions) = try type.toType(
                 typePrefix: typePrefix,
                 description: param.description,
                 swagger: swagger
@@ -175,16 +175,16 @@ public struct RequestParameterFactory {
         return nil
     }
 
-    private func resolvePathParameters(parameters: [SwaggerSwiftML.Parameter], typePrefix: String, swagger: Swagger) -> ([FunctionParameter], [ModelDefinition]) {
+    private func resolvePathParameters(parameters: [SwaggerSwiftML.Parameter], typePrefix: String, swagger: Swagger) throws -> ([FunctionParameter], [ModelDefinition]) {
         let pathParameters = parameters.parameters(of: .path)
 
         var modelDefinitions = [ModelDefinition]()
         var functionParameters = [FunctionParameter]()
 
         for (parameter, paramType, _) in pathParameters {
-            let (paramType, embeddedDefinitions) = paramType.toType(typePrefix: typePrefix + parameter.name.uppercasingFirst,
-                                                                    description: parameter.description,
-                                                                    swagger: swagger)
+            let (paramType, embeddedDefinitions) = try paramType.toType(typePrefix: typePrefix + parameter.name.uppercasingFirst,
+                                                                        description: parameter.description,
+                                                                        swagger: swagger)
 
             modelDefinitions.append(contentsOf: embeddedDefinitions)
 
@@ -201,14 +201,14 @@ public struct RequestParameterFactory {
         return (functionParameters, modelDefinitions)
     }
 
-    private func resolveQueryParameters(parameters: [SwaggerSwiftML.Parameter], typePrefix: String, swagger: Swagger) -> ([FunctionParameter], [ModelDefinition]) {
+    private func resolveQueryParameters(parameters: [SwaggerSwiftML.Parameter], typePrefix: String, swagger: Swagger) throws -> ([FunctionParameter], [ModelDefinition]) {
         let queryParameters = parameters.parameters(of: .query)
 
         var modelDefinitions = [ModelDefinition]()
         var functionParameters = [FunctionParameter]()
 
         for (parameter, queryType, _) in queryParameters {
-            let (paramType, embeddedDefinitions) = queryType.toType(
+            let (paramType, embeddedDefinitions) = try queryType.toType(
                 typePrefix: typePrefix + parameter.name.uppercasingFirst,
                 description: parameter.description,
                 swagger: swagger
@@ -271,6 +271,16 @@ public struct RequestParameterFactory {
 
             let type = schema.type(named: modelDefinition.typeName)
 
+            if case TypeType.array(let typeName) = type {
+                let param = FunctionParameter(description: parameter.description,
+                                              name: "body",
+                                              typeName: typeName,
+                                              required: parameter.required,
+                                              in: .body,
+                                              isEnum: false)
+                return (param, [])
+            }
+
             let param = FunctionParameter(description: parameter.description,
                                           name: "body",
                                           typeName: type,
@@ -282,7 +292,7 @@ public struct RequestParameterFactory {
         }
     }
 
-    private func resolveFormDataParameters(parameters: [SwaggerSwiftML.Parameter], typePrefix: String, swagger: Swagger) -> ([FunctionParameter], [ModelDefinition]) {
+    private func resolveFormDataParameters(parameters: [SwaggerSwiftML.Parameter], typePrefix: String, swagger: Swagger) throws -> ([FunctionParameter], [ModelDefinition]) {
         let formDataParameters = parameters.parameters(of: .formData)
 
         var functionParameters = [FunctionParameter]()
@@ -309,9 +319,9 @@ public struct RequestParameterFactory {
 
                     functionParameters.append(param)
                 } else {
-                    let typeName = dataType.toType(typePrefix: typePrefix,
-                                                   description: parameter.description,
-                                                   swagger: swagger)
+                    let typeName = try dataType.toType(typePrefix: typePrefix,
+                                                       description: parameter.description,
+                                                       swagger: swagger)
 
                     let param = FunctionParameter(description: parameter.description,
                                                   name: parameter.name,
@@ -335,9 +345,9 @@ public struct RequestParameterFactory {
                 log("[\(swagger.serviceName)] SwaggerSwift does not currently support array as the data type in a FormData request", error: true)
                 continue
             case .file:
-                let typeName = dataType.toType(typePrefix: typePrefix,
-                                               description: parameter.description,
-                                               swagger: swagger)
+                let typeName = try dataType.toType(typePrefix: typePrefix,
+                                                   description: parameter.description,
+                                                   swagger: swagger)
 
                 let param = FunctionParameter(description: parameter.description,
                                               name: parameter.name,

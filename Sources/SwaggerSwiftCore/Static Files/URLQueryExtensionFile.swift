@@ -1,7 +1,7 @@
 let urlQueryItemExtension = """
 import Foundation
 
-public extension URLQueryItem {
+<ACCESSCONTROL> extension URLQueryItem {
     init(name: String, value: Bool) {
         self.init(name: name, value: value ? "true" : "false")
     }
@@ -20,6 +20,10 @@ public extension URLQueryItem {
 
     init(name: String, value: Date) {
         self.init(name: name, value: ISO8601DateFormatter().string(from: value))
+    }
+
+    init(name: String, value: [String]) {
+        self.init(name: name, value: value.joined(separator: ","))
     }
 }
 """

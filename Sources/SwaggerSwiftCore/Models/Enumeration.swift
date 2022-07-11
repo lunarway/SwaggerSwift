@@ -23,7 +23,7 @@ struct Enumeration {
         return str
     }
 
-    func modelDefinition(embeddedFile: Bool) -> String {
+    func modelDefinition(embeddedFile: Bool, accessControl: APIAccessControl) -> String {
         let valueNames = values
             .sorted(by: { $0 < $1 })
             .map { isCodable ? $0.camelized : $0 }
@@ -41,7 +41,7 @@ struct Enumeration {
         }
 
         var model = """
-public enum \(self.typeName)\(isCodable ? ": Codable, Equatable" : "") {
+\(accessControl.rawValue) enum \(self.typeName)\(isCodable ? ": Codable, Equatable" : "") {
 \(cases.joined(separator: "\n").indentLines(1))
 """
         if isCodable {
@@ -53,7 +53,7 @@ public enum \(self.typeName)\(isCodable ? ": Codable, Equatable" : "") {
             model += """
 
 
-public init(from decoder: Decoder) throws {
+\(accessControl.rawValue) init(from decoder: Decoder) throws {
     let container = try decoder.singleValueContainer()
     let stringValue = try container.decode(String.self)
     switch stringValue {
@@ -74,7 +74,7 @@ case .\(Self.toCasename($0, isCodable)):
 
             model += """
 
-public func encode(to encoder: Encoder) throws {
+\(accessControl.rawValue) func encode(to encoder: Encoder) throws {
     var container = encoder.singleValueContainer()
     switch self {
 \(encodeCases)
@@ -88,7 +88,7 @@ public func encode(to encoder: Encoder) throws {
 
             model += """
 
-public init(rawValue: String) {
+\(accessControl.rawValue) init(rawValue: String) {
     switch rawValue {
 \(decodeCases)
     default:
@@ -108,7 +108,7 @@ case .\(Self.toCasename($0, isCodable)):
 
             model += """
 
-public var rawValue: String {
+\(accessControl.rawValue) var rawValue: String {
     switch self {
 \(rawValueCases)
     case .\(unknownName)(let stringValue):
@@ -127,9 +127,9 @@ public var rawValue: String {
 }
 
 extension Enumeration {
-    func toSwift(serviceName: String?, embedded: Bool, packagesToImport: [String]) -> String {
+    func toSwift(serviceName: String?, embedded: Bool, accessControl: APIAccessControl, packagesToImport: [String]) -> String {
         if embedded {
-            return modelDefinition(embeddedFile: true)
+            return modelDefinition(embeddedFile: true, accessControl: accessControl)
         }
 
         var fileSections = ""
@@ -138,9 +138,9 @@ extension Enumeration {
             fileSections += "\n\nextension \(serviceName) {\n"
         }
 
-        let modelDef = modelDefinition(embeddedFile: false)
+        let modelDef = modelDefinition(embeddedFile: false, accessControl: accessControl)
         if let description = description, description.count > 0 {
-            let comment = "// \(description)"
+            let comment = "// \(description.replacingOccurrences(of: "\n", with: "\n//"))"
             fileSections += "\(comment)\n\(modelDef)".indentLines(1) + "\n"
         } else {
             fileSections += modelDef.indentLines(1) + "\n"

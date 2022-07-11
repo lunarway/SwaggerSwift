@@ -1,10 +1,10 @@
 import Foundation
 import SwaggerSwiftML
 #if canImport(FoundationNetworking)
-    import FoundationNetworking
+import FoundationNetworking
 #endif
 
-public struct SwaggerParser {
+public struct Generator {
     let apiRequestFactory: APIRequestFactory
     let modelTypeResolver: ModelTypeResolver
 
@@ -19,20 +19,23 @@ public struct SwaggerParser {
     ///   - githubToken: A GitHub token
     ///   - destinationPath: The path to where the API Swift Package should be created
     ///   - projectName: The api suite name
+    ///   - createPackage: should the files just be written to a directory, or should a swift package be generated?
     ///   - verbose: Should logs be shown
     ///   - apiFilterList: A list of APIs that should be parsed - can be used to filter away other APIs
-    public func parse(swaggerFilePath: String, githubToken: String, destinationPath: String, projectName: String, verbose: Bool = false, dummyMode: Bool = false, apiFilterList: [String]?) async throws {
+    public func parse(swaggerFilePath: String?, githubToken: String, verbose: Bool = false, dummyMode: Bool = false, apiFilterList: [String]?) async throws {
         isVerboseMode = verbose
 
         let fileManager = FileManager.default
-        let commonLibraryName = "\(projectName)Shared"
-        let swiftPackageSourcesDirectory = destinationPath + "/Sources"
+
+        let swaggerFilePath = swaggerFilePath ?? "./SwaggerFile.yml"
 
         log("Parsing SwaggerFile at: \(swaggerFilePath)")
         let swaggerFile = try SwaggerFileParser.parse(
             at: swaggerFilePath,
             fileManager: fileManager
         )
+
+        let accessControl = swaggerFile.accessControl
 
         let services: [String: SwaggerFile.Service]
         if let apiFilterList = apiFilterList {
@@ -41,13 +44,9 @@ public struct SwaggerParser {
             services = swaggerFile.services
         }
 
-        try fileManager.createDirectory(
-            atPath: swiftPackageSourcesDirectory,
-            withIntermediateDirectories: true,
-            attributes: nil
-        )
+        typealias APISpec = (APIDefinition, [ModelDefinition])
 
-        let swaggers: [Swagger] = await withTaskGroup(of: Swagger?.self) { group in
+        let apiSpecs: [APISpec] = await withTaskGroup(of: APISpec?.self) { group in
             for service in services {
                 group.addTask {
                     do {
@@ -59,16 +58,11 @@ public struct SwaggerParser {
                             swaggerPath: service.value.path ?? swaggerFile.path
                         )
 
-                        try await parse(
-                            swagger: swagger,
-                            swaggerFile: swaggerFile,
-                            swiftPackageSourcesDirectory: swiftPackageSourcesDirectory,
-                            commonLibraryName: commonLibraryName,
-                            fileManager: fileManager,
-                            dummyMode: dummyMode
-                        )
+                        let apiSpec = try await APIFactory(apiRequestFactory: apiRequestFactory,
+                                                           modelTypeResolver: modelTypeResolver)
+                            .generate(for: swagger, withSwaggerFile: swaggerFile)
 
-                        return try await swagger
+                        return apiSpec
                     } catch let error {
                         if let error = error as? FetchSwaggerError {
                             error.logError()
@@ -88,31 +82,85 @@ public struct SwaggerParser {
                 }
             }
 
-            var swaggers = [Swagger]()
-            for await swagger in group {
-                if let swagger = swagger {
-                    swaggers.append(swagger)
+            var apiSpecs = [APISpec]()
+            for await spec in group {
+                if let spec = spec {
+                    apiSpecs.append(spec)
                 }
             }
 
-            return swaggers
+            return apiSpecs
         }
 
-        log("Creating Swift Project at \(destinationPath)")
+        let destination = URL(fileURLWithPath: swaggerFilePath).deletingLastPathComponent().appendingPathComponent(swaggerFile.destination).path
 
-        try createPackageSwiftFile(
-            at: destinationPath,
-            named: projectName,
-            commonLibraryName: commonLibraryName,
-            apis: swaggers.map(\.serviceName)
-        )
+        log("Creating Swift Project at \(destination)")
 
-        try createCommonLibrary(
-            path: swiftPackageSourcesDirectory,
-            commonLibraryName: commonLibraryName,
-            swaggerFile: swaggerFile,
-            fileManager: fileManager
-        )
+        let commonLibraryName = "\(swaggerFile.projectName)Shared"
+
+        if swaggerFile.createSwiftPackage {
+            let projectRoot = "\(destination)/\(swaggerFile.projectName)"
+            let swiftPackageSourcesDirectory = "\(projectRoot)/Sources"
+
+            try fileManager.createDirectory(
+                atPath: destination,
+                withIntermediateDirectories: true,
+                attributes: nil
+            )
+
+            for spec in apiSpecs {
+                try write(apiDefinition: spec.0,
+                          modelDefinitions: spec.1,
+                          swaggerFile: swaggerFile,
+                          rootDirectory: swiftPackageSourcesDirectory,
+                          commonLibraryName: commonLibraryName,
+                          accessControl: accessControl,
+                          fileManager: fileManager,
+                          dummyMode: dummyMode)
+            }
+
+            try createPackageSwiftFile(
+                at: projectRoot,
+                named: swaggerFile.projectName,
+                commonLibraryName: commonLibraryName,
+                apis: apiSpecs.map { $0.0 }.map(\.serviceName).sorted()
+            )
+
+            try createCommonLibrary(
+                path: swiftPackageSourcesDirectory,
+                commonLibraryName: commonLibraryName,
+                swaggerFile: swaggerFile,
+                accessControl: .public, // this needs to be public for the other files to see it
+                fileManager: fileManager
+            )
+        } else {
+            let rootDir = "\(destination)/\(swaggerFile.projectName)"
+
+            try fileManager.createDirectory(
+                atPath: rootDir,
+                withIntermediateDirectories: true,
+                attributes: nil
+            )
+
+            for spec in apiSpecs {
+                try write(apiDefinition: spec.0,
+                          modelDefinitions: spec.1,
+                          swaggerFile: swaggerFile,
+                          rootDirectory: rootDir,
+                          commonLibraryName: nil,
+                          accessControl: accessControl,
+                          fileManager: fileManager,
+                          dummyMode: dummyMode)
+            }
+
+            try createCommonLibrary(
+                path: rootDir,
+                commonLibraryName: commonLibraryName,
+                swaggerFile: swaggerFile,
+                accessControl: accessControl,
+                fileManager: fileManager
+            )
+        }
     }
 
     private func fetchSwagger(_ request: URLRequest) async throws -> (Data, URLResponse) {
@@ -154,10 +202,10 @@ public struct SwaggerParser {
         }
     }
 
-    private func parse(swagger: Swagger, swaggerFile: SwaggerFile, swiftPackageSourcesDirectory: String, commonLibraryName: String, fileManager: FileManager, dummyMode: Bool) throws {
-        log("Parsing contents of Swagger: \(swagger.serviceName)")
+    private func write(apiDefinition: APIDefinition, modelDefinitions: [ModelDefinition], swaggerFile: SwaggerFile, rootDirectory: String, commonLibraryName: String?, accessControl: APIAccessControl, fileManager: FileManager, dummyMode: Bool) throws {
+        log("Parsing contents of Swagger: \(apiDefinition.serviceName)")
 
-        let apiDirectory = swiftPackageSourcesDirectory + "/" + swagger.serviceName
+        let apiDirectory = rootDirectory + "/" + apiDefinition.serviceName
         let modelDirectory = "\(apiDirectory)/Models"
 
         if !dummyMode {
@@ -171,56 +219,54 @@ public struct SwaggerParser {
             try fileManager.createDirectory(atPath: modelDirectory, withIntermediateDirectories: true, attributes: nil)
         }
 
-        let (apiDefinition, apiModelDefinitions) = try APIFactory(apiRequestFactory: apiRequestFactory, modelTypeResolver: modelTypeResolver).generate(for: swagger, withSwaggerFile: swaggerFile)
-
         let apiDefinitionFile = apiDefinition.toSwift(
             swaggerFile: swaggerFile,
-            packagesToImport: [commonLibraryName]
+            accessControl: accessControl.rawValue,
+            packagesToImport: commonLibraryName != nil ? [commonLibraryName!] : []
         )
 
         let apiDefinitionFilename = "\(apiDirectory)/\(apiDefinition.serviceName).swift"
-        try apiDefinitionFile.write(
-            toFile: apiDefinitionFilename,
-            atomically: true,
-            encoding: .utf8
-        )
+        try apiDefinitionFile.write(toFile: apiDefinitionFilename)
 
-        log("[\(swagger.serviceName)] 🖨 \(apiDefinitionFilename)")
+        log("[\(apiDefinition.serviceName)] 🖨 \(apiDefinitionFilename)")
 
-        for apiModel in apiModelDefinitions {
+        for apiModel in modelDefinitions {
             let file = apiModel.toSwift(
-                serviceName: swagger.serviceName,
+                serviceName: apiDefinition.serviceName,
                 embedded: false,
-                packagesToImport: [commonLibraryName]
+                accessControl: swaggerFile.accessControl,
+                packagesToImport: commonLibraryName != nil ? [commonLibraryName!] : []
             )
 
             let filename = "\(modelDirectory)/\(apiDefinition.serviceName)_\(apiModel.typeName).swift"
-            try file.write(toFile: filename, atomically: true, encoding: .utf8)
+            try file.write(toFile: filename)
 
-            log("[\(swagger.serviceName)] 🖨 \(filename)")
+            log("[\(apiDefinition.serviceName)] 🖨 \(filename)")
         }
     }
 
-    private func createCommonLibrary(path: String, commonLibraryName: String, swaggerFile: SwaggerFile, fileManager: FileManager) throws {
+    private func createCommonLibrary(path: String, commonLibraryName: String, swaggerFile: SwaggerFile, accessControl: APIAccessControl, fileManager: FileManager) throws {
         let targetPath = path + "/" + commonLibraryName
 
         try fileManager.createDirectory(atPath: targetPath,
                                         withIntermediateDirectories: true,
                                         attributes: nil)
 
-        try serviceError.write(toFile: "\(targetPath)/ServiceError.swift", atomically: true, encoding: .utf8)
-        try urlQueryItemExtension.write(toFile: "\(targetPath)/URLQueryExtension.swift", atomically: true, encoding: .utf8)
-        try jsonParsingErrorExtension.write(toFile: "\(targetPath)/ParsingError.swift", atomically: true, encoding: .utf8)
-        try networkInterceptor.write(toFile: "\(targetPath)/NetworkInterceptor.swift", atomically: true, encoding: .utf8)
-        try additionalPropertyUtil.write(toFile: "\(targetPath)/AdditionalProperty.swift", atomically: true, encoding: .utf8)
-        try formData.write(toFile: "\(targetPath)/FormData.swift", atomically: true, encoding: .utf8)
-        try dateDecodingStrategy.write(toFile: "\(targetPath)/DateDecodingStrategy.swift", atomically: true, encoding: .utf8)
-        try apiInitializeFile.write(toFile: "\(targetPath)/APIInitialize.swift", atomically: true, encoding: .utf8)
+        let accControl: String = accessControl.rawValue
+
+        try serviceError.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(toFile: "\(targetPath)/ServiceError.swift")
+        try urlQueryItemExtension.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(toFile: "\(targetPath)/URLQueryExtension.swift")
+        try jsonParsingErrorExtension.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(toFile: "\(targetPath)/ParsingError.swift")
+        try networkInterceptor.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(toFile: "\(targetPath)/NetworkInterceptor.swift")
+        try additionalPropertyUtil.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(toFile: "\(targetPath)/AdditionalProperty.swift")
+        try formData.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(toFile: "\(targetPath)/FormData.swift")
+        try dateDecodingStrategy.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(toFile: "\(targetPath)/DateDecodingStrategy.swift")
+        try apiInitializeFile.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(toFile: "\(targetPath)/APIInitialize.swift")
 
         if let globalHeaderFields = swaggerFile.globalHeaders {
             let globalHeadersModel = GlobalHeadersModel(headerFields: globalHeaderFields)
-            let globalHeadersFileContents = globalHeadersModel.toSwift(swaggerFile: swaggerFile)
-            try globalHeadersFileContents.write(toFile: "\(targetPath)/GlobalHeaders.swift", atomically: true, encoding: .utf8)
+            let globalHeadersFileContents = globalHeadersModel.toSwift(swaggerFile: swaggerFile, accessControl: accessControl)
+            try globalHeadersFileContents.write(toFile: "\(targetPath)/GlobalHeaders.swift")
         }
     }
 
@@ -234,6 +280,7 @@ public struct SwaggerParser {
     /// - Throws: Throws if the files couldnt be created on disk
     private func createPackageSwiftFile(at path: String, named name: String, commonLibraryName: String, apis: [String], fileManager: FileManager = FileManager.default) throws {
         let commonTarget = SwiftPackageBuilder.Target(type: .target, name: commonLibraryName)
+
         let apiTargets = apis.map {
             SwiftPackageBuilder.Target(
                 type: .target,
@@ -255,6 +302,17 @@ public struct SwaggerParser {
         try fileManager.createDirectory(atPath: expandedPath, withIntermediateDirectories: true)
 
         // write package swift file
-        try packageFile.write(toFile: expandedPath + "/Package.swift", atomically: true, encoding: .utf8)
+        try packageFile.write(toFile: expandedPath + "/Package.swift", addHeader: false)
+    }
+}
+
+extension String {
+    func write(toFile path: String, addHeader: Bool = true) throws {
+        if addHeader {
+            let file = "// Autogenerated with ❤️ by SwaggerSwift\n// Do not modify this file manually 🙅\n\n" + self
+            try file.write(toFile: path, atomically: true, encoding: .utf8)
+        } else {
+            try self.write(toFile: path, atomically: true, encoding: .utf8)
+        }
     }
 }

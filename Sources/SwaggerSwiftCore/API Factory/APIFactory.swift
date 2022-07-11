@@ -103,6 +103,8 @@ struct APIFactory {
             allDefinitions.append(contentsOf: resolved.inlineModelDefinitions)
 
             switch resolved.propertyType {
+            case .typeAlias(let typeName, let type):
+                allDefinitions.append(.typeAlias(.init(typeName: typeName, type: type.toString(required: true))))
             case .array(let containsType):
                 let arrayModel = ModelDefinition.array(.init(description: schema.description, typeName: typeName, containsType: containsType.toString(required: true)))
                 allDefinitions.append(arrayModel)
@@ -128,7 +130,6 @@ struct APIFactory {
                 break
             }
         }
-
         return allDefinitions
     }
 

@@ -67,6 +67,8 @@ public struct APIResponseTypeFactory {
                 case .date:
                     log("[\(swagger.serviceName) - \(httpMethod.rawValue) \(servicePath)] Unsupported date type in response]")
                     return nil
+                case .typeAlias(let typeName, _):
+                    return APIRequestResponseType.object(statusCode, isSuccessResponse, typeName: typeName)
                 }
             }
 

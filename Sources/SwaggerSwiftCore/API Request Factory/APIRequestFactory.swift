@@ -51,7 +51,7 @@ public struct APIRequestFactory {
 
         let responseMap: [ResponseTypeMap] = responses.map { ($0.statusCode, $0.responseType) }
 
-        let (functionParameters, inlineModels) = requestParameterFactory.make(
+        let (functionParameters, inlineModels) = try requestParameterFactory.make(
             forOperation: operation,
             functionName: functionName,
             responseTypes: responseMap,
@@ -167,10 +167,16 @@ public struct APIRequestFactory {
                             valueType: valueType
                         )
                     }
+                case .array:
+                    return QueryElement(
+                        fieldName: $0.name,
+                        fieldValue: $0.name.camelized,
+                        isOptional: $0.required == false,
+                        valueType: .array
+                    )
                 case .number: fallthrough
                 case .integer: fallthrough
                 case .boolean: fallthrough
-                case .array: fallthrough
                 case .file:
                     return QueryElement(
                         fieldName: $0.name,
