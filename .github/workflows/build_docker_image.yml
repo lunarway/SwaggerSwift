@@ -18,7 +18,7 @@ jobs:
       run: docker buildx build --platform linux/amd64 ./ --tag quay.io/lunarway/swaggerswift:latest 
       
     - name: Quay login
-      run: docker docker login -u="$QUAY_USERNAME" -p="$QUAY_TOKEN" quay.io
+      run: docker login -u="$QUAY_USERNAME" -p="$QUAY_TOKEN" quay.io
       env:
         QUAY_TOKEN: ${{ secrets.quay_token }}
         QUAY_USERNAME: ${{ secrets.quay_username }}
