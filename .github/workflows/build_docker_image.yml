@@ -14,16 +14,12 @@ jobs:
     
     - name: Init buildx
       run: docker buildx create --use
-    - name: Build docker image
-      run: docker buildx build --platform linux/amd64 ./ --tag quay.io/lunarway/swaggerswift:latest 
       
     - name: Quay login
       run: docker login -u="$QUAY_USERNAME" -p="$QUAY_TOKEN" quay.io
       env:
         QUAY_TOKEN: ${{ secrets.quay_token }}
         QUAY_USERNAME: ${{ secrets.quay_username }}
-        
-    - name: Push docker image
-      run: docker push quay.io/lunarway/swaggerswift:latest
-
-
+    
+    - name: Build docker image
+      run: docker buildx build --platform linux/amd64 ./ --tag quay.io/lunarway/swaggerswift:latest --push
