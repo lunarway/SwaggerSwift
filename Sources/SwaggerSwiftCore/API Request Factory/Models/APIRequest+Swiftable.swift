@@ -187,7 +187,7 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
                 }
             }
         }
-        if let interceptor = self.interceptor else {
+        if let interceptor = self.interceptor {
           interceptor.networkDidPerformRequest(urlRequest: request, urlResponse: response, data: data, error: error) { result in
              switch result {
               case .success:
