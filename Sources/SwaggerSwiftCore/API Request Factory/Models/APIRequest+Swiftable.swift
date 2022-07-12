@@ -187,18 +187,17 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
                 }
             }
         }
-        guard let interceptor = self.interceptor else {
+        if let interceptor = self.interceptor else {
+          interceptor.networkDidPerformRequest(urlRequest: request, urlResponse: response, data: data, error: error) { result in
+             switch result {
+              case .success:
+                  completion(data, response, error)
+              case .failure(let error):
+                  completion(nil, nil, error)
+             }
+          }
+        } else {
             completion(data, response, error)
-            return
-        }
-
-        interceptor.networkDidPerformRequest(urlRequest: request, urlResponse: response, data: data, error: error) { result in
-           switch result {
-            case .success:
-                completion(data, response, error)
-            case .failure(let error):
-                completion(nil, nil, error)
-           }
         }
     }
 
