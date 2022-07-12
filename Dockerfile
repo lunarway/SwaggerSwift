@@ -1,4 +1,8 @@
-FROM --platform linux/arm64 swift:amazonlinux2 as builder
+FROM swift:amazonlinux2 as builder
+
+RUN yum -y install \
+  git
+  
 WORKDIR /swaggerswift
 COPY . .
 
