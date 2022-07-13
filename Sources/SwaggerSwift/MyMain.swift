@@ -30,7 +30,7 @@ struct SwaggerSwiftParser: AsyncParsableCommand {
         try await swaggerParser.parse(
             swaggerFilePath: swaggerFilePath,
             githubToken: gitHubToken,
-            verbose: true,
+            verbose: verbose,
             dummyMode: false,
             apiFilterList: apiList
         )
