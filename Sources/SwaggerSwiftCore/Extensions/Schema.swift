@@ -21,16 +21,16 @@ extension Schema {
     /// - Parameter name: the name of the type
     func type(named name: String) -> TypeType {
         switch self.type {
-        case .string(_, let enumValues, _, _, _):
+        case .string(_, let enumValues, _, _, _, _):
             if let enumValues = enumValues, enumValues.count > 0 {
                 return TypeType.enumeration(typeName: name)
             } else {
-                return TypeType.string
+                return TypeType.string(defaultValue: nil)
             }
         case .number:
-            return .int
+            return .int(defaultValue: nil)
         case .integer:
-            return .int
+            return .int(defaultValue: nil)
         case .boolean(let defaultValue):
             return .boolean(defaultValue: defaultValue)
         case .array:

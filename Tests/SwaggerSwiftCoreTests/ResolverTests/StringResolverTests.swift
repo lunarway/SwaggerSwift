@@ -5,7 +5,8 @@ class StringResolverTests: XCTestCase {
     func testEnumResolvesToEnum() {
         let type = StringResolver.resolve(format: nil,
                                           enumValues: ["value1", "value2"],
-                                          typeNamePrefix: "namePrefix")
+                                          typeNamePrefix: "namePrefix",
+                                          defaultValue: nil)
         if case .enumeration(let typeName) = type {
             XCTAssertEqual(typeName, "NamePrefix")
         } else {
@@ -16,7 +17,8 @@ class StringResolverTests: XCTestCase {
     func testStringResolvesToString() {
         let type = StringResolver.resolve(format: nil,
                                           enumValues: nil,
-                                          typeNamePrefix: "")
+                                          typeNamePrefix: "",
+                                          defaultValue: nil)
         if case .string = type {
             XCTAssertTrue(true)
         } else {
@@ -27,7 +29,8 @@ class StringResolverTests: XCTestCase {
     func testStringFormatResolvesToString() {
         let type = StringResolver.resolve(format: .string,
                                           enumValues: nil,
-                                          typeNamePrefix: "")
+                                          typeNamePrefix: "",
+                                          defaultValue: nil)
         if case .string = type {
             XCTAssertTrue(true)
         } else {
@@ -38,7 +41,8 @@ class StringResolverTests: XCTestCase {
     func testDateFormatResolvesToObjectDate() {
         let type = StringResolver.resolve(format: .date,
                                           enumValues: nil,
-                                          typeNamePrefix: "")
+                                          typeNamePrefix: "",
+                                          defaultValue: nil)
         if case .object(let typeName) = type {
             XCTAssertEqual(typeName, "Date")
         } else {
@@ -49,7 +53,8 @@ class StringResolverTests: XCTestCase {
     func testDateTimeFormatResolvesToObjectDate() {
         let type = StringResolver.resolve(format: .dateTime,
                                           enumValues: nil,
-                                          typeNamePrefix: "")
+                                          typeNamePrefix: "",
+                                          defaultValue: nil)
         if case .object(let typeName) = type {
             XCTAssertEqual(typeName, "Date")
         } else {
@@ -60,7 +65,8 @@ class StringResolverTests: XCTestCase {
     func testPasswordFormatResolvesToString() {
         let type = StringResolver.resolve(format: .password,
                                           enumValues: nil,
-                                          typeNamePrefix: "")
+                                          typeNamePrefix: "",
+                                          defaultValue: nil)
         if case .string = type {
             XCTAssertTrue(true)
         } else {
@@ -71,7 +77,8 @@ class StringResolverTests: XCTestCase {
     func testEmailFormatResolvesToString() {
         let type = StringResolver.resolve(format: .email,
                                           enumValues: nil,
-                                          typeNamePrefix: "")
+                                          typeNamePrefix: "",
+                                          defaultValue: nil)
         if case .string = type {
             XCTAssertTrue(true)
         } else {
@@ -82,7 +89,8 @@ class StringResolverTests: XCTestCase {
     func testBinaryFormatResolvesToObjectData() {
         let type = StringResolver.resolve(format: .binary,
                                           enumValues: nil,
-                                          typeNamePrefix: "")
+                                          typeNamePrefix: "",
+                                          defaultValue: nil)
         if case .object(let typeName) = type {
             XCTAssertEqual(typeName, "Data")
         } else {
@@ -94,7 +102,8 @@ class StringResolverTests: XCTestCase {
     func testLongFormatResolvesToObjectString() {
         let type = StringResolver.resolve(format: .long,
                                           enumValues: nil,
-                                          typeNamePrefix: "")
+                                          typeNamePrefix: "",
+                                          defaultValue: nil)
         if case .object(let typeName) = type {
             XCTAssertEqual(typeName, "String")
         } else {
@@ -105,7 +114,8 @@ class StringResolverTests: XCTestCase {
     func testFloatFormatResolvesToObjectString() {
         let type = StringResolver.resolve(format: .float,
                                           enumValues: nil,
-                                          typeNamePrefix: "")
+                                          typeNamePrefix: "",
+                                          defaultValue: nil)
         if case .object(let typeName) = type {
             XCTAssertEqual(typeName, "String")
         } else {
@@ -116,7 +126,8 @@ class StringResolverTests: XCTestCase {
     func testDoubleFormatResolvesToObjectString() {
         let type = StringResolver.resolve(format: .double,
                                           enumValues: nil,
-                                          typeNamePrefix: "")
+                                          typeNamePrefix: "",
+                                          defaultValue: nil)
         if case .object(let typeName) = type {
             XCTAssertEqual(typeName, "String")
         } else {
@@ -127,7 +138,8 @@ class StringResolverTests: XCTestCase {
     func testByteFormatResolvesToObjectString() {
         let type = StringResolver.resolve(format: .byte,
                                           enumValues: nil,
-                                          typeNamePrefix: "")
+                                          typeNamePrefix: "",
+                                          defaultValue: nil)
         if case .object(let typeName) = type {
             XCTAssertEqual(typeName, "String")
         } else {
@@ -138,7 +150,8 @@ class StringResolverTests: XCTestCase {
     func testBooleanFormatResolvesToObjectString() {
         let type = StringResolver.resolve(format: .boolean,
                                           enumValues: nil,
-                                          typeNamePrefix: "")
+                                          typeNamePrefix: "",
+                                          defaultValue: nil)
         if case .object(let typeName) = type {
             XCTAssertEqual(typeName, "String")
         } else {
@@ -149,7 +162,8 @@ class StringResolverTests: XCTestCase {
     func testInt32FormatResolvesToObjectString() {
         let type = StringResolver.resolve(format: .int32,
                                           enumValues: nil,
-                                          typeNamePrefix: "")
+                                          typeNamePrefix: "",
+                                          defaultValue: nil)
         if case .object(let typeName) = type {
             XCTAssertEqual(typeName, "String")
         } else {
@@ -160,7 +174,8 @@ class StringResolverTests: XCTestCase {
     func testUnsupportedISO8601ResolvesToDate() {
         let type = StringResolver.resolve(format: .unsupported("ISO8601"),
                                           enumValues: nil,
-                                          typeNamePrefix: "")
+                                          typeNamePrefix: "",
+                                          defaultValue: nil)
         if case .date = type {
             XCTAssertTrue(true)
         } else {
@@ -171,7 +186,8 @@ class StringResolverTests: XCTestCase {
     func testUnsupportedUUIDResolvesToObjectString() {
         let type = StringResolver.resolve(format: .unsupported("uuid"),
                                           enumValues: nil,
-                                          typeNamePrefix: "")
+                                          typeNamePrefix: "",
+                                          defaultValue: nil)
         if case .object(let typeName) = type {
             XCTAssertEqual(typeName, "String")
         } else {
@@ -182,7 +198,8 @@ class StringResolverTests: XCTestCase {
     func testUnsupportedDateTimeResolvesToObjectDate() {
         let type = StringResolver.resolve(format: .unsupported("datetime"),
                                           enumValues: nil,
-                                          typeNamePrefix: "")
+                                          typeNamePrefix: "",
+                                          defaultValue: nil)
         if case .object(let typeName) = type {
             XCTAssertEqual(typeName, "Date")
         } else {
@@ -193,7 +210,8 @@ class StringResolverTests: XCTestCase {
     func testUnsupportedURIResolvesToObjectURL() {
         let type = StringResolver.resolve(format: .unsupported("uri"),
                                           enumValues: nil,
-                                          typeNamePrefix: "")
+                                          typeNamePrefix: "",
+                                          defaultValue: nil)
         if case .object(let typeName) = type {
             XCTAssertEqual(typeName, "URL")
         } else {
@@ -204,7 +222,8 @@ class StringResolverTests: XCTestCase {
     func testUnsupportedResolvesToTypealias() {
         let type = StringResolver.resolve(format: .unsupported("randomString"),
                                           enumValues: nil,
-                                          typeNamePrefix: "namePrefix")
+                                          typeNamePrefix: "namePrefix",
+                                          defaultValue: nil)
         if case .typeAlias(let typeName, let type) = type,
            case .string = type {
             XCTAssertEqual(typeName, "namePrefix")

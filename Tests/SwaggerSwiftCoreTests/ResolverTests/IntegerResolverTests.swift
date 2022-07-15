@@ -3,7 +3,7 @@ import XCTest
 
 class IntegerResolverTests: XCTestCase {
     func testIntegerResolvesToInt() throws {
-        let type = IntegerResolver.resolve(format: nil)
+        let type = IntegerResolver.resolve(format: nil, defaultValue: nil)
 
         if case .int = type {
             XCTAssertTrue(true)
@@ -13,7 +13,7 @@ class IntegerResolverTests: XCTestCase {
     }
 
     func testLongFormatResolvesToDouble() throws {
-        let type = IntegerResolver.resolve(format: .long)
+        let type = IntegerResolver.resolve(format: .long, defaultValue: nil)
 
         if case .double = type {
             XCTAssertTrue(true)
@@ -23,7 +23,7 @@ class IntegerResolverTests: XCTestCase {
     }
 
     func testFloatFormatResolvesToFloat() throws {
-        let type = IntegerResolver.resolve(format: .float)
+        let type = IntegerResolver.resolve(format: .float, defaultValue: nil)
 
         if case .float = type {
             XCTAssertTrue(true)
@@ -33,7 +33,7 @@ class IntegerResolverTests: XCTestCase {
     }
 
     func testInt32FormatResolvesToInt() throws {
-        let type = IntegerResolver.resolve(format: .int32)
+        let type = IntegerResolver.resolve(format: .int32, defaultValue: nil)
 
         if case .int = type {
             XCTAssertTrue(true)
@@ -43,7 +43,7 @@ class IntegerResolverTests: XCTestCase {
     }
 
     func testDoubleFormatResolvesToDouble() throws {
-        let type = IntegerResolver.resolve(format: .double)
+        let type = IntegerResolver.resolve(format: .double, defaultValue: nil)
 
         if case .double = type {
             XCTAssertTrue(true)
@@ -53,7 +53,7 @@ class IntegerResolverTests: XCTestCase {
     }
 
     func testDateFormatResolvesToInt() throws {
-        let type = IntegerResolver.resolve(format: .date)
+        let type = IntegerResolver.resolve(format: .date, defaultValue: nil)
 
         if case .int = type {
             XCTAssertTrue(true)
@@ -63,7 +63,7 @@ class IntegerResolverTests: XCTestCase {
     }
 
     func testDateTimeFormatResolvesToInt() throws {
-        let type = IntegerResolver.resolve(format: .dateTime)
+        let type = IntegerResolver.resolve(format: .dateTime, defaultValue: nil)
 
         if case .int = type {
             XCTAssertTrue(true)
@@ -73,7 +73,7 @@ class IntegerResolverTests: XCTestCase {
     }
 
     func testPasswordFormatResolvesToInt() throws {
-        let type = IntegerResolver.resolve(format: .password)
+        let type = IntegerResolver.resolve(format: .password, defaultValue: nil)
 
         if case .int = type {
             XCTAssertTrue(true)
@@ -83,7 +83,7 @@ class IntegerResolverTests: XCTestCase {
     }
 
     func testEmailFormatResolvesToInt() throws {
-        let type = IntegerResolver.resolve(format: .email)
+        let type = IntegerResolver.resolve(format: .email, defaultValue: nil)
 
         if case .int = type {
             XCTAssertTrue(true)
@@ -93,7 +93,7 @@ class IntegerResolverTests: XCTestCase {
     }
 
     func testStringFormatResolvesToInt() throws {
-        let type = IntegerResolver.resolve(format: .string)
+        let type = IntegerResolver.resolve(format: .string, defaultValue: nil)
 
         if case .int = type {
             XCTAssertTrue(true)
@@ -103,7 +103,7 @@ class IntegerResolverTests: XCTestCase {
     }
 
     func testByteFormatResolvesToInt() throws {
-        let type = IntegerResolver.resolve(format: .byte)
+        let type = IntegerResolver.resolve(format: .byte, defaultValue: nil)
 
         if case .int = type {
             XCTAssertTrue(true)
@@ -113,7 +113,7 @@ class IntegerResolverTests: XCTestCase {
     }
 
     func testBinaryFormatResolvesToInt() throws {
-        let type = IntegerResolver.resolve(format: .binary)
+        let type = IntegerResolver.resolve(format: .binary, defaultValue: nil)
 
         if case .int = type {
             XCTAssertTrue(true)
@@ -123,7 +123,7 @@ class IntegerResolverTests: XCTestCase {
     }
 
     func testBooleanFormatResolvesToInt() throws {
-        let type = IntegerResolver.resolve(format: .boolean)
+        let type = IntegerResolver.resolve(format: .boolean, defaultValue: nil)
 
         if case .int = type {
             XCTAssertTrue(true)
@@ -133,7 +133,7 @@ class IntegerResolverTests: XCTestCase {
     }
 
     func testUnsupportedIntFormatResolvesToInt() throws {
-        let type = IntegerResolver.resolve(format: .unsupported("int"))
+        let type = IntegerResolver.resolve(format: .unsupported("int"), defaultValue: nil)
 
         if case .int = type {
             XCTAssertTrue(true)
@@ -143,7 +143,7 @@ class IntegerResolverTests: XCTestCase {
     }
 
     func testUnsupportedInt64FormatResolvesToInt64() throws {
-        let type = IntegerResolver.resolve(format: .unsupported("int64"))
+        let type = IntegerResolver.resolve(format: .unsupported("int64"), defaultValue: nil)
 
         if case .int64 = type {
             XCTAssertTrue(true)
@@ -153,7 +153,7 @@ class IntegerResolverTests: XCTestCase {
     }
 
     func testUnsupportedDecimalFormatResolvesToDouble() throws {
-        let type = IntegerResolver.resolve(format: .unsupported("decimal"))
+        let type = IntegerResolver.resolve(format: .unsupported("decimal"), defaultValue: nil)
 
         if case .double = type {
             XCTAssertTrue(true)
@@ -163,7 +163,7 @@ class IntegerResolverTests: XCTestCase {
     }
 
     func testUnsupportedFormatResolvesToInt() throws {
-        let type = IntegerResolver.resolve(format: .unsupported("myNonExistingFormat"))
+        let type = IntegerResolver.resolve(format: .unsupported("myNonExistingFormat"), defaultValue: nil)
 
         if case .int = type {
             XCTAssertTrue(true)
