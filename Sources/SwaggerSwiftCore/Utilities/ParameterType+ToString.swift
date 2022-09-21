@@ -14,7 +14,7 @@ extension ParameterType {
                                                                                  values: enumValues,
                                                                                  isCodable: true))])
                 } else {
-                    return (.string, [])
+                    return (.string(defaultValue: nil), [])
                 }
             case .some(let some):
                 if let enumValues = enumValues {
@@ -30,14 +30,14 @@ extension ParameterType {
         case .number(format: let format, maximum: _, exclusiveMaximum: _, minimum: _, exclusiveMinimum: _, multipleOf: _):
             switch format {
             case .none:
-                return (.double, [])
+                return (.double(defaultValue: nil), [])
             case .some(let some):
                 return (try typeOfDataFormat(some), [])
             }
         case .integer(format: let format, maximum: _, exclusiveMaximum: _, minimum: _, exclusiveMinimum: _, multipleOf: _):
             switch format {
             case .none:
-                return (.int, [])
+                return (.int(defaultValue: nil), [])
             case .some(let some):
                 return (try typeOfDataFormat(some), [])
             }
@@ -65,19 +65,19 @@ private func typeOfItems(_ itemsType: ItemsType, typePrefix: String, swagger: Sw
         if let format = format {
             return (try typeOfDataFormat(format), modelDefinitions)
         } else {
-            return (.string, modelDefinitions)
+            return (.string(defaultValue: nil), modelDefinitions)
         }
     case .number(format: let format, _, _, _, _, _):
         if let format = format {
             return (try typeOfDataFormat(format), [])
         } else {
-            return (.int, [])
+            return (.int(defaultValue: nil), [])
         }
     case .integer(format: let format, _, _, _, _, _):
         if let format = format {
             return (try typeOfDataFormat(format), [])
         } else {
-            return (.int, [])
+            return (.int(defaultValue: nil), [])
         }
     case .boolean:
         return (.boolean(defaultValue: nil), [])
@@ -95,15 +95,15 @@ enum TypeOfDataFormatError: Error {
 private func typeOfDataFormat(_ dataFormat: DataFormat) throws -> TypeType {
     switch dataFormat {
     case .int32:
-        return .int
+        return .int(defaultValue: nil)
     case .long:
-        return .int
+        return .int(defaultValue: nil)
     case .float:
-        return .float
+        return .float(defaultValue: nil)
     case .double:
-        return .double
+        return .double(defaultValue: nil)
     case .string:
-        return .string
+        return .string(defaultValue: nil)
     case .byte:
         fatalError("Bytes is not supported as a dataformat yet")
     case .binary:
@@ -115,17 +115,17 @@ private func typeOfDataFormat(_ dataFormat: DataFormat) throws -> TypeType {
     case .dateTime:
         return .object(typeName: "Date")
     case .password:
-        return .string
+        return .string(defaultValue: nil)
     case .email:
-        return .string
+        return .string(defaultValue: nil)
     case .unsupported(let typeName):
         switch typeName {
         case "int64":
-            return .int64
+            return .int64(defaultValue: nil)
         case "uuid":
             return .object(typeName: "String")
         case "integer":
-            return .int
+            return .int(defaultValue: nil)
         default:
             throw TypeOfDataFormatError.unsupportedType(typeName)
         }

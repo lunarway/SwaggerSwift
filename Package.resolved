@@ -5,8 +5,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/lunarway/SwaggerSwiftML",
       "state" : {
-        "revision" : "b35d7cea194cd8ae6eea6e79188b38a299d4da09",
-        "version" : "1.0.18"
+        "revision" : "a973b5151c225defbe13663108d4b11c07cd3064",
+        "version" : "1.0.19"
       }
     },
     {
