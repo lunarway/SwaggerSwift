@@ -90,7 +90,6 @@ class StringResolverTests: XCTestCase {
         }
     }
 
-
     func testLongFormatResolvesToObjectString() {
         let type = StringResolver.resolve(format: .long,
                                           enumValues: nil,

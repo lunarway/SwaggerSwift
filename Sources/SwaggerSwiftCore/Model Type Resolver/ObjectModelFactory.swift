@@ -182,7 +182,7 @@ public class ObjectModelFactory {
                 allOfParts.append(allOfPart)
             }
         }
-        
+
         return allOfParts
     }
 

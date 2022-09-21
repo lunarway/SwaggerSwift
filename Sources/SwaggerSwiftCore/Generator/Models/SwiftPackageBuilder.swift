@@ -70,7 +70,7 @@ class SwiftPackageBuilder {
 
     let package = Package(
         name: "PROJECT_NAME",
-        platforms: [.iOS(.v12), .macOS(.v12)],
+        platforms: [.iOS(.v14), .macOS(.v12)],
         products: [
     PRODUCTS
         ],

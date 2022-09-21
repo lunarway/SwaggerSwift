@@ -231,8 +231,8 @@ public struct RequestParameterFactory {
     }
 
     private func resolveBodyParameters(parameters: [SwaggerSwiftML.Parameter], typePrefix: String, namespace: String, swagger: Swagger) -> (FunctionParameter, [ModelDefinition])? {
-        var schemaNode: Node<Schema>? = nil
-        var parameter: Parameter? = nil
+        var schemaNode: Node<Schema>?
+        var parameter: Parameter?
         for param in parameters {
             if case let ParameterLocation.body(schema) = param.location {
                 schemaNode = schema.value
