@@ -29,7 +29,11 @@ struct GlobalHeadersModel {
 
         model += "\n\n"
 
-        model += "\(accessControl.rawValue) extension \(typeName) {\n"
+        // the global headers extension must be internal for the library. if it is public it will conflict with
+        // other libraries that might use SwaggerSwift as well with the same extensions. The reason for this is that
+        // the GlobalHeaders is a protocol and not a struct. If it was a struct it would be easier for the type checker
+        // to figure out which version to use.
+        model += "internal extension \(typeName) {\n"
 
         model += addToRequestFunction().indentLines(1)
 
