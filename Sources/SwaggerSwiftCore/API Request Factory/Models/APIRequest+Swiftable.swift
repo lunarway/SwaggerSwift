@@ -169,25 +169,35 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
 \(requestPart)
     request = interceptor?.networkWillPerformRequest(request) ?? request
     let task = urlSession().\(urlSessionMethodName) { (data, response, error) in
-        if let interceptor = self.interceptor, interceptor.networkDidPerformRequest(urlRequest: request, urlResponse: response, data: data, error: error) == false {
-            return
-        }
-
-        if let error = error {
-            completion(.failure(.requestFailed(error: error)))
-        } else if let data = data {
-            guard let httpResponse = response as? HTTPURLResponse else {
-                completion(.failure(ServiceError.clientError(reason: "Returned response object wasnt a HTTP URL Response as expected, but was instead a \\(String(describing: response))")))
-                return
-            }
-
-            switch httpResponse.statusCode {
-            \(responseTypes)
-            default:
-                let result = String(data: data, encoding: .utf8) ?? ""
-                let error = NSError(domain: "\(serviceName ?? "Generic")", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: result])
+        let completion: (Data?, URLResponse?, Error?) -> Void = { (data, response, error) in
+            if let error = error {
                 completion(.failure(.requestFailed(error: error)))
+            } else if let data = data {
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    completion(.failure(ServiceError.clientError(reason: "Returned response object wasnt a HTTP URL Response as expected, but was instead a \\(String(describing: response))")))
+                    return
+                }
+
+                switch httpResponse.statusCode {
+                \(responseTypes)
+                default:
+                    let result = String(data: data, encoding: .utf8) ?? ""
+                    let error = NSError(domain: "\(serviceName ?? "Generic")", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: result])
+                    completion(.failure(.requestFailed(error: error)))
+                }
             }
+        }
+        if let interceptor = self.interceptor {
+          interceptor.networkDidPerformRequest(urlRequest: request, urlResponse: response, data: data, error: error) { result in
+             switch result {
+              case .success:
+                  completion(data, response, error)
+              case .failure(let error):
+                  completion(nil, nil, error)
+             }
+          }
+        } else {
+            completion(data, response, error)
         }
     }
 
