@@ -29,16 +29,20 @@ struct GlobalHeadersModel {
 
         model += "\n\n"
 
-        model += "internal extension \(typeName) {\n"
+        model += "\(accessControl.rawValue) extension \(typeName) {\n"
 
-        model += addToRequestFunction(accessControl: accessControl.rawValue).indentLines(1)
+        model += addToRequestFunction().indentLines(1)
+
+        model += "\n\n"
+
+        model += asDictionaryFunction().indentLines(1)
 
         model += "\n}\n"
 
         return model
     }
 
-    func addToRequestFunction(accessControl: String) -> String {
+    func addToRequestFunction() -> String {
         let fields = headerFields.map {
             APIRequestHeaderField(
                 headerName: $0,
@@ -59,6 +63,38 @@ if let \($0.swiftyName) = \($0.swiftyName) {
 """ }
             .joined(separator: "\n\n")
             .indentLines(1)
+
+        function += "\n"
+
+        function += "}"
+
+        return function
+    }
+
+    func asDictionaryFunction() -> String {
+        let fields = headerFields.map {
+            APIRequestHeaderField(
+                headerName: $0,
+                isRequired: false
+            )
+        }
+
+        var function = ""
+
+        function += "var asDictionary: [String: String] {\n"
+        function += "var headers = [String: String]()\n\n".indentLines(1)
+
+        function += fields
+            .sorted(by: { $0.swiftyName < $1.swiftyName })
+            .map { """
+if let \($0.swiftyName) = \($0.swiftyName) {
+    headers[\"\($0.fullHeaderName)\"] = \($0.swiftyName)
+}
+""" }
+            .joined(separator: "\n\n")
+            .indentLines(1)
+
+        function += "\n\nreturn headers".indentLines(1)
 
         function += "\n"
 

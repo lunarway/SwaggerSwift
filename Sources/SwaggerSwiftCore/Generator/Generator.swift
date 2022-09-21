@@ -168,7 +168,7 @@ public struct Generator {
             case noData
         }
         return try await withCheckedThrowingContinuation { continuation in
-            URLSession.shared.dataTask(with: request) { data, response, error in
+            URLSession.shared.dataTask(with: request) { data, response, _ in
                 guard let data = data, let response = response else {
                     continuation.resume(throwing: FetchError.noData)
                     return

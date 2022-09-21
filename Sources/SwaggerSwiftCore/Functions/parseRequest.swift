@@ -65,4 +65,3 @@ func parse(request requestNode: Node<SwaggerSwiftML.Response>, httpMethod: HTTPM
         return (.void, [])
     }
 }
-

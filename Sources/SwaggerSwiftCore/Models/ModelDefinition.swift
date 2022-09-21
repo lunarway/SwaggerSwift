@@ -22,7 +22,6 @@ extension ModelDefinition {
         }
     }
 
-
     func toSwift(serviceName: String?, embedded: Bool, accessControl: APIAccessControl, packagesToImport: [String]) -> String {
         switch self {
         case .enumeration(let enumeration):

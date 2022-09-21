@@ -49,7 +49,7 @@ extension Sequence where Element == ModelField {
             let fieldType = "\(field.type.toString(required: field.isRequired || field.defaultValue != nil))"
 
             var declaration: String
-            if field.argumentLabel.variableNameFormatted != field.safeParameterName.value.variableNameFormatted {
+            if field.argumentLabel.variableNameFormatted != field.safeParameterName.value.variableNameFormatted.trimmingCharacters(in: CharacterSet(charactersIn: "`")) {
                 // MyFieldName myFieldName: FieldType
                 declaration = "\(field.argumentLabel.variableNameFormatted) \(field.safeParameterName.value.variableNameFormatted): \(fieldType)"
             } else {

@@ -5,7 +5,7 @@ import SwaggerSwiftCore
 struct SwaggerSwiftParser: AsyncParsableCommand {
     @Option(name: .shortAndLong, help: "Path to SwaggerFile")
     var swaggerFilePath: String = "./SwaggerFile"
-    
+
     @Option(name: .shortAndLong, help: "Set logging to be verbose")
     var verbose: Bool = false
 

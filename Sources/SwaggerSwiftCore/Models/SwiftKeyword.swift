@@ -23,17 +23,17 @@ enum SwiftKeyword: String {
         case .kSelf:
             return "this"
         case .kPrivate:
-            return "`private`"
+            return "isPrivate"
         case .kPublic:
-            return "`public`"
+            return "isPublic"
         case .kThrow:
             return "`throw`"
         case .kThrows:
             return "`throws`"
         case .kOverride:
-            return "`override`"
+            return "isOverride"
         case .kDefault:
-            return "`default`"
+            return "isDefault"
         case .kDefer:
             return "`defer`"
         }
