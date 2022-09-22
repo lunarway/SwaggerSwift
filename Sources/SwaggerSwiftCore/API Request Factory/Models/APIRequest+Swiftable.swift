@@ -117,12 +117,12 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
         case .json:
             urlSessionMethodName = "dataTask(with: request)"
             headerStatements.append("request.addValue(\"application/json\", forHTTPHeaderField: \"Content-Type\")")
-            returnStatement = " -> URLSessionDataTask"
+            returnStatement = ""
 
         case .formUrlEncoded: fallthrough
         case .multiPartFormData:
             urlSessionMethodName = "uploadTask(with: request, from: requestData as Data)"
-            returnStatement = " -> URLSessionUploadTask"
+            returnStatement = ""
         }
 
         var declaration = ""
@@ -133,8 +133,6 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
         if isInternalOnly {
             declaration += "#if DEBUG\n"
         }
-
-        declaration += "@discardableResult\n"
 
         declaration += """
         \(description?.documentationFormat() ?? "/// No description provided")
@@ -202,8 +200,6 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
     }
 
     task.resume()
-
-    return task
 }
 
 """
