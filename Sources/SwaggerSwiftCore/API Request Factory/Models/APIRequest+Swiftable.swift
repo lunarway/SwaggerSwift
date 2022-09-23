@@ -111,18 +111,16 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
                 """
         }
 
-        let returnStatement: String
+        let returnStatement: String = returnType.typeName.toString(required: true)
         let urlSessionMethodName: String
         switch consumes {
         case .json:
-            urlSessionMethodName = "dataTask(with: request)"
+            urlSessionMethodName = "data(for: request)"
             headerStatements.append("request.addValue(\"application/json\", forHTTPHeaderField: \"Content-Type\")")
-            returnStatement = ""
 
         case .formUrlEncoded: fallthrough
         case .multiPartFormData:
-            urlSessionMethodName = "uploadTask(with: request, from: requestData as Data)"
-            returnStatement = ""
+            urlSessionMethodName = "upload(for: request, from: requestData as Data)"
         }
 
         var declaration = ""
@@ -139,11 +137,10 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
         /// - Endpoint: \(self.httpMethod.rawValue.uppercased()) \(self.servicePath)
         /// - Parameters:
         \(parameters.map { "///   - \($0.variableName): \($0.description?.replacingOccurrences(of: "\n", with: ". ").replacingOccurrences(of: "..", with: ".") ?? "No description")" }.joined(separator: "\n"))
-        /// - Returns: the URLSession task. This can be used to cancel the request.
 
         """
 
-        declaration += "\(accessControl) func \(functionName)(\(arguments))\(`throws` ? " throws" : "")\(returnStatement) {"
+        declaration += "\(accessControl) func \(functionName)(\(arguments))\(`throws` ? " throws" : "") async -> \(returnStatement) {"
 
         let responseTypes = self.responseTypes.map { $0.print() }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n            ")
 
@@ -157,7 +154,7 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
         var body =
             """
 \(declaration)
-    let endpointUrl = self.baseUrlProvider().appendingPathComponent("\(servicePath)")
+    let endpointUrl = baseUrlProvider().appendingPathComponent("\(servicePath)")
 
     \(queryStatement.count > 0 ? "var" : "let") urlComponents = URLComponents(url: endpointUrl, resolvingAgainstBaseURL: true)!
 \(queryStatement.indentLines(1))
@@ -166,43 +163,41 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
     request.httpMethod = "\(httpMethod.rawValue.uppercased())"
 \(requestPart)
     request = interceptor?.networkWillPerformRequest(request) ?? request
-    let task = urlSession().\(urlSessionMethodName) { (data, response, error) in
-        let completion: (Data?, URLResponse?, Error?) -> Void = { (data, response, error) in
-            if let error = error {
-                completion(.failure(.requestFailed(error: error)))
-            } else if let data = data {
-                guard let httpResponse = response as? HTTPURLResponse else {
-                    completion(.failure(ServiceError.clientError(reason: "Returned response object wasnt a HTTP URL Response as expected, but was instead a \\(String(describing: response))")))
-                    return
-                }
-
-                switch httpResponse.statusCode {
-                \(responseTypes)
-                default:
-                    let result = String(data: data, encoding: .utf8) ?? ""
-                    let error = NSError(domain: "\(serviceName ?? "Generic")", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: result])
-                    completion(.failure(.requestFailed(error: error)))
-                }
+    do {
+       let (data, response) = try await urlSession().\(urlSessionMethodName)
+            if let interceptor = interceptor,
+               let error = await interceptor.networkDidPerformRequest(urlRequest: request, urlResponse: response, data: data, error: nil) {
+                return .failure(.requestFailed(error: error))
             }
-        }
-        if let interceptor = self.interceptor {
-          interceptor.networkDidPerformRequest(urlRequest: request, urlResponse: response, data: data, error: error) { result in
-             switch result {
-              case .success:
-                  completion(data, response, error)
-              case .failure(let error):
-                  completion(nil, nil, error)
-             }
-          }
-        } else {
-            completion(data, response, error)
-        }
-    }
 
-    task.resume()
+            guard let httpResponse = response as? HTTPURLResponse else {
+                return .failure(ServiceError.clientError(reason: "Returned response object wasnt a HTTP URL Response as expected, but was instead a \\(String(describing: response))"))
+            }
+
+            switch httpResponse.statusCode {
+            \(responseTypes)
+             default:
+                let result = String(data: data, encoding: .utf8) ?? ""
+                let error = NSError(domain: "\(serviceName ?? "Generic")", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: result])
+                return .failure(.requestFailed(error: error))
+            }
+    } catch {
+       return .failure(.requestFailed(error: error))
+    }
 }
 
 """
+        body +=
+        """
+
+        \(accessControl) func \(functionName)(\(arguments)\(arguments.isEmpty ? "" : ", ")completion: @escaping (\(returnStatement)) -> Void = { _ in })\(`throws` ? " throws" : "") {
+          _Concurrency.Task {
+                let result = await \(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ",")))
+                completion(result)
+           }
+        }
+
+        """
         if isInternalOnly {
             body += "#endif\n"
         }

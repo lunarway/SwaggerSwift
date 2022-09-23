@@ -58,13 +58,13 @@ enum APIRequestResponseType {
             return """
 case \(statusCode.rawValue):
     let result = String(data: data, encoding: .utf8) ?? ""
-    completion(.\(swiftResult)(\(resultType("result", resultIsEnum))))
+    return .\(swiftResult)(\(resultType("result", resultIsEnum)))
 """
         case .object(let statusCode, let resultIsEnum, let responseType):
             if responseType == "Data" {
                 return """
     case \(statusCode.rawValue):
-        completion(.\(swiftResult)(data))
+        return .\(swiftResult)(data)
     """
             } else {
                 return """
@@ -74,10 +74,10 @@ case \(statusCode.rawValue):
         decoder.dateDecodingStrategy = .custom(dateDecodingStrategy)
         let result = try decoder.decode(\(responseType.modelNamed).self, from: data)
 
-        completion(.\(swiftResult)(\(resultType("result", resultIsEnum))))
+        return .\(swiftResult)(\(resultType("result", resultIsEnum)))
     } catch let error {
         interceptor?.networkFailedToParseObject(urlRequest: request, urlResponse: response, data: data, error: error)
-        completion(.failure(.requestFailed(error: error)))
+        return .failure(.requestFailed(error: error))
     }
 """
             }
@@ -85,57 +85,57 @@ case \(statusCode.rawValue):
             if resultIsEnum {
                 return """
 case \(statusCode.rawValue):
-    completion(.\(swiftResult)(\(resultType("", resultIsEnum))))
+    return .\(swiftResult)(\(resultType("", resultIsEnum)))
 """
             } else {
                 return """
 case \(statusCode.rawValue):
-    completion(.\(swiftResult)(\(resultType("()", resultIsEnum))))
+    return .\(swiftResult)(\(resultType("()", resultIsEnum)))
 """
             }
         case .int(let statusCode, _):
             return """
 case \(statusCode.rawValue):
     if let stringValue = String(data: data, encoding: .utf8), let value = Int(stringValue) {
-        completion(.success(value))
+        return .success(value)
     } else {
-        completion(.failure(.clientError(reason: "Failed to convert backend result to expected type"))
+        return .failure(.clientError(reason: "Failed to convert backend result to expected type")
     }
 """
         case .double(let statusCode, _):
             return """
 case \(statusCode.rawValue):
     if let stringValue = String(data: data, encoding: .utf8), let value = Double(stringValue) {
-        completion(.success(value))
+        return .success(value)
     } else {
-        completion(.failure(.clientError(reason: "Failed to convert backend result to expected type"))
+        return .failure(.clientError(reason: "Failed to convert backend result to expected type")
     }
 """
         case .float(let statusCode, _):
             return """
 case \(statusCode.rawValue):
     if let stringValue = String(data: data, encoding: .utf8), let value = Float(stringValue) {
-        completion(.success(value))
+        return .success(value)
     } else {
-        completion(.failure(.clientError(reason: "Failed to convert backend result to expected type"))
+        return .failure(.clientError(reason: "Failed to convert backend result to expected type")
     }
 """
         case .boolean(let statusCode, _):
             return """
 case \(statusCode.rawValue):
     if let stringValue = String(data: data, encoding: .utf8), let value = Bool(stringValue) {
-        completion(.success(value))
+        return .success(value)
     } else {
-        completion(.failure(.clientError(reason: "Failed to convert backend result to expected type"))
+        return .failure(.clientError(reason: "Failed to convert backend result to expected type")
     }
 """
         case .int64(let statusCode, _):
             return """
 case \(statusCode.rawValue):
     if let stringValue = String(data: data, encoding: .utf8), let value = Int64(stringValue) {
-        completion(.success(value))
+        return .success(value)
     } else {
-        completion(.failure(.clientError(reason: "Failed to convert backend result to expected type"))
+        return .failure(.clientError(reason: "Failed to convert backend result to expected type")
     }
 """
         case .array(let statusCode, let resultIsEnum, let innerType):
@@ -146,9 +146,9 @@ case \(statusCode.rawValue):
         decoder.dateDecodingStrategy = .custom(dateDecodingStrategy)
         let result = try decoder.decode([\(innerType)].self, from: data)
 
-        completion(.\(swiftResult)(\(resultType("result", resultIsEnum))))
+        return .\(swiftResult)(\(resultType("result", resultIsEnum)))
     } catch let error {
-        completion(.failure(.requestFailed(error: error)))
+        return .failure(.requestFailed(error: error))
     }
 """
         case .enumeration(let statusCode, let resultIsEnum, let responseType):
@@ -159,9 +159,9 @@ case \(statusCode.rawValue):
                     // The string can be outputted as: "\\"enumValue\\"\\n", so we remove the newlines and remove the apostrophes
                     let cleanedStringValue = stringValue.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).trimmingCharacters(in: CharacterSet(charactersIn: "\\""))
                     let enumValue = \(responseType)(rawValue: cleanedStringValue)
-                    completion(.\(swiftResult)(\(resultType("enumValue", resultIsEnum))))
+                    return .\(swiftResult)(\(resultType("enumValue", resultIsEnum)))
                 } else {
-                    completion(.failure(.clientError(reason: "Failed to convert backend result to expected type")))
+                    return .failure(.clientError(reason: "Failed to convert backend result to expected type"))
                 }
             """
         }

@@ -18,7 +18,7 @@ public struct RequestParameterFactory {
     ///   - swagger: the swagger spec
     ///   - swaggerFile: the swagger file
     /// - Returns: the list of all parameters to the API request
-    func make(forOperation operation: SwaggerSwiftML.Operation, functionName: String, responseTypes: [ResponseTypeMap], pathParameters: [Parameter], swagger: Swagger, swaggerFile: SwaggerFile) throws -> ([FunctionParameter], [ModelDefinition]) {
+    func make(forOperation operation: SwaggerSwiftML.Operation, functionName: String, responseTypes: [ResponseTypeMap], pathParameters: [Parameter], swagger: Swagger, swaggerFile: SwaggerFile) throws -> ([FunctionParameter], [ModelDefinition], ReturnType) {
         let parameters = (operation.parameters ?? []).map {
             swagger.findParameter(node: $0)
         } + pathParameters
@@ -68,18 +68,12 @@ public struct RequestParameterFactory {
         let (failureTypeName, failureInlineModels) = createResultEnumType(types: responseTypes, failure: true, functionName: functionName, swagger: swagger)
         resolvedModelDefinitions.append(contentsOf: failureInlineModels)
 
-        let completionHandler = FunctionParameter(
+        let returnType = ReturnType(
             description: "The completion handler of the function returns as soon as the request completes",
-            name: "completion",
-            typeName: .object(typeName: "@escaping (Result<\(successTypeName), ServiceError<\(failureTypeName)>>) -> Void = { _ in }"),
-            required: true,
-            in: .nowhere,
-            isEnum: false
+            typeName: .object(typeName: "Result<\(successTypeName), ServiceError<\(failureTypeName)>>")
         )
 
-        resolvedParameters.append(completionHandler)
-
-        return (resolvedParameters, resolvedModelDefinitions)
+        return (resolvedParameters, resolvedModelDefinitions, returnType)
     }
 
     private func createResultEnumType(types: [ResponseTypeMap], failure: Bool, functionName: String, swagger: Swagger) -> (String, [ModelDefinition]) {
