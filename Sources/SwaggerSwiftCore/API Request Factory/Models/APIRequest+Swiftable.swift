@@ -173,7 +173,7 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
     request = interceptor?.networkWillPerformRequest(request) ?? request
     let task = urlSession().\(urlSessionMethodName) { (data, response, error) in
         let completion: (Data?, URLResponse?, Error?) -> Void = { (data, response, error) in
-            if let error = error {
+            if let error {
                 completion(.failure(.requestFailed(error: error)))
             } else if let data {
                 guard let response else {
