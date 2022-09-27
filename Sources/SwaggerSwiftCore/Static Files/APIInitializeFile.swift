@@ -1,7 +1,8 @@
 let apiInitializeFile = """
 import Foundation
 
-<ACCESSCONTROL> protocol APIInitialize {
+/// Provides a single common interface for initialising all APIs
+public protocol APIInitialize {
     init(urlSession: @escaping () -> URLSession,
          baseUrlProvider: @escaping () -> URL,
          headerProvider: @escaping () -> GlobalHeaders,
