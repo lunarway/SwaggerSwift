@@ -170,9 +170,9 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
     request = interceptor?.networkWillPerformRequest(request) ?? request
     let task = urlSession().\(urlSessionMethodName) { (data, response, error) in
         let completion: (Data?, URLResponse?, Error?) -> Void = { (data, response, error) in
-            if let error = error {
+            if let error {
                 completion(.failure(.requestFailed(error: error)))
-            } else if let data = data {
+            } else if let data {
                 guard let httpResponse = response as? HTTPURLResponse else {
                     completion(.failure(ServiceError.clientError(reason: "Returned response object wasnt a HTTP URL Response as expected, but was instead a \\(String(describing: response))")))
                     return
