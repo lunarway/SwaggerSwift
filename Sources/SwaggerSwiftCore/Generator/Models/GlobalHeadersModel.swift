@@ -21,7 +21,7 @@ struct GlobalHeadersModel {
 
         var model = ""
 
-        model += "\(accessControl.rawValue) protocol \(typeName) {\n"
+        model += "public protocol \(typeName) {\n"
 
         model += properties.indentLines(1)
 
