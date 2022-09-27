@@ -172,10 +172,13 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
         let completion: (Data?, URLResponse?, Error?) -> Void = { (data, response, error) in
             if let error = error {
                 completion(.failure(.requestFailed(error: error)))
-            } else if let data = data {
+            } else if let data {
+                guard let response else {
+                    fatalError("No response returned in success block - Not expected")
+                }
+
                 guard let httpResponse = response as? HTTPURLResponse else {
-                    completion(.failure(ServiceError.clientError(reason: "Returned response object wasnt a HTTP URL Response as expected, but was instead a \\(String(describing: response))")))
-                    return
+                    fatalError("Returned response object wasnt a HTTP URL Response as expected, but was instead a \\(response)")
                 }
 
                 switch httpResponse.statusCode {
