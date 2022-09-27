@@ -27,9 +27,21 @@ struct GlobalHeadersModel {
 
         model += "\n}"
 
-        model += "\n\n"
+        model += "\n"
 
-        model += "\(accessControl.rawValue) extension \(typeName) {\n"
+        return model
+    }
+
+    public func writeExtensions(inCommonPackageNamed: String?) -> String {
+        var model = "import Foundation\n"
+
+        if let inCommonPackageNamed = inCommonPackageNamed {
+            model += "import \(inCommonPackageNamed)\n"
+        }
+
+        model += "\n"
+
+        model += "internal extension \(typeName) {\n"
 
         model += addToRequestFunction().indentLines(1)
 

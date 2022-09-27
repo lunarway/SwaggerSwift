@@ -96,6 +96,7 @@ public struct Generator {
 
         log("Creating Swift Project at \(destination)")
 
+        let globalHeadersModel = GlobalHeadersModel(headerFields: swaggerFile.globalHeaders ?? [])
         let commonLibraryName = "\(swaggerFile.projectName)Shared"
 
         if swaggerFile.createSwiftPackage {
@@ -115,6 +116,7 @@ public struct Generator {
                           rootDirectory: swiftPackageSourcesDirectory,
                           commonLibraryName: commonLibraryName,
                           accessControl: accessControl,
+                          globalHeadersModel: globalHeadersModel,
                           fileManager: fileManager,
                           dummyMode: dummyMode)
             }
@@ -149,6 +151,7 @@ public struct Generator {
                           rootDirectory: rootDir,
                           commonLibraryName: nil,
                           accessControl: accessControl,
+                          globalHeadersModel: globalHeadersModel,
                           fileManager: fileManager,
                           dummyMode: dummyMode)
             }
@@ -202,7 +205,7 @@ public struct Generator {
         }
     }
 
-    private func write(apiDefinition: APIDefinition, modelDefinitions: [ModelDefinition], swaggerFile: SwaggerFile, rootDirectory: String, commonLibraryName: String?, accessControl: APIAccessControl, fileManager: FileManager, dummyMode: Bool) throws {
+    private func write(apiDefinition: APIDefinition, modelDefinitions: [ModelDefinition], swaggerFile: SwaggerFile, rootDirectory: String, commonLibraryName: String?, accessControl: APIAccessControl, globalHeadersModel: GlobalHeadersModel, fileManager: FileManager, dummyMode: Bool) throws {
         log("Parsing contents of Swagger: \(apiDefinition.serviceName)")
 
         let apiDirectory = rootDirectory + "/" + apiDefinition.serviceName
@@ -224,6 +227,10 @@ public struct Generator {
             accessControl: accessControl.rawValue,
             packagesToImport: commonLibraryName != nil ? [commonLibraryName!] : []
         )
+
+        let globalHeadersDefinitions = globalHeadersModel.writeExtensions(inCommonPackageNamed: commonLibraryName)
+        let globalHeaderExtensionsPath = "\(apiDirectory)/GlobalHeaderExtensions.swift"
+        try globalHeadersDefinitions.write(toFile: globalHeaderExtensionsPath)
 
         let apiDefinitionFilename = "\(apiDirectory)/\(apiDefinition.serviceName).swift"
         try apiDefinitionFile.write(toFile: apiDefinitionFilename)
