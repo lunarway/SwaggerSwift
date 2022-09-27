@@ -189,11 +189,14 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
         }
 
         if let interceptor = self.interceptor {
-            interceptor.networkDidPerformRequest(urlRequest: request, urlResponse: response, data: data, error: error) { result in
-                switch result {
-                case .success:
+            Task {
+                do {
+                    try await interceptor.networkDidPerformRequest(urlRequest: request,
+                                                                   urlResponse: response,
+                                                                   data: data,
+                                                                   error: error)
                     completion(data, response, error)
-                case .failure(let error):
+                } catch {
                     completion(nil, nil, error)
                 }
             }
