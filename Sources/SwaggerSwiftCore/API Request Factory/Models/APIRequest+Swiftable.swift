@@ -147,7 +147,10 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
 
         declaration += "\(accessControl) func \(functionName)(\(arguments))\(`throws` ? " throws" : "")\(returnStatement) {"
 
-        let responseTypes = self.responseTypes.map { $0.print() }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n            ")
+        let responseTypes = self.responseTypes
+            .map { $0.print(apiName: serviceName ?? "") }
+            .joined(separator: "\n")
+            .replacingOccurrences(of: "\n", with: "\n            ")
 
         let requestPart = (globalHeaders.joined(separator: "\n").addNewlinesIfNonEmpty(2)
                            + headerStatements.joined(separator: "\n").addNewlinesIfNonEmpty(2)

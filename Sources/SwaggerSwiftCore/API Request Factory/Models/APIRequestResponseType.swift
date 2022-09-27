@@ -36,7 +36,7 @@ enum APIRequestResponseType {
         }
     }
 
-    func print() -> String {
+    func print(apiName: String) -> String {
         let failed = !statusCode.isSuccess
         let swiftResult = failed ? "failure" : "success"
 
@@ -76,7 +76,11 @@ case \(statusCode.rawValue):
 
         completion(.\(swiftResult)(\(resultType("result", resultIsEnum))))
     } catch let error {
-        interceptor?.networkFailedToParseObject(urlRequest: request, urlResponse: response, data: data, error: error)
+        interceptor?.networkFailedToParseObject(urlRequest: request,
+                                                urlResponse: response,
+                                                data: data,
+                                                error: error)
+
         completion(.failure(.requestFailed(error: error)))
     }
 """
@@ -99,7 +103,14 @@ case \(statusCode.rawValue):
     if let stringValue = String(data: data, encoding: .utf8), let value = Int(stringValue) {
         completion(.success(value))
     } else {
-        completion(.failure(.clientError(reason: "Failed to convert backend result to expected type"))
+        let error = NSError(domain: "\(apiName)",
+                            code: 0,
+                            userInfo: [
+                                NSLocalizedDescriptionKey: "Failed to convert backend result to expected type"
+                            ]
+        )
+
+        completion(.failure(.requestFailed(error: error)))
     }
 """
         case .double(let statusCode, _):
@@ -108,7 +119,14 @@ case \(statusCode.rawValue):
     if let stringValue = String(data: data, encoding: .utf8), let value = Double(stringValue) {
         completion(.success(value))
     } else {
-        completion(.failure(.clientError(reason: "Failed to convert backend result to expected type"))
+        let error = NSError(domain: "\(apiName)",
+                            code: 0,
+                            userInfo: [
+                                NSLocalizedDescriptionKey: "Failed to convert backend result to expected type"
+                            ]
+        )
+
+        completion(.failure(.requestFailed(error: error)))
     }
 """
         case .float(let statusCode, _):
@@ -117,7 +135,14 @@ case \(statusCode.rawValue):
     if let stringValue = String(data: data, encoding: .utf8), let value = Float(stringValue) {
         completion(.success(value))
     } else {
-        completion(.failure(.clientError(reason: "Failed to convert backend result to expected type"))
+        let error = NSError(domain: "\(apiName)",
+                            code: 0,
+                            userInfo: [
+                                NSLocalizedDescriptionKey: "Failed to convert backend result to expected type"
+                            ]
+        )
+
+        completion(.failure(.requestFailed(error: error)))
     }
 """
         case .boolean(let statusCode, _):
@@ -126,7 +151,14 @@ case \(statusCode.rawValue):
     if let stringValue = String(data: data, encoding: .utf8), let value = Bool(stringValue) {
         completion(.success(value))
     } else {
-        completion(.failure(.clientError(reason: "Failed to convert backend result to expected type"))
+        let error = NSError(domain: "\(apiName)",
+                            code: 0,
+                            userInfo: [
+                                NSLocalizedDescriptionKey: "Failed to convert backend result to expected type"
+                            ]
+        )
+
+        completion(.failure(.requestFailed(error: error)))
     }
 """
         case .int64(let statusCode, _):
@@ -135,7 +167,14 @@ case \(statusCode.rawValue):
     if let stringValue = String(data: data, encoding: .utf8), let value = Int64(stringValue) {
         completion(.success(value))
     } else {
-        completion(.failure(.clientError(reason: "Failed to convert backend result to expected type"))
+        let error = NSError(domain: "\(apiName)",
+                            code: 0,
+                            userInfo: [
+                                NSLocalizedDescriptionKey: "Failed to convert backend result to expected type"
+                            ]
+        )
+
+        completion(.failure(.requestFailed(error: error)))
     }
 """
         case .array(let statusCode, let resultIsEnum, let innerType):
@@ -152,16 +191,27 @@ case \(statusCode.rawValue):
     }
 """
         case .enumeration(let statusCode, let resultIsEnum, let responseType):
-            // This is necessary as iOS 12 doesnt support JSON fragments in JSONDecoder, so we have to do the parsing manually
+            // This is necessary as iOS 12 doesnt support JSON fragments in JSONDecoder,
+            // so we have to do the parsing manually
             return """
             case \(statusCode.rawValue):
                 if let stringValue = String(data: data, encoding: .utf8) {
                     // The string can be outputted as: "\\"enumValue\\"\\n", so we remove the newlines and remove the apostrophes
-                    let cleanedStringValue = stringValue.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).trimmingCharacters(in: CharacterSet(charactersIn: "\\""))
+                    let cleanedStringValue = stringValue
+                        .trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+                        .trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+
                     let enumValue = \(responseType)(rawValue: cleanedStringValue)
                     completion(.\(swiftResult)(\(resultType("enumValue", resultIsEnum))))
                 } else {
-                    completion(.failure(.clientError(reason: "Failed to convert backend result to expected type")))
+                    let error = NSError(domain: "\(apiName)",
+                                        code: 0,
+                                        userInfo: [
+                                            NSLocalizedDescriptionKey: "Failed to convert backend result to expected type"
+                                        ]
+                    )
+
+                    completion(.failure(.requestFailed(error: error)))
                 }
             """
         }
