@@ -38,7 +38,6 @@ class SwiftPackageBuilder {
         """
         .library(
             name: \"\($0.name)\",
-            type: .static,
             targets: [
         \($0.targets.sorted(by: { $0.name < $1.name }).map { "\"\($0.name)\"" }.joined(separator: ",\n").indentLines(2))
             ]
