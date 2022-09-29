@@ -195,7 +195,7 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
         }
 
         if let interceptor = self.interceptor {
-            Task { [request] in
+            _Concurrency.Task { [request] in
                 do {
                     try await interceptor.networkDidPerformRequest(urlRequest: request,
                                                                    urlResponse: response,
