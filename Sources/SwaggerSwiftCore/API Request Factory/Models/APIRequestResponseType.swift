@@ -199,7 +199,7 @@ case \(statusCode.rawValue):
                     // The string can be outputted as: "\\"enumValue\\"\\n", so we remove the newlines and remove the apostrophes
                     let cleanedStringValue = stringValue
                         .trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-                        .trimmingCharacters(in: CharacterSet(charactersIn: \"\""))
+                        .trimmingCharacters(in: CharacterSet(charactersIn: ""))
 
                     let enumValue = \(responseType)(rawValue: cleanedStringValue)
                     completion(.\(swiftResult)(\(resultType("enumValue", resultIsEnum))))
