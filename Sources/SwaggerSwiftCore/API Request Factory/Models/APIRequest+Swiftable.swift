@@ -142,7 +142,7 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
 
         declaration += "\(accessControl) func \(functionName)(\(arguments))\(`throws` ? " throws" : "") async -> \(returnStatement) {"
 
-        let responseTypes = self.responseTypes.map { $0.print() }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n            ")
+        let responseTypes = self.responseTypes.map { $0.print() }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n                ")
 
         let requestPart = (globalHeaders.joined(separator: "\n").addNewlinesIfNonEmpty(2)
                            + headerStatements.joined(separator: "\n").addNewlinesIfNonEmpty(2)
@@ -169,7 +169,7 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
                let error = await interceptor.networkDidPerformRequest(urlRequest: request, urlResponse: response, data: data, error: nil) {
                 return .failure(.requestFailed(error: error))
             }
-
+            
             guard let httpResponse = response as? HTTPURLResponse else {
                 return .failure(ServiceError.clientError(reason: "Returned response object wasnt a HTTP URL Response as expected, but was instead a \\(String(describing: response))"))
             }
