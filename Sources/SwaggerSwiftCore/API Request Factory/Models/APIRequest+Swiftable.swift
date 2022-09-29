@@ -147,7 +147,10 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
 
         declaration += "\(accessControl) func \(functionName)(\(arguments))\(`throws` ? " throws" : "")\(returnStatement) {"
 
-        let responseTypes = self.responseTypes.map { $0.print() }.joined(separator: "\n").replacingOccurrences(of: "\n", with: "\n                ")
+        let responseTypes = self.responseTypes
+            .map { $0.print(apiName: serviceName ?? "") }
+            .joined(separator: "\n")
+            .replacingOccurrences(of: "\n", with: "\n            ")
 
         let requestPart = (globalHeaders.joined(separator: "\n").addNewlinesIfNonEmpty(2)
                            + headerStatements.joined(separator: "\n").addNewlinesIfNonEmpty(2)
@@ -170,12 +173,15 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
     request = interceptor?.networkWillPerformRequest(request) ?? request
     let task = urlSession().\(urlSessionMethodName) { (data, response, error) in
         let completion: (Data?, URLResponse?, Error?) -> Void = { (data, response, error) in
-            if let error = error {
+            if let error {
                 completion(.failure(.requestFailed(error: error)))
-            } else if let data = data {
+            } else if let data {
+                guard let response else {
+                    fatalError("No response returned in success block - Not expected")
+                }
+
                 guard let httpResponse = response as? HTTPURLResponse else {
-                    completion(.failure(ServiceError.clientError(reason: "Returned response object wasnt a HTTP URL Response as expected, but was instead a \\(String(describing: response))")))
-                    return
+                    fatalError("Returned response object wasnt a HTTP URL Response as expected, but was instead a \\(response)")
                 }
 
                 switch httpResponse.statusCode {
@@ -187,15 +193,19 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
                 }
             }
         }
+
         if let interceptor = self.interceptor {
-          interceptor.networkDidPerformRequest(urlRequest: request, urlResponse: response, data: data, error: error) { result in
-             switch result {
-             case .success:
-                completion(data, response, error)
-             case .failure(let error):
-                completion(nil, nil, error)
-             }
-          }
+            _Concurrency.Task { [request] in
+                do {
+                    try await interceptor.networkDidPerformRequest(urlRequest: request,
+                                                                   urlResponse: response,
+                                                                   data: data,
+                                                                   error: error)
+                    completion(data, response, error)
+                } catch {
+                    completion(nil, nil, error)
+                }
+            }
         } else {
             completion(data, response, error)
         }
