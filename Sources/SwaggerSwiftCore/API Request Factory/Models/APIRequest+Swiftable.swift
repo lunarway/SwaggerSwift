@@ -111,18 +111,16 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
                 """
         }
 
-        let returnStatement: String
+        let returnStatement: String = returnType.typeName.toString(required: true)
         let urlSessionMethodName: String
         switch consumes {
         case .json:
-            urlSessionMethodName = "dataTask(with: request)"
+            urlSessionMethodName = "data(for: request)"
             headerStatements.append("request.addValue(\"application/json\", forHTTPHeaderField: \"Content-Type\")")
-            returnStatement = " -> URLSessionDataTask"
 
         case .formUrlEncoded: fallthrough
         case .multiPartFormData:
-            urlSessionMethodName = "uploadTask(with: request, from: requestData as Data)"
-            returnStatement = " -> URLSessionUploadTask"
+            urlSessionMethodName = "upload(for: request, from: requestData as Data)"
         }
 
         var declaration = ""
@@ -134,18 +132,15 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
             declaration += "#if DEBUG\n"
         }
 
-        declaration += "@discardableResult\n"
-
         declaration += """
         \(description?.documentationFormat() ?? "/// No description provided")
         /// - Endpoint: \(self.httpMethod.rawValue.uppercased()) \(self.servicePath)
         /// - Parameters:
         \(parameters.map { "///   - \($0.variableName): \($0.description?.replacingOccurrences(of: "\n", with: ". ").replacingOccurrences(of: "..", with: ".") ?? "No description")" }.joined(separator: "\n"))
-        /// - Returns: the URLSession task. This can be used to cancel the request.
 
         """
 
-        declaration += "\(accessControl) func \(functionName)(\(arguments))\(`throws` ? " throws" : "")\(returnStatement) {"
+        declaration += "\(accessControl) func \(functionName)(\(arguments))\(`throws` ? " throws" : "") async -> \(returnStatement) {"
 
         let responseTypes = self.responseTypes
             .map { $0.print(apiName: serviceName ?? "") }
@@ -162,7 +157,7 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
         var body =
             """
 \(declaration)
-    let endpointUrl = self.baseUrlProvider().appendingPathComponent("\(servicePath)")
+    let endpointUrl = baseUrlProvider().appendingPathComponent("\(servicePath)")
 
     \(queryStatement.count > 0 ? "var" : "let") urlComponents = URLComponents(url: endpointUrl, resolvingAgainstBaseURL: true)!
 \(queryStatement.indentLines(1))
@@ -171,52 +166,45 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
     request.httpMethod = "\(httpMethod.rawValue.uppercased())"
 \(requestPart)
     request = interceptor?.networkWillPerformRequest(request) ?? request
-    let task = urlSession().\(urlSessionMethodName) { (data, response, error) in
-        let completion: (Data?, URLResponse?, Error?) -> Void = { (data, response, error) in
-            if let error {
-                completion(.failure(.requestFailed(error: error)))
-            } else if let data {
-                guard let response else {
-                    fatalError("No response returned in success block - Not expected")
-                }
-
-                guard let httpResponse = response as? HTTPURLResponse else {
-                    fatalError("Returned response object wasnt a HTTP URL Response as expected, but was instead a \\(response)")
-                }
-
-                switch httpResponse.statusCode {
-                \(responseTypes)
-                default:
-                    let result = String(data: data, encoding: .utf8) ?? ""
-                    let error = NSError(domain: "\(serviceName ?? "Generic")", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: result])
-                    completion(.failure(.requestFailed(error: error)))
+    do {
+       let (data, response) = try await urlSession().\(urlSessionMethodName)
+            if let interceptor {
+               do {
+                 try await interceptor.networkDidPerformRequest(urlRequest: request, urlResponse: response, data: data, error: nil)
+               } catch {
+                  return .failure(.requestFailed(error: error))
                 }
             }
-        }
-
-        if let interceptor = self.interceptor {
-            _Concurrency.Task { [request] in
-                do {
-                    try await interceptor.networkDidPerformRequest(urlRequest: request,
-                                                                   urlResponse: response,
-                                                                   data: data,
-                                                                   error: error)
-                    completion(data, response, error)
-                } catch {
-                    completion(nil, nil, error)
-                }
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                let error = NSError(domain: "\(serviceName ?? "Generic")", code: 0, userInfo: [NSLocalizedDescriptionKey: "Returned response object wasnt a HTTP URL Response as expected, but was instead a \\(String(describing: response))"])
+                return .failure(.requestFailed(error: error))
             }
-        } else {
-            completion(data, response, error)
-        }
+
+            switch httpResponse.statusCode {
+            \(responseTypes)
+             default:
+                let result = String(data: data, encoding: .utf8) ?? ""
+                let error = NSError(domain: "\(serviceName ?? "Generic")", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: result])
+                return .failure(.requestFailed(error: error))
+            }
+    } catch {
+       return .failure(.requestFailed(error: error))
     }
-
-    task.resume()
-
-    return task
 }
 
 """
+        body +=
+        """
+
+        \(accessControl) func \(functionName)(\(arguments)\(arguments.isEmpty ? "" : ", ")completion: @escaping (\(returnStatement)) -> Void = { _ in })\(`throws` ? " throws" : "") {
+          _Concurrency.Task {
+                let result = await \(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ",")))
+                completion(result)
+           }
+        }
+
+        """
         if isInternalOnly {
             body += "#endif\n"
         }

@@ -15,4 +15,5 @@ struct APIRequest {
     let queries: [QueryElement]
     let headers: [APIRequestHeaderField]
     let responseTypes: [APIRequestResponseType]
+    let returnType: ReturnType
 }
