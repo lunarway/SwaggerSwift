@@ -168,13 +168,17 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
     request = interceptor?.networkWillPerformRequest(request) ?? request
     do {
        let (data, response) = try await urlSession().\(urlSessionMethodName)
-            if let interceptor,
-               let error = await interceptor.networkDidPerformRequest(urlRequest: request, urlResponse: response, data: data, error: nil) {
-                return .failure(.requestFailed(error: error))
+            if let interceptor {
+               do {
+                 try await interceptor.networkDidPerformRequest(urlRequest: request, urlResponse: response, data: data, error: nil)
+               } catch {
+                  return .failure(.requestFailed(error: error))
+                }
             }
             
             guard let httpResponse = response as? HTTPURLResponse else {
-                return .failure(ServiceError.clientError(reason: "Returned response object wasnt a HTTP URL Response as expected, but was instead a \\(String(describing: response))"))
+                let error = NSError(domain: "\(serviceName ?? "Generic")", code: 0, userInfo: [NSLocalizedDescriptionKey: "Returned response object wasnt a HTTP URL Response as expected, but was instead a \\(String(describing: response))"])
+                return .failure(.requestFailed(error: error))
             }
 
             switch httpResponse.statusCode {
