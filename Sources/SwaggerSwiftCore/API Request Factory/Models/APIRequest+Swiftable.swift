@@ -196,7 +196,7 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
 """
         body +=
         """
-
+        \(isDeprecated ? "@available(*, deprecated)" : "")
         \(accessControl) func \(functionName)(\(arguments)\(arguments.isEmpty ? "" : ", ")completion: @escaping (\(returnStatement)) -> Void = { _ in })\(`throws` ? " throws" : "") {
           _Concurrency.Task {
                 let result = await \(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ",")))
