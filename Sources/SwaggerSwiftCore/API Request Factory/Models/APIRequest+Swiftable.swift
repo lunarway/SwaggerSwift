@@ -183,10 +183,10 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
 
             switch httpResponse.statusCode {
             \(responseTypes)
-             default:
-                let result = String(data: data, encoding: .utf8) ?? ""
-                let error = NSError(domain: "\(serviceName ?? "Generic")", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: result])
-                return .failure(.requestFailed(error: error))
+            default:
+              let result = String(data: data, encoding: .utf8) ?? ""
+              let error = NSError(domain: "\(serviceName ?? "Generic")", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: result])
+              return .failure(.requestFailed(error: error))
             }
     } catch {
        return .failure(.requestFailed(error: error))
@@ -199,7 +199,7 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
         \(isDeprecated ? "@available(*, deprecated)" : "")
         \(accessControl) func \(functionName)(\(arguments)\(arguments.isEmpty ? "" : ", ")completion: @escaping (\(returnStatement)) -> Void = { _ in })\(`throws` ? " throws" : "") {
           _Concurrency.Task {
-                let result = await \(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ",")))
+                let result = await \(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ", ")))
                 completion(result)
            }
         }
