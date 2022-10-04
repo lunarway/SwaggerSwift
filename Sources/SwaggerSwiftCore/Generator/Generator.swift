@@ -269,6 +269,7 @@ public struct Generator {
         try formData.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(toFile: "\(targetPath)/FormData.swift")
         try dateDecodingStrategy.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(toFile: "\(targetPath)/DateDecodingStrategy.swift")
         try apiInitializeFile.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(toFile: "\(targetPath)/APIInitialize.swift")
+        try apiInitializerFile.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(toFile: "\(targetPath)/APIInitializer.swift")
 
         if let globalHeaderFields = swaggerFile.globalHeaders {
             let globalHeadersModel = GlobalHeadersModel(headerFields: globalHeaderFields)
