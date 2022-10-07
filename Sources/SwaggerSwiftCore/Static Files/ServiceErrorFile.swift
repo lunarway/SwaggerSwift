@@ -5,4 +5,5 @@ let serviceError = """
     // The backend returned an error, e.g. a 500 Internal Server Error, 403 Unauthorized
     case backendError(error: ErrorType)
 }
+
 """

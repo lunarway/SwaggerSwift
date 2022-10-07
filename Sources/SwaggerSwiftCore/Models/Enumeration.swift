@@ -41,7 +41,7 @@ struct Enumeration {
         }
 
         var model = """
-\(accessControl.rawValue) enum \(self.typeName)\(isCodable ? ": Codable, Equatable" : "") {
+\(accessControl.rawValue) enum \(self.typeName)\(isCodable ? ": Codable, Equatable, Sendable" : ": Sendable") {
 \(cases.joined(separator: "\n").indentLines(1))
 """
         if isCodable {

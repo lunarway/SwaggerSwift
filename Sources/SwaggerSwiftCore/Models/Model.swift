@@ -50,7 +50,7 @@ struct Model {
             model += comment + "\n"
         }
 
-        model += "\(accessControl.rawValue) struct \(typeName)\(isCodable ? ": Codable" : "") {\n"
+        model += "\(accessControl.rawValue) struct \(typeName)\(isCodable ? ": Codable, Sendable" : ": Sendable") {\n"
 
         model += fields.asPropertyList(accessControl: accessControl).indentLines(1)
 

@@ -1,7 +1,7 @@
 let additionalPropertyUtil = """
 import Foundation
 
-<ACCESSCONTROL> enum AdditionalProperty: Codable {
+<ACCESSCONTROL> enum AdditionalProperty: Codable, Sendable {
     case string(String)
     case integer(Int)
     case double(Double)

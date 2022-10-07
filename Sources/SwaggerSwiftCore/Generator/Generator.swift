@@ -46,47 +46,48 @@ public struct Generator {
 
         typealias APISpec = (APIDefinition, [ModelDefinition])
 
-        let apiSpecs: [APISpec] = await withTaskGroup(of: APISpec?.self) { group in
+        let apiSpecs: [APISpec] = try await withThrowingTaskGroup(of: APISpec?.self) { group in
+            var apiSpecs = [APISpec]()
+
             for service in services {
                 group.addTask {
-                    do {
-                        async let swagger = try await downloadSwagger(
-                            githubToken: githubToken,
-                            organisation: swaggerFile.organisation,
-                            serviceName: service.key,
-                            branch: service.value.branch ?? "master",
-                            swaggerPath: service.value.path ?? swaggerFile.path
-                        )
+                    async let swagger = try await downloadSwagger(
+                        githubToken: githubToken,
+                        organisation: swaggerFile.organisation,
+                        serviceName: service.key,
+                        branch: service.value.branch ?? "master",
+                        swaggerPath: service.value.path ?? swaggerFile.path
+                    )
 
-                        let apiSpec = try await APIFactory(apiRequestFactory: apiRequestFactory,
-                                                           modelTypeResolver: modelTypeResolver)
-                            .generate(for: swagger, withSwaggerFile: swaggerFile)
+                    let apiSpec = try await APIFactory(apiRequestFactory: apiRequestFactory,
+                                                       modelTypeResolver: modelTypeResolver)
+                        .generate(for: swagger, withSwaggerFile: swaggerFile)
 
-                        return apiSpec
-                    } catch let error {
-                        if let error = error as? FetchSwaggerError {
-                            error.logError()
-                        } else if let error = error as? APIRequestFactory.APIRequestFactoryError {
-                            switch error {
-                            case .unsupportedMimeType(let httpMethod, let servicePath, let mimeType):
-                                log("[\(service.key) \(httpMethod) \(servicePath)] Swagger is using invalid mime type: \(mimeType)", error: true)
-                            case .missingConsumeType(let httpMethod, let servicePath):
-                                log("[\(service.key) \(httpMethod) \(servicePath)] Swagger is not specifying the mimetype", error: true)
-                            }
-                        } else {
-                            log("[\(service.key)] Failed to download Swagger: \(error.localizedDescription)", error: true)
-                        }
-
-                        return nil
-                    }
+                    return apiSpec
                 }
             }
 
-            var apiSpecs = [APISpec]()
-            for await spec in group {
-                if let spec = spec {
-                    apiSpecs.append(spec)
+            do {
+                for try await spec in group {
+                    if let spec = spec {
+                        apiSpecs.append(spec)
+                    }
                 }
+            } catch {
+                if let error = error as? FetchSwaggerError {
+                    error.logError()
+                } else if let error = error as? APIRequestFactory.APIRequestFactoryError {
+                    switch error {
+                    case .unsupportedMimeType(let serviceName, let httpMethod, let servicePath, let mimeType):
+                        log("[\(serviceName) \(httpMethod) \(servicePath)] Swagger is using invalid mime type: \(mimeType)", error: true)
+                    case .missingConsumeType(let serviceName, let httpMethod, let servicePath):
+                        log("[\(serviceName) \(httpMethod) \(servicePath)] Swagger is not specifying the mimetype", error: true)
+                    }
+                } else {
+                    log("Failed to download Swagger: \(error.localizedDescription)", error: true)
+                }
+
+                throw NSError(domain: "", code: 0)
             }
 
             return apiSpecs

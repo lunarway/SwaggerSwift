@@ -2,7 +2,7 @@ import Foundation
 import SwaggerSwiftML
 
 enum IntegerResolver {
-    static func resolve(format: DataFormat?, defaultValue: Int?) -> TypeType {
+    static func resolve(serviceName: String, format: DataFormat?, defaultValue: Int?) -> TypeType {
         if let format = format {
             switch format {
             case .long:
@@ -33,7 +33,7 @@ enum IntegerResolver {
             case .byte: fallthrough
             case .binary: fallthrough
             case .boolean:
-                log("⚠️: SwaggerSwift does not support '\(format)' for integer type", error: true)
+                log("⚠️: [\(serviceName)] SwaggerSwift does not support '\(format)' for integer type", error: true)
                 return .int(defaultValue: nil)
             case .unsupported(let unsupported):
                 switch unsupported {

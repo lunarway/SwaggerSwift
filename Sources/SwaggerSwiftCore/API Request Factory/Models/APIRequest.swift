@@ -3,7 +3,6 @@ struct APIRequest {
     let description: String?
     let functionName: String
     let parameters: [FunctionParameter]
-    let `throws`: Bool
     let consumes: APIRequestConsumes
     let isInternalOnly: Bool
     let isDeprecated: Bool
