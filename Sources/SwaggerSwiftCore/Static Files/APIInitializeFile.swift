@@ -9,4 +9,5 @@ public protocol APIInitialize {
          interceptor: NetworkInterceptor?
     )
 }
+
 """
