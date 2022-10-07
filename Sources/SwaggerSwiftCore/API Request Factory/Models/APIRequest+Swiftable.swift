@@ -135,6 +135,14 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
         declaration += """
         \(description?.documentationFormat() ?? "/// No description provided")
         /// - Endpoint: \(self.httpMethod.rawValue.uppercased()) \(self.servicePath)
+<<<<<<< Updated upstream
+=======
+        """
+
+        if parameters.count > 0 {
+            documentation += "\n"
+            documentation += """
+>>>>>>> Stashed changes
         /// - Parameters:
         \(parameters.map { "///   - \($0.variableName): \($0.description?.replacingOccurrences(of: "\n", with: ". ").replacingOccurrences(of: "..", with: ".") ?? "No description")" }.joined(separator: "\n"))
 
