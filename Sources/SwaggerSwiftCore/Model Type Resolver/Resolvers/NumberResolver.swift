@@ -2,7 +2,7 @@ import Foundation
 import SwaggerSwiftML
 
 enum NumberResolver {
-    static func resolve(format: DataFormat?, defaultValue: Double?) -> TypeType {
+    static func resolve(format: DataFormat?, defaultValue: Double?, serviceName: String) -> TypeType {
         if let format = format {
             switch format {
             case .long:
@@ -29,7 +29,7 @@ enum NumberResolver {
             case .byte: fallthrough
             case .binary: fallthrough
             case .boolean:
-                log("⚠️: SwaggerSwift does not support '\(format)' for number", error: true)
+                log("⚠️: \(serviceName): SwaggerSwift does not support '\(format)' for number", error: true)
                 return .double(defaultValue: defaultValue)
             case .unsupported(let unsupported):
                 switch unsupported {
@@ -46,12 +46,12 @@ enum NumberResolver {
                         return .int64(defaultValue: nil)
                     }
                 case "float64":
-                    log("⚠️: `format: float64` format does not exist for type number in the Swagger spec. Please change it to specify `format: double` instead.", error: true)
+                    log("⚠️:\(serviceName): `format: float64` format does not exist for type number in the Swagger spec. Please change it to specify `format: double` instead.", error: true)
                     return .double(defaultValue: defaultValue)
                 case "decimal":
                     return .double(defaultValue: defaultValue)
                 default:
-                    log("⚠️: SwaggerSwift does not support '\(unsupported)' for number", error: true)
+                    log("⚠️: \(serviceName): SwaggerSwift does not support '\(unsupported)' for number", error: true)
                     return .double(defaultValue: defaultValue)
                 }
             }

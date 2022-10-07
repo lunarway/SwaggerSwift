@@ -13,8 +13,8 @@ public struct APIRequestFactory {
     }
 
     public enum APIRequestFactoryError: Swift.Error {
-        case unsupportedMimeType(httpMethod: String, servicePath: String, mimeType: String)
-        case missingConsumeType(httpMethod: String, servicePath: String)
+        case unsupportedMimeType(serviceName: String, httpMethod: String, servicePath: String, mimeType: String)
+        case missingConsumeType(serviceName: String, httpMethod: String, servicePath: String)
     }
 
     func generateRequest(for operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, servicePath: String, swagger: Swagger, swaggerFile: SwaggerFile, pathParameters: [Parameter]) throws -> (APIRequest, [ModelDefinition]) {
@@ -88,7 +88,6 @@ public struct APIRequestFactory {
             description: operation.description,
             functionName: functionName,
             parameters: functionParameters,
-            throws: false,
             consumes: try consumeMimeType(forOperation: operation, swagger: swagger, httpMethod: httpMethod.rawValue, servicePath: servicePath),
             isInternalOnly: operation.isInternalOnly,
             isDeprecated: operation.deprecated,
@@ -200,10 +199,10 @@ public struct APIRequestFactory {
                 return consume
             } else {
                 log("[\(swagger.serviceName) \(httpMethod) \(servicePath)] ⚠️ SwaggerSwift does not support consume mime type '\(rawConsume)'")
-                throw APIRequestFactoryError.unsupportedMimeType(httpMethod: httpMethod, servicePath: servicePath, mimeType: rawConsume)
+                throw APIRequestFactoryError.unsupportedMimeType(serviceName: swagger.serviceName, httpMethod: httpMethod, servicePath: servicePath, mimeType: rawConsume)
             }
         } else {
-            throw APIRequestFactoryError.missingConsumeType(httpMethod: httpMethod, servicePath: servicePath)
+            throw APIRequestFactoryError.missingConsumeType(serviceName: swagger.serviceName, httpMethod: httpMethod, servicePath: servicePath)
         }
     }
 

@@ -2,7 +2,7 @@ import Foundation
 import SwaggerSwiftML
 
 enum StringResolver {
-    static func resolve(format: DataFormat?, enumValues: [String]?, typeNamePrefix: String, defaultValue: String?) -> TypeType {
+    static func resolve(format: DataFormat?, enumValues: [String]?, typeNamePrefix: String, defaultValue: String?, serviceName: String) -> TypeType {
         if enumValues != nil {
             let enumTypename = typeNamePrefix.modelNamed
             return .enumeration(typeName: enumTypename)
@@ -41,7 +41,7 @@ enum StringResolver {
                 case "uri":
                     return .object(typeName: "URL")
                 default:
-                    log("⚠️: SwaggerSwift does not support '\(unsupported)' for strings", error: true)
+                    log("⚠️: \(serviceName): SwaggerSwift does not support '\(unsupported)' for strings", error: true)
                     return .typeAlias(typeName: typeNamePrefix, type: .string(defaultValue: defaultValue))
                 }
             }

@@ -29,7 +29,8 @@ public struct ModelTypeResolver {
             let type = StringResolver.resolve(format: format,
                                               enumValues: enumValues,
                                               typeNamePrefix: typeNamePrefix,
-                                              defaultValue: defaultValue)
+                                              defaultValue: defaultValue,
+                                              serviceName: swagger.serviceName)
 
             if case .enumeration(let enumTypeName) = type {
                 let model = ModelDefinition.enumeration(Enumeration(serviceName: swagger.serviceName,
@@ -42,11 +43,13 @@ public struct ModelTypeResolver {
 
             return .init(type)
         case .integer(let format, _, _, _, _, _, let defaultValue):
-            let type = IntegerResolver.resolve(format: format, defaultValue: defaultValue)
+            let type = IntegerResolver.resolve(serviceName: swagger.serviceName, format: format, defaultValue: defaultValue)
             return .init(type)
 
         case .number(let format, _, _, _, _, _, let defaultValue):
-            let type = NumberResolver.resolve(format: format, defaultValue: defaultValue)
+            let type = NumberResolver.resolve(format: format,
+                                              defaultValue: defaultValue,
+                                              serviceName: swagger.serviceName)
             return .init(type)
         case .boolean(let defaultValue):
             let type = BooleanResolver.resolve(with: defaultValue)
@@ -120,7 +123,11 @@ public struct ModelTypeResolver {
         case .node(let node):
             switch node.type {
             case .string(let format, let enumValues, _, _, _):
-                let type = StringResolver.resolve(format: format, enumValues: enumValues, typeNamePrefix: typeNamePrefix, defaultValue: nil)
+                let type = StringResolver.resolve(format: format,
+                                                  enumValues: enumValues,
+                                                  typeNamePrefix: typeNamePrefix,
+                                                  defaultValue: nil,
+                                                  serviceName: swagger.serviceName)
 
                 if case .enumeration(let enumTypeName) = type {
                     let model = ModelDefinition.enumeration(Enumeration(serviceName: swagger.serviceName,

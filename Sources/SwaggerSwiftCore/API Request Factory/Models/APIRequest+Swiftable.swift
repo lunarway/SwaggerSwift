@@ -132,15 +132,19 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
             declaration += "#if DEBUG\n"
         }
 
-        declaration += """
+        var documentation = """
         \(description?.documentationFormat() ?? "/// No description provided")
         /// - Endpoint: \(self.httpMethod.rawValue.uppercased()) \(self.servicePath)
-        /// - Parameters:
-        \(parameters.map { "///   - \($0.variableName): \($0.description?.replacingOccurrences(of: "\n", with: ". ").replacingOccurrences(of: "..", with: ".") ?? "No description")" }.joined(separator: "\n"))
-
         """
 
-        declaration += "\(accessControl) func \(functionName)(\(arguments))\(`throws` ? " throws" : "") async -> \(returnStatement) {"
+        if parameters.count > 0 {
+            documentation += """
+        /// - Parameters:
+        \(parameters.map { "///   - \($0.variableName): \($0.description?.replacingOccurrences(of: "\n", with: ". ").replacingOccurrences(of: "..", with: ".") ?? "No description")" }.joined(separator: "\n"))
+        """
+        }
+
+        declaration += "private func _\(functionName)(\(arguments)) async -> \(returnStatement) {"
 
         let responseTypes = self.responseTypes
             .map { $0.print(apiName: serviceName ?? "") }
@@ -194,17 +198,40 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
 }
 
 """
-        body +=
-        """
-        \(isDeprecated ? "@available(*, deprecated)" : "")
-        \(accessControl) func \(functionName)(\(arguments)\(arguments.isEmpty ? "" : ", ")completion: @escaping (\(returnStatement)) -> Void = { _ in })\(`throws` ? " throws" : "") {
-          _Concurrency.Task {
-                let result = await \(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ", ")))
+        if isDeprecated {
+            body += "@available(*, deprecated)\n"
+        }
+
+        body += documentation
+
+        body += "\n"
+
+        body += """
+        \(accessControl) func \(functionName)(\(arguments)\(arguments.isEmpty ? "" : ", ")completion: @escaping (\(returnStatement)) -> Void = { _ in }) {
+            _Concurrency.Task {
+                let result = await _\(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ", ")))
                 completion(result)
-           }
+            }
         }
 
         """
+
+        if isDeprecated {
+            body += "@available(*, deprecated)\n"
+        }
+
+        body += documentation
+
+        body += "\n"
+
+        body +=
+        """
+        \(accessControl) func \(functionName)(\(arguments)) async -> \(returnStatement) {
+            await _\(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ", ")))
+        }
+
+        """
+
         if isInternalOnly {
             body += "#endif\n"
         }
