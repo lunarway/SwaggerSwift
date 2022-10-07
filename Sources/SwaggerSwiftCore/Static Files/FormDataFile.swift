@@ -1,7 +1,7 @@
 let formData = """
 import Foundation
 
-<ACCESSCONTROL> struct FormData {
+<ACCESSCONTROL> struct FormData: Sendable {
     private let crlf = "\\r\\n"
 
     /// the data representation of the object
