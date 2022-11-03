@@ -150,7 +150,6 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
         let responseTypes = self.responseTypes
             .map { $0.print(apiName: serviceName ?? "") }
             .joined(separator: "\n")
-            .replacingOccurrences(of: "\n", with: "\n            ")
 
         let requestPart = (globalHeaders.joined(separator: "\n").addNewlinesIfNonEmpty(2)
                            + headerStatements.joined(separator: "\n").addNewlinesIfNonEmpty(2)
@@ -171,30 +170,34 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
     request.httpMethod = "\(httpMethod.rawValue.uppercased())"
 \(requestPart)
     request = interceptor?.networkWillPerformRequest(request) ?? request
-    do {
-       let (data, response) = try await urlSession().\(urlSessionMethodName)
-            if let interceptor {
-               do {
-                 try await interceptor.networkDidPerformRequest(urlRequest: request, urlResponse: response, data: data, error: nil)
-               } catch {
-                  return .failure(.requestFailed(error: error))
-                }
-            }
-            
-            guard let httpResponse = response as? HTTPURLResponse else {
-                let error = NSError(domain: "\(serviceName ?? "Generic")", code: 0, userInfo: [NSLocalizedDescriptionKey: "Returned response object wasnt a HTTP URL Response as expected, but was instead a \\(String(describing: response))"])
-                return .failure(.requestFailed(error: error))
-            }
 
-            switch httpResponse.statusCode {
-            \(responseTypes)
-            default:
-              let result = String(data: data, encoding: .utf8) ?? ""
-              let error = NSError(domain: "\(serviceName ?? "Generic")", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: result])
-              return .failure(.requestFailed(error: error))
-            }
+    let data: Data
+    let response: URLResponse
+    do {
+        (data, response) = try await urlSession().\(urlSessionMethodName)
     } catch {
-       return .failure(.requestFailed(error: error))
+        return .failure(.requestFailed(error: error))
+    }
+
+    if let interceptor {
+        do {
+            try await interceptor.networkDidPerformRequest(urlRequest: request, urlResponse: response, data: data, error: nil)
+        } catch {
+            return .failure(.requestFailed(error: error))
+        }
+    }
+
+    guard let httpResponse = response as? HTTPURLResponse else {
+        let error = NSError(domain: "\(serviceName ?? "Generic")", code: 0, userInfo: [NSLocalizedDescriptionKey: "Returned response object wasnt a HTTP URL Response as expected, but was instead a \\(String(describing: response))"])
+        return .failure(.requestFailed(error: error))
+    }
+
+    switch httpResponse.statusCode {
+\(responseTypes.indentLines(1))
+    default:
+        let result = String(data: data, encoding: .utf8) ?? ""
+        let error = NSError(domain: "\(serviceName ?? "Generic")", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: result])
+        return .failure(.requestFailed(error: error))
     }
 }
 
