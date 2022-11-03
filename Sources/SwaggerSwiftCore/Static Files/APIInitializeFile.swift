@@ -5,8 +5,8 @@ import Foundation
 public protocol APIInitialize {
     init(urlSession: @escaping () -> URLSession,
          baseUrlProvider: @escaping () -> URL,
-         headerProvider: @escaping () -> GlobalHeaders,
-         interceptor: NetworkInterceptor?
+         headerProvider: @escaping () -> any GlobalHeaders,
+         interceptor: (any NetworkInterceptor)?
     )
 }
 

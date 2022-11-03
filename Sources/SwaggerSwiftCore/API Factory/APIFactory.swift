@@ -206,7 +206,7 @@ struct APIFactory {
         if hasGlobalHeaders {
             fields.append(APIDefinitionField(name: "headerProvider",
                                              description: "a block provider for the set of globally defined headers",
-                                             typeName: "() -> GlobalHeaders",
+                                             typeName: "() -> any GlobalHeaders",
                                              isRequired: true,
                                              typeIsAutoclosure: false,
                                              typeIsBlock: true,
@@ -215,7 +215,7 @@ struct APIFactory {
 
         fields.append(APIDefinitionField(name: "interceptor",
                                          description: "use this if you need to intercept overall requests",
-                                         typeName: "NetworkInterceptor",
+                                         typeName: "(any NetworkInterceptor)",
                                          isRequired: false,
                                          typeIsAutoclosure: false,
                                          typeIsBlock: false,
