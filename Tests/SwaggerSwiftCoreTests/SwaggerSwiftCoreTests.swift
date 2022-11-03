@@ -14,7 +14,7 @@ final class SwaggerSwiftTests: XCTestCase {
         let result = model.modelDefinition(serviceName: nil, accessControl: .public)
 
         XCTAssertEqual(result, """
-public struct Test: Codable {
+public struct Test: Codable, Sendable {
     public let url: URL?
 
     public init(url: URL? = nil) {
@@ -46,7 +46,7 @@ public struct Test: Codable {
         let result = model.modelDefinition(serviceName: nil, accessControl: .public)
 
         XCTAssertEqual(result, """
-public struct Test: Codable {
+public struct Test: Codable, Sendable {
     public let url: URL
 
     public init(url: URL) {
