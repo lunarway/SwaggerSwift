@@ -134,6 +134,7 @@ public struct Generator {
                 commonLibraryName: commonLibraryName,
                 swaggerFile: swaggerFile,
                 accessControl: .public, // this needs to be public for the other files to see it
+                globalHeadersModel: globalHeadersModel,
                 fileManager: fileManager
             )
         } else {
@@ -162,6 +163,7 @@ public struct Generator {
                 commonLibraryName: commonLibraryName,
                 swaggerFile: swaggerFile,
                 accessControl: accessControl,
+                globalHeadersModel: globalHeadersModel,
                 fileManager: fileManager
             )
         }
@@ -182,7 +184,7 @@ public struct Generator {
         }
     }
 
-    private func downloadSwagger(githubToken: String, organisation: String, serviceName: String, branch: String, swaggerPath: String, urlSession: URLSession = .shared) async throws -> Swagger {
+    private func download(githubToken: String, organisation: String, serviceName: String, branch: String, swaggerPath: String, urlSession: URLSession) async throws -> Data {
         let url = URL(string: "https://raw.githubusercontent.com/\(organisation)/\(serviceName)/\(branch)/\(swaggerPath)")!
         var request = URLRequest(url: url)
         request.addValue("token \(githubToken)", forHTTPHeaderField: "Authorization")
@@ -191,8 +193,26 @@ public struct Generator {
         log("Downloading Swagger at: \(url.absoluteString)")
         let (data, response) = try await fetchSwagger(request)
         if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
-            throw FetchSwaggerError.requestFailed(serviceName: serviceName, branch: branch, statusCode: httpResponse.statusCode)
+            if branch != "master" || branch != "main" {
+                log(" ⚠️ \(serviceName): Failed to download with custom branch ´\(branch)´ - Trying master instead.", error: true)
+                return try await download(githubToken: githubToken, organisation: organisation, serviceName: serviceName, branch: "master", swaggerPath: swaggerPath, urlSession: urlSession)
+            } else {
+                throw FetchSwaggerError.requestFailed(serviceName: serviceName,
+                                                      branch: branch,
+                                                      statusCode: httpResponse.statusCode)
+            }
         }
+
+        return data
+    }
+
+    private func downloadSwagger(githubToken: String, organisation: String, serviceName: String, branch: String, swaggerPath: String, urlSession: URLSession = .shared) async throws -> Swagger {
+        let data = try await download(githubToken: githubToken,
+                                      organisation: organisation,
+                                      serviceName: serviceName,
+                                      branch: branch,
+                                      swaggerPath: swaggerPath,
+                                      urlSession: urlSession)
 
         guard let stringValue = String(data: data, encoding: .utf8) else {
             throw FetchSwaggerError.invalidResponse(serviceName: serviceName)
@@ -229,9 +249,11 @@ public struct Generator {
             packagesToImport: commonLibraryName != nil ? [commonLibraryName!] : []
         )
 
-        let globalHeadersDefinitions = globalHeadersModel.writeExtensions(inCommonPackageNamed: commonLibraryName)
-        let globalHeaderExtensionsPath = "\(apiDirectory)/GlobalHeaderExtensions.swift"
-        try globalHeadersDefinitions.write(toFile: globalHeaderExtensionsPath)
+        if swaggerFile.createSwiftPackage {
+            let globalHeadersDefinitions = globalHeadersModel.writeExtensions(inCommonPackageNamed: commonLibraryName)
+            let globalHeaderExtensionsPath = "\(apiDirectory)/GlobalHeaderExtensions.swift"
+            try globalHeadersDefinitions.write(toFile: globalHeaderExtensionsPath)
+        }
 
         let apiDefinitionFilename = "\(apiDirectory)/\(apiDefinition.serviceName).swift"
         try apiDefinitionFile.write(toFile: apiDefinitionFilename)
@@ -253,7 +275,7 @@ public struct Generator {
         }
     }
 
-    private func createCommonLibrary(path: String, commonLibraryName: String, swaggerFile: SwaggerFile, accessControl: APIAccessControl, fileManager: FileManager) throws {
+    private func createCommonLibrary(path: String, commonLibraryName: String, swaggerFile: SwaggerFile, accessControl: APIAccessControl, globalHeadersModel: GlobalHeadersModel, fileManager: FileManager) throws {
         let targetPath = path + "/" + commonLibraryName
 
         try fileManager.createDirectory(atPath: targetPath,
@@ -271,6 +293,12 @@ public struct Generator {
         try dateDecodingStrategy.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(toFile: "\(targetPath)/DateDecodingStrategy.swift")
         try apiInitializeFile.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(toFile: "\(targetPath)/APIInitialize.swift")
         try apiInitializerFile.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(toFile: "\(targetPath)/APIInitializer.swift")
+
+        if swaggerFile.createSwiftPackage == false {
+            let globalHeadersDefinitions = globalHeadersModel.writeExtensions(inCommonPackageNamed: nil)
+            let globalHeaderExtensionsPath = "\(targetPath)/GlobalHeaderExtensions.swift"
+            try globalHeadersDefinitions.write(toFile: globalHeaderExtensionsPath)
+        }
 
         if let globalHeaderFields = swaggerFile.globalHeaders {
             let globalHeadersModel = GlobalHeadersModel(headerFields: globalHeaderFields)
