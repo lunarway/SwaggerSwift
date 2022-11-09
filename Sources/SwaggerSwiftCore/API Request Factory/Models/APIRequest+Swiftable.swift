@@ -236,6 +236,7 @@ private func _\(functionName)(\(functionArguments)) async -> \(functionReturnTyp
 
         body +=
         """
+        @discardableResult
         \(accessControl) func \(functionName)(\(functionArguments)) async -> \(functionReturnType) {
             await _\(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ", ")))
         }
