@@ -2,24 +2,30 @@ import Foundation
 import SwaggerSwiftML
 
 extension APIRequest {
-    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool, accessControl: String, packagesToImport: [String]) -> String {
-        let arguments = parameters.map {
+    /// The arguments of the function, e.g. "myValue: String, myOtherValue: Int"
+    private var functionArguments: String {
+        parameters.map {
             "\($0.name.variableNameFormatted): \($0.typeName.toString(required: $0.required))\($0.required ? "" : " = nil")"
         }.joined(separator: ", ")
+    }
 
-        let servicePath = self.servicePath.split(separator: "/").map {
-            let path = String($0)
-                .replacingOccurrences(of: "{", with: "")
-                .replacingOccurrences(of: "}", with: "")
+    private var functionReturnType: String {
+        returnType.typeName.toString(required: true)
+    }
 
-            if $0.contains("{") {
-                return "\\(\(path.variableNameFormatted))"
-            } else {
-                return path
-            }
-        }.joined(separator: "/")
+    private func makeRequestFunction(serviceName: String?, swaggerFile: SwaggerFile) -> String {
+        let servicePath = self.servicePath.split(separator: "/")
+            .map {
+                let path = String($0)
+                    .replacingOccurrences(of: "{", with: "")
+                    .replacingOccurrences(of: "}", with: "")
 
-        let queryStatement: String = queries.toQueryItems()
+                if $0.contains("{") {
+                    return "\\(\(path.variableNameFormatted))"
+                } else {
+                    return path
+                }
+            }.joined(separator: "/")
 
         var globalHeaders = [String]()
         if let globalHeaderFields = swaggerFile.globalHeaders, globalHeaderFields.count > 0 {
@@ -111,7 +117,6 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
                 """
         }
 
-        let returnStatement: String = returnType.typeName.toString(required: true)
         let urlSessionMethodName: String
         switch consumes {
         case .json:
@@ -123,34 +128,6 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
             urlSessionMethodName = "upload(for: request, from: requestData as Data)"
         }
 
-        var declaration = ""
-        if isDeprecated {
-            declaration += "@available(*, deprecated)\n"
-        }
-
-        if isInternalOnly {
-            declaration += "#if DEBUG\n"
-        }
-
-        var documentation = """
-        \(description?.documentationFormat() ?? "/// No description provided")
-        /// - Endpoint: \(self.httpMethod.rawValue.uppercased()) \(self.servicePath)
-        """
-
-        if parameters.count > 0 {
-            documentation += "\n"
-            documentation += """
-        /// - Parameters:
-        \(parameters.map { "///   - \($0.variableName): \($0.description?.replacingOccurrences(of: "\n", with: ". ").replacingOccurrences(of: "..", with: ".") ?? "No description")" }.joined(separator: "\n"))
-        """
-        }
-
-        declaration += "private func _\(functionName)(\(arguments)) async -> \(returnStatement) {"
-
-        let responseTypes = self.responseTypes
-            .map { $0.print(apiName: serviceName ?? "") }
-            .joined(separator: "\n")
-
         let requestPart = (globalHeaders.joined(separator: "\n").addNewlinesIfNonEmpty(2)
                            + headerStatements.joined(separator: "\n").addNewlinesIfNonEmpty(2)
                            + bodyInjection.addNewlinesIfNonEmpty(2))
@@ -158,13 +135,16 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
             .indentLines(1)
             .addNewlinesIfNonEmpty()
 
-        var body =
-            """
-\(declaration)
+        let responseTypes = self.responseTypes
+            .map { $0.print(apiName: serviceName ?? "") }
+            .joined(separator: "\n")
+
+        return """
+private func _\(functionName)(\(functionArguments)) async -> \(functionReturnType) {
     let endpointUrl = baseUrlProvider().appendingPathComponent("\(servicePath)")
 
-    \(queryStatement.count > 0 ? "var" : "let") urlComponents = URLComponents(url: endpointUrl, resolvingAgainstBaseURL: true)!
-\(queryStatement.indentLines(1))
+    \(queries.count > 0 ? "var" : "let") urlComponents = URLComponents(url: endpointUrl, resolvingAgainstBaseURL: true)!
+\(queries.toQueryItems().indentLines(1))
     let requestUrl = urlComponents.url!
     var request = URLRequest(url: requestUrl)
     request.httpMethod = "\(httpMethod.rawValue.uppercased())"
@@ -202,7 +182,32 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
 }
 
 """
+    }
+
+    func toSwift(serviceName: String?, swaggerFile: SwaggerFile, embedded: Bool, accessControl: String, packagesToImport: [String]) -> String {
+        var documentation = """
+        \(description?.documentationFormat() ?? "/// No description provided")
+        /// - Endpoint: `\(self.httpMethod.rawValue.uppercased()) \(self.servicePath)`
+        """
+
+        if parameters.count > 0 {
+            documentation += "\n"
+            documentation += """
+        /// - Parameters:
+        \(parameters.map { "///   - \($0.variableName): \($0.description?.replacingOccurrences(of: "\n", with: ". ").replacingOccurrences(of: "..", with: ".") ?? "No description")" }.joined(separator: "\n"))
+        """
+        }
+
+        var body: String = ""
+
+        if isInternalOnly {
+            body += "#if DEBUG\n"
+        }
+
+        body += makeRequestFunction(serviceName: serviceName, swaggerFile: swaggerFile)
+
         if isDeprecated {
+            body += "\n"
             body += "@available(*, deprecated)\n"
         }
 
@@ -211,7 +216,7 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
         body += "\n"
 
         body += """
-        \(accessControl) func \(functionName)(\(arguments)\(arguments.isEmpty ? "" : ", ")completion: @escaping (\(returnStatement)) -> Void = { _ in }) {
+        \(accessControl) func \(functionName)(\(functionArguments)\(functionArguments.isEmpty ? "" : ", ")completion: @escaping (\(functionReturnType)) -> Void = { _ in }) {
             _Concurrency.Task {
                 let result = await _\(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ", ")))
                 completion(result)
@@ -221,6 +226,7 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
         """
 
         if isDeprecated {
+            body += "\n"
             body += "@available(*, deprecated)\n"
         }
 
@@ -230,7 +236,8 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
 
         body +=
         """
-        \(accessControl) func \(functionName)(\(arguments)) async -> \(returnStatement) {
+        @discardableResult
+        \(accessControl) func \(functionName)(\(functionArguments)) async -> \(functionReturnType) {
             await _\(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ", ")))
         }
 
