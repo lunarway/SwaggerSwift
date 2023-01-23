@@ -44,7 +44,7 @@ struct APIDefinition {
             .trimmingCharacters(in: CharacterSet.newlines)
 
         serviceDefinition += """
-\(accessControl) struct \(serviceName): APIInitialize {
+\(accessControl) struct \(serviceName): @unchecked Sendable, APIInitialize {
 \(properties)
 
 \(initMethod)
