@@ -172,6 +172,9 @@ private func _\(functionName)(\(functionArguments)) async -> \(functionReturnTyp
         return .failure(.requestFailed(error: error))
     }
 
+    let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .custom(dateDecodingStrategy)
+
     switch httpResponse.statusCode {
 \(responseTypes.indentLines(1))
     default:

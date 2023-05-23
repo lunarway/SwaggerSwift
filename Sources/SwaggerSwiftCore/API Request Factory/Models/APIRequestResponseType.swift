@@ -70,8 +70,6 @@ case \(statusCode.rawValue):
                 return """
 case \(statusCode.rawValue):
     do {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .custom(dateDecodingStrategy)
         let result = try decoder.decode(\(responseType.modelNamed).self, from: data)
 
         return .\(swiftResult)(\(resultType("result", resultIsEnum)))
@@ -180,8 +178,6 @@ case \(statusCode.rawValue):
             return """
 case \(statusCode.rawValue):
     do {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .custom(dateDecodingStrategy)
         let result = try decoder.decode([\(innerType)].self, from: data)
 
         return .\(swiftResult)(\(resultType("result", resultIsEnum)))
