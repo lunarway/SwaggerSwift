@@ -59,7 +59,13 @@ func parse(request requestNode: Node<SwaggerSwiftML.Response>, httpMethod: HTTPM
                 return nil
             }
 
-            return (schema.type(named: modelReference.typeName), [])
+            let resolvedType = schema.type(named: modelReference.typeName)
+
+            if case .array = resolvedType {
+                return (TypeType.object(typeName: modelReference.typeName), [])
+            } else {
+                return (resolvedType, [])
+            }
         }
     } else {
         return (.void, [])
