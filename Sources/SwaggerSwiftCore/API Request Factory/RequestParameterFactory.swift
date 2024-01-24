@@ -186,7 +186,7 @@ public struct RequestParameterFactory {
             fields: allHeaderFields,
             inheritsFrom: [],
             isInternalOnly: isInternalOnly,
-            embeddedDefinitions: [],d s
+            embeddedDefinitions: [],
             isCodable: false
         )
 
