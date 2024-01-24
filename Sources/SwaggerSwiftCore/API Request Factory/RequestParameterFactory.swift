@@ -184,7 +184,9 @@ public struct RequestParameterFactory {
             description: "A collection of the header fields required for the request",
             typeName: "\(typePrefix)Headers",
             fields: allHeaderFields,
+            inheritsFrom: [],
             isInternalOnly: isInternalOnly,
+            embeddedDefinitions: [],
             isCodable: false
         )
 
