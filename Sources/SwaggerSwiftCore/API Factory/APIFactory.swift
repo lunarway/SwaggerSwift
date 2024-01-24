@@ -201,7 +201,7 @@ struct APIFactory {
                                defaultValue: nil)
         ]
 
-        let hasGlobalHeaders = (swaggerFile.globalHeaders ?? []).count > 0
+        let hasGlobalHeaders = swaggerFile.globalHeaders.count > 0
 
         if hasGlobalHeaders {
             fields.append(APIDefinitionField(name: "headerProvider",

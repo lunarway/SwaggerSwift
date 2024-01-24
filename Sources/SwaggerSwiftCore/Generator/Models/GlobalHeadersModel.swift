@@ -54,7 +54,7 @@ struct GlobalHeadersModel {
         return model
     }
 
-    func addToRequestFunction() -> String {
+    private func addToRequestFunction() -> String {
         let fields = headerFields.map {
             APIRequestHeaderField(
                 headerName: $0,
@@ -83,7 +83,7 @@ if let \($0.swiftyName) = \($0.swiftyName) {
         return function
     }
 
-    func asDictionaryFunction() -> String {
+    private func asDictionaryFunction() -> String {
         let fields = headerFields.map {
             APIRequestHeaderField(
                 headerName: $0,

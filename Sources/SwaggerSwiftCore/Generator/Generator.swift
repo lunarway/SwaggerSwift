@@ -97,7 +97,7 @@ public struct Generator {
 
         log("Creating Swift Project at \(destination)")
 
-        let globalHeadersModel = GlobalHeadersModel(headerFields: swaggerFile.globalHeaders ?? [])
+        let globalHeadersModel = GlobalHeadersModel(headerFields: swaggerFile.globalHeaders)
         let commonLibraryName = "\(swaggerFile.projectName)Shared"
 
         if swaggerFile.createSwiftPackage {
@@ -226,7 +226,17 @@ public struct Generator {
         }
     }
 
-    private func write(apiDefinition: APIDefinition, modelDefinitions: [ModelDefinition], swaggerFile: SwaggerFile, rootDirectory: String, commonLibraryName: String?, accessControl: APIAccessControl, globalHeadersModel: GlobalHeadersModel, fileManager: FileManager, dummyMode: Bool) throws {
+    private func write(
+        apiDefinition: APIDefinition,
+        modelDefinitions: [ModelDefinition],
+        swaggerFile: SwaggerFile,
+        rootDirectory: String,
+        commonLibraryName: String?,
+        accessControl: APIAccessControl,
+        globalHeadersModel: GlobalHeadersModel,
+        fileManager: FileManager,
+        dummyMode: Bool
+    ) throws {
         log("Parsing contents of Swagger: \(apiDefinition.serviceName)")
 
         let apiDirectory = rootDirectory + "/" + apiDefinition.serviceName
@@ -300,8 +310,8 @@ public struct Generator {
             try globalHeadersDefinitions.write(toFile: globalHeaderExtensionsPath)
         }
 
-        if let globalHeaderFields = swaggerFile.globalHeaders {
-            let globalHeadersModel = GlobalHeadersModel(headerFields: globalHeaderFields)
+        if swaggerFile.globalHeaders.count > 0 {
+            let globalHeadersModel = GlobalHeadersModel(headerFields: swaggerFile.globalHeaders)
             let globalHeadersFileContents = globalHeadersModel.toSwift(swaggerFile: swaggerFile, accessControl: accessControl)
             try globalHeadersFileContents.write(toFile: "\(targetPath)/GlobalHeaders.swift")
         }

@@ -18,9 +18,11 @@ public struct APIRequestFactory {
     }
 
     func generateRequest(for operation: SwaggerSwiftML.Operation, httpMethod: HTTPMethod, servicePath: String, swagger: Swagger, swaggerFile: SwaggerFile, pathParameters: [Parameter]) throws -> (APIRequest, [ModelDefinition]) {
-        let functionName = resolveFunctionName(httpMethod: httpMethod.rawValue,
-                                               servicePath: servicePath,
-                                               operationId: operation.operationId)
+        let functionName = resolveFunctionName(
+            httpMethod: httpMethod.rawValue,
+            servicePath: servicePath,
+            operationId: operation.operationId
+        )
 
         var inlineResponseModels = [ModelDefinition]()
 
@@ -66,21 +68,36 @@ public struct APIRequestFactory {
             swagger.findParameter(node: $0)
         } + pathParameters
 
-        let headers = allParameters.compactMap { param -> APIRequestHeaderField? in
-            if case ParameterLocation.header = param.location {
-                return APIRequestHeaderField(headerName: param.name,
-                                             isRequired: param.required)
-            } else {
-                return nil
+        let requestSpecificHeaders = allParameters
+            .compactMap { param -> APIRequestHeaderField? in
+                if case ParameterLocation.header = param.location {
+
+                    let isRequired: Bool
+                    if swaggerFile.globalHeaders.contains(param.name) {
+                        isRequired = false // the header will be provided by global headers
+                    } else {
+                        isRequired = param.required
+                    }
+
+                    return APIRequestHeaderField(
+                        headerName: param.name,
+                        isRequired: isRequired
+                    )
+                } else {
+                    return nil
+                }
             }
-        }
+
+        let headers = requestSpecificHeaders
 
         let queryItems = resolveQueries(parameters: allParameters, swagger: swagger)
 
-        let apiResponseTypes = apiResponseTypeFactory.make(forResponses: responses,
-                                                           forHTTPMethod: httpMethod,
-                                                           at: servicePath,
-                                                           swagger: swagger)
+        let apiResponseTypes = apiResponseTypeFactory.make(
+            forResponses: responses,
+            forHTTPMethod: httpMethod,
+            at: servicePath,
+            swagger: swagger
+        )
 
         inlineResponseModels.append(contentsOf: inlineModels)
 
@@ -88,13 +105,18 @@ public struct APIRequestFactory {
             description: operation.description,
             functionName: functionName,
             parameters: functionParameters,
-            consumes: try consumeMimeType(forOperation: operation, swagger: swagger, httpMethod: httpMethod.rawValue, servicePath: servicePath),
+            consumes: try consumeMimeType(
+                forOperation: operation,
+                swagger: swagger,
+                httpMethod: httpMethod.rawValue,
+                servicePath: servicePath
+            ),
             isInternalOnly: operation.isInternalOnly,
             isDeprecated: operation.deprecated,
             httpMethod: httpMethod,
             servicePath: servicePath,
             queries: queryItems,
-            headers: headers,
+            headers: headers.unique(on: \.swiftyName),
             responseTypes: apiResponseTypes,
             returnType: returnType
         )
