@@ -30,11 +30,13 @@ public struct RequestParameterFactory {
             .map { $0.capitalizingFirstLetter() }
             .joined()
 
-        if let (headerParameter, headerModels) = try resolveInputHeadersToApi(parameters: parameters,
-                                                                              typePrefix: typeName,
-                                                                              isInternalOnly: operation.isInternalOnly,
-                                                                              swagger: swagger,
-                                                                              swaggerFile: swaggerFile) {
+        if let (headerParameter, headerModels) = try resolveInputHeadersToApi(
+            parameters: parameters,
+            typePrefix: typeName,
+            isInternalOnly: operation.isInternalOnly,
+            swagger: swagger,
+            swaggerFile: swaggerFile
+        ) {
             resolvedParameters.append(headerParameter)
             resolvedModelDefinitions.append(contentsOf: headerModels)
         }
@@ -113,60 +115,91 @@ public struct RequestParameterFactory {
     }
 
     private func resolveInputHeadersToApi(parameters: [SwaggerSwiftML.Parameter], typePrefix: String, isInternalOnly: Bool, swagger: Swagger, swaggerFile: SwaggerFile) throws -> (FunctionParameter, [ModelDefinition])? {
-        let headerParameters = parameters.parameters(of: .header)
+        let requestSpecificParameters = parameters.compactMap {
+            if case let .header(type) = $0.location {
+                return HeaderParameter(
+                    type: type,
+                    name: $0.name,
+                    required: $0.required,
+                    description: $0.description
+                )
+            } else {
+                return nil
+            }
+        }.unique(on: { $0.name }) // this is necessary in the case where copies of the same header are sent in at the same request
 
-        let globalHeaderFieldNames = (swaggerFile.globalHeaders ?? []).map(convertApiHeader)
+        let globalHeaderParams = swaggerFile.globalHeaders
+            .filter { header in requestSpecificParameters.contains(where: { $0.name.lowercased() == header.lowercased() }) == false }
+            .map {
+                HeaderParameter(
+                    type: .string(
+                        format: nil,
+                        enumValues: nil,
+                        maxLength: nil,
+                        minLength: nil,
+                        pattern: nil
+                    ),
+                    name: $0,
+                    required: true,
+                    description: nil
+                )
+            }
 
         var modelDefinitions = [ModelDefinition]()
-
-        let headerFields: [ModelField] = try headerParameters.compactMap { param, type, _ in
-            let (type, inlineModelDefinitions) = try type.toType(
+        let requestSpecificHeaderFields: [ModelField] = try requestSpecificParameters.map { headerParam in
+            let (type, inlineModelDefinitions) = try headerParam.type.toType(
                 typePrefix: typePrefix,
-                description: param.description,
+                description: headerParam.description,
                 swagger: swagger
             )
 
-            let name = convertApiHeader(param.name)
-
-            // we should not add fields for the global headers
-            if globalHeaderFieldNames.contains(name) {
-                return nil
-            }
-
             modelDefinitions.append(contentsOf: inlineModelDefinitions)
 
-            return ModelField(description: nil,
-                              type: type,
-                              name: name,
-                              isRequired: param.required)
-        }.sorted(by: { $0.argumentLabel < $1.argumentLabel })
-
-        if headerFields.count > 0 {
-            let typeName = "\(typePrefix)Headers"
-
-            let model = Model(description: "A collection of the header fields required for the request",
-                              typeName: typeName,
-                              fields: headerFields,
-                              inheritsFrom: [],
-                              isInternalOnly: isInternalOnly,
-                              embeddedDefinitions: [],
-                              isCodable: false)
-
-            if model.fields.count > 0 {
-                let headerModelDefinition = ModelDefinition.object(model)
-                modelDefinitions.append(headerModelDefinition)
-                let functionParameter = FunctionParameter(description: nil,
-                                                          name: "headers",
-                                                          typeName: .object(typeName: typeName),
-                                                          required: true,
-                                                          in: .headers,
-                                                          isEnum: false)
-
-                return (functionParameter, modelDefinitions)
+            let isRequired: Bool
+            if swaggerFile.globalHeaders.contains(where: { $0.lowercased() == headerParam.name.lowercased() }) {
+                isRequired = false // this is overriden by the global headers so it will be set by that, and is therefor not required here
+            } else {
+                isRequired = headerParam.required
             }
+
+            return ModelField(
+                description: nil,
+                type: type,
+                name: convertApiHeader(headerParam.name),
+                isRequired: isRequired
+            )
         }
 
-        return nil
+        let globalHeaderFields = globalHeaderParams
+            .map {
+                ModelField(description: nil, type: .string(defaultValue: nil), name: convertApiHeader($0.name), isRequired: false)
+            }
+
+        let allHeaderFields = (requestSpecificHeaderFields + globalHeaderFields)
+            .sorted(by: { $0.argumentLabel < $1.argumentLabel })
+
+        guard allHeaderFields.count > 0 else { return nil }
+
+        let model = Model(
+            description: "A collection of the header fields required for the request",
+            typeName: "\(typePrefix)Headers",
+            fields: allHeaderFields,
+            isInternalOnly: isInternalOnly,
+            isCodable: false
+        )
+
+        modelDefinitions.append(ModelDefinition.object(model))
+
+        let functionParameter = FunctionParameter(
+            description: nil,
+            name: "headers",
+            typeName: .object(typeName: model.typeName),
+            required: requestSpecificHeaderFields.count > 0 && requestSpecificHeaderFields.contains(where: { $0.isRequired }),
+            in: .headers,
+            isEnum: false
+        )
+
+        return (functionParameter, modelDefinitions)
     }
 
     private func resolvePathParameters(parameters: [SwaggerSwiftML.Parameter], typePrefix: String, swagger: Swagger) throws -> ([FunctionParameter], [ModelDefinition]) {
@@ -355,5 +388,19 @@ public struct RequestParameterFactory {
         }
 
         return (functionParameters, modelDefinitions)
+    }
+}
+
+extension Sequence {
+    func unique<T: Equatable>(on block: (Iterator.Element) -> T) -> [Self.Element] {
+        var result = [Iterator.Element]()
+        
+        for item in self {
+            if result.contains(where: { r in block(item) == block(r) }) == false {
+                result.append(item)
+            }
+        }
+
+        return result
     }
 }
