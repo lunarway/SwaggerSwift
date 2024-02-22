@@ -238,7 +238,7 @@ private func _\(functionName)(\(functionArguments)) async -> \(functionReturnTyp
         body += "\n"
 
         body += """
-        \(accessControl) func \(functionName)(\(functionArguments)\(functionArguments.isEmpty ? "" : ", ")completion: @escaping (\(functionReturnType)) -> Void = { _ in }) {
+        \(accessControl) func \(functionName)(\(functionArguments)\(functionArguments.isEmpty ? "" : ", ")completion: @Sendable @escaping (\(functionReturnType)) -> Void = { _ in }) {
             _Concurrency.Task {
                 let result = await _\(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ", ")))
                 completion(result)
