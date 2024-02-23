@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set Xcode
-        run: xcversion select 15.2
+        run: xcodes select 15.2
 
       - name: Build
         run: swift build -v
@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set Xcode
-        run: xcversion select 15.2
+        run: xcodes select 15.2
 
       - name: Run tests
         run: swift test -v --parallel --xunit-output test.xml
