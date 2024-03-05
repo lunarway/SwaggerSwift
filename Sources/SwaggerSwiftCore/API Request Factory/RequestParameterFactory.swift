@@ -19,7 +19,7 @@ public struct RequestParameterFactory {
     ///   - swaggerFile: the swagger file
     /// - Returns: the list of all parameters to the API request
     func make(forOperation operation: SwaggerSwiftML.Operation, functionName: String, responseTypes: [ResponseTypeMap], pathParameters: [Parameter], swagger: Swagger, swaggerFile: SwaggerFile) throws -> ([FunctionParameter], [ModelDefinition], ReturnType) {
-        let parameters = (operation.parameters ?? []).map {
+        let parameters: [Parameter] = (operation.parameters ?? []).map {
             swagger.findParameter(node: $0)
         } + pathParameters
 
@@ -42,12 +42,20 @@ public struct RequestParameterFactory {
         }
 
         // Path
-        let (pathParameters, pathModels) = try resolvePathParameters(parameters: parameters, typePrefix: typeName, swagger: swagger)
+        let (pathParameters, pathModels) = try resolvePathParameters(
+            parameters: parameters,
+            typePrefix: typeName,
+            swagger: swagger
+        )
         resolvedParameters.append(contentsOf: pathParameters)
         resolvedModelDefinitions.append(contentsOf: pathModels)
 
         // Query
-        let (queryParameters, queryModels) = try resolveQueryParameters(parameters: parameters, typePrefix: typeName, swagger: swagger)
+        let (queryParameters, queryModels) = try resolveQueryParameters(
+            parameters: parameters,
+            typePrefix: typeName,
+            swagger: swagger
+        )
         resolvedParameters.append(contentsOf: queryParameters)
         resolvedModelDefinitions.append(contentsOf: queryModels)
 
@@ -65,9 +73,20 @@ public struct RequestParameterFactory {
         resolvedModelDefinitions.append(contentsOf: formDataModels)
 
         // Completion
-        let (successTypeName, successInlineModels) = createResultEnumType(types: responseTypes, failure: false, functionName: functionName, swagger: swagger)
+        let (successTypeName, successInlineModels) = createResultEnumType(
+            types: responseTypes,
+            failure: false,
+            functionName: functionName,
+            swagger: swagger
+        )
         resolvedModelDefinitions.append(contentsOf: successInlineModels)
-        let (failureTypeName, failureInlineModels) = createResultEnumType(types: responseTypes, failure: true, functionName: functionName, swagger: swagger)
+        
+        let (failureTypeName, failureInlineModels) = createResultEnumType(
+            types: responseTypes,
+            failure: true,
+            functionName: functionName,
+            swagger: swagger
+        )
         resolvedModelDefinitions.append(contentsOf: failureInlineModels)
 
         let returnType = ReturnType(
@@ -102,7 +121,8 @@ public struct RequestParameterFactory {
                             description: nil,
                             typeName: typeName,
                             values: fields,
-                            isCodable: false)
+                            isCodable: false, 
+                            collectionFormat: nil)
             )
 
             return (typeName, [enumeration])
@@ -337,7 +357,8 @@ public struct RequestParameterFactory {
                                                                description: parameter.description,
                                                                typeName: typeName,
                                                                values: enumValues,
-                                                               isCodable: true)))
+                                                               isCodable: true,
+                                                               collectionFormat: nil)))
 
                     let param = FunctionParameter(description: parameter.description,
                                                   name: parameter.name,

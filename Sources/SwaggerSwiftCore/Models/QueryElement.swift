@@ -1,8 +1,10 @@
+import SwaggerSwiftML
+
 struct QueryElement {
     enum ValueType {
         case date
         case `enum`
-        case array
+        case array(isEnum: Bool, collectionFormat: CollectionFormat?)
         case `default`
     }
 
@@ -27,7 +29,17 @@ extension QueryElement {
                         queryItems.append(URLQueryItem(name: \"\(self.fieldName)\", value: \(fieldName)Value))
                     }
                     """
-            case .array:
+            case .array(let isEnum, let collectionFormat):
+                if isEnum {
+                    if collectionFormat == .csv {
+                        return """
+                if let \(fieldName)Value = \(self.fieldName) {
+                    queryItems.append(URLQueryItem(name: \"\(self.fieldName)\", value: \(fieldName)Value.map { $0.rawValue }.joined(separator: ",")))
+                }
+                """
+                    }
+                }
+
                 return """
                     if let \(fieldName)Value = \(self.fieldName) {
                         queryItems.append(URLQueryItem(name: \"\(self.fieldName)\", value: \(fieldName)Value))
@@ -47,6 +59,12 @@ extension QueryElement {
             switch self.valueType {
             case .enum:
                 fieldValue = "\(self.fieldValue).rawValue"
+            case .array(let isEnum, let collectionFormat):
+                if isEnum && collectionFormat == .csv {
+                    fieldValue = "\(self.fieldValue).map { $0.rawValue }.joined(separator: \",\")"
+                } else {
+                    fieldValue = "\(self.fieldValue)"
+                }
             default:
                 fieldValue = "\(self.fieldValue)"
             }

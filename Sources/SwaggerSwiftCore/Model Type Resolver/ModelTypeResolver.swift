@@ -37,7 +37,8 @@ public struct ModelTypeResolver {
                                                                     description: schema.description,
                                                                     typeName: enumTypeName,
                                                                     values: enumValues ?? [],
-                                                                    isCodable: true))
+                                                                    isCodable: true, 
+                                                                    collectionFormat: nil))
                 return ResolvedModel(.enumeration(typeName: enumTypeName), [model])
             }
 
@@ -130,11 +131,17 @@ public struct ModelTypeResolver {
                                                   serviceName: swagger.serviceName)
 
                 if case .enumeration(let enumTypeName) = type {
-                    let model = ModelDefinition.enumeration(Enumeration(serviceName: swagger.serviceName,
-                                                                        description: schema.description,
-                                                                        typeName: enumTypeName,
-                                                                        values: enumValues ?? [],
-                                                                        isCodable: true))
+                    let model = ModelDefinition.enumeration(
+                        Enumeration(
+                            serviceName: swagger.serviceName,
+                            description: schema.description,
+                            typeName: enumTypeName,
+                            values: enumValues ?? [],
+                            isCodable: true,
+                            
+                            collectionFormat: nil
+                        )
+                    )
                     return (.enumeration(typeName: enumTypeName), [model])
                 } else {
                     return (type, [])

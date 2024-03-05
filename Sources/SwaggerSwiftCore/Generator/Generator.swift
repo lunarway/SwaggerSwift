@@ -59,9 +59,10 @@ public struct Generator {
                         swaggerPath: service.value.path ?? swaggerFile.path
                     )
 
-                    let apiSpec = try await APIFactory(apiRequestFactory: apiRequestFactory,
-                                                       modelTypeResolver: modelTypeResolver)
-                        .generate(for: swagger, withSwaggerFile: swaggerFile)
+                    let apiSpec = try await APIFactory(
+                        apiRequestFactory: apiRequestFactory,
+                        modelTypeResolver: modelTypeResolver
+                    ).generate(for: swagger, withSwaggerFile: swaggerFile)
 
                     return apiSpec
                 }

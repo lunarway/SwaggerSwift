@@ -141,12 +141,8 @@ public struct APIRequestFactory {
             }
         }
 
-        let queries: [QueryElement] = queryParameters.compactMap {
-            guard case ParameterLocation.query = $0.location else {
-                return nil
-            }
-
-            switch $0.location {
+        let queries: [QueryElement] = queryParameters.compactMap { parameter in
+            switch parameter.location {
             case .query(let type, _):
                 switch type {
                 case .string(let format, let enumValues, _, _, _):
@@ -167,43 +163,54 @@ public struct APIRequestFactory {
                         case .email: fallthrough
                         case .unsupported:
                             return QueryElement(
-                                fieldName: $0.name,
-                                fieldValue: $0.name.camelized,
-                                isOptional: $0.required == false,
+                                fieldName: parameter.name,
+                                fieldValue: parameter.name.camelized,
+                                isOptional: parameter.required == false,
                                 valueType: valueType
                             )
                         case .date: fallthrough
                         case .dateTime:
                             return QueryElement(
-                                fieldName: $0.name,
-                                fieldValue: $0.name.camelized,
-                                isOptional: $0.required == false,
+                                fieldName: parameter.name,
+                                fieldValue: parameter.name.camelized,
+                                isOptional: parameter.required == false,
                                 valueType: .date
                             )
                         }
                     } else {
                         return QueryElement(
-                            fieldName: $0.name,
-                            fieldValue: $0.name.camelized,
-                            isOptional: $0.required == false,
+                            fieldName: parameter.name,
+                            fieldValue: parameter.name.camelized,
+                            isOptional: parameter.required == false,
                             valueType: valueType
                         )
                     }
-                case .array:
+                case .array(let items, let collectionFormat, maxItems: _, minItems: _, uniqueItems: _):
+                    if case .string(_, let enumValues, _, _, _) = items.type {
+                        if enumValues != nil {
+                            return QueryElement(
+                                fieldName: parameter.name,
+                                fieldValue: parameter.name.camelized,
+                                isOptional: parameter.required == false,
+                                valueType: .array(isEnum: true, collectionFormat: collectionFormat)
+                            )
+                        }
+                    }
+                    
                     return QueryElement(
-                        fieldName: $0.name,
-                        fieldValue: $0.name.camelized,
-                        isOptional: $0.required == false,
-                        valueType: .array
+                        fieldName: parameter.name,
+                        fieldValue: parameter.name.camelized,
+                        isOptional: parameter.required == false,
+                        valueType: .array(isEnum: false, collectionFormat: collectionFormat)
                     )
                 case .number: fallthrough
                 case .integer: fallthrough
                 case .boolean: fallthrough
                 case .file:
                     return QueryElement(
-                        fieldName: $0.name,
-                        fieldValue: $0.name.camelized,
-                        isOptional: $0.required == false,
+                        fieldName: parameter.name,
+                        fieldValue: parameter.name.camelized,
+                        isOptional: parameter.required == false,
                         valueType: .default
                     )
                 }
