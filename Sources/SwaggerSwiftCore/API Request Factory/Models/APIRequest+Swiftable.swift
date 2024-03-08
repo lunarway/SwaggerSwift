@@ -55,11 +55,11 @@ extension APIRequest {
             .sorted(by: { $0.swiftyName < $1.swiftyName })
             .map {
                 if $0.isRequired {
-                    return "request.addValue(\(headersName).\($0.swiftyName), forHTTPHeaderField: \"\($0.fullHeaderName)\")"
+                    return "request.setValue(\(headersName).\($0.swiftyName), forHTTPHeaderField: \"\($0.fullHeaderName)\")"
                 } else {
                     return """
 if let \(($0.swiftyName)) = \(headersName).\($0.swiftyName) {
-    request.addValue(\($0.swiftyName), forHTTPHeaderField: \"\($0.fullHeaderName)\")
+    request.setValue(\($0.swiftyName), forHTTPHeaderField: \"\($0.fullHeaderName)\")
 }
 """
                 }
@@ -140,7 +140,7 @@ if let \(($0.swiftyName)) = \(headersName).\($0.swiftyName) {
         switch consumes {
         case .json:
             urlSessionMethodName = "data(for: request)"
-            headerStatements.append("request.addValue(\"application/json\", forHTTPHeaderField: \"Content-Type\")")
+            headerStatements.append("request.setValue(\"application/json\", forHTTPHeaderField: \"Content-Type\")")
 
         case .formUrlEncoded: fallthrough
         case .multiPartFormData:
