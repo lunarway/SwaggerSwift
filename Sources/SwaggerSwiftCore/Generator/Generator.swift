@@ -188,19 +188,28 @@ public struct Generator {
     private func download(githubToken: String, organisation: String, serviceName: String, branch: String, swaggerPath: String, urlSession: URLSession) async throws -> Data {
         let url = URL(string: "https://raw.githubusercontent.com/\(organisation)/\(serviceName)/\(branch)/\(swaggerPath)")!
         var request = URLRequest(url: url)
-        request.addValue("token \(githubToken)", forHTTPHeaderField: "Authorization")
-        request.addValue("application/vnd.github.v3.raw", forHTTPHeaderField: "Accept")
+        request.setValue("token \(githubToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/vnd.github.v3.raw", forHTTPHeaderField: "Accept")
 
         log("Downloading Swagger at: \(url.absoluteString)")
         let (data, response) = try await fetchSwagger(request)
         if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
             if branch != "master" || branch != "main" {
                 log(" ⚠️ \(serviceName): Failed to download with custom branch ´\(branch)´ - Trying master instead.", error: true)
-                return try await download(githubToken: githubToken, organisation: organisation, serviceName: serviceName, branch: "master", swaggerPath: swaggerPath, urlSession: urlSession)
+                return try await download(
+                    githubToken: githubToken,
+                    organisation: organisation,
+                    serviceName: serviceName,
+                    branch: "master",
+                    swaggerPath: swaggerPath,
+                    urlSession: urlSession
+                )
             } else {
-                throw FetchSwaggerError.requestFailed(serviceName: serviceName,
-                                                      branch: branch,
-                                                      statusCode: httpResponse.statusCode)
+                throw FetchSwaggerError.requestFailed(
+                    serviceName: serviceName,
+                    branch: branch,
+                    statusCode: httpResponse.statusCode
+                )
             }
         }
 

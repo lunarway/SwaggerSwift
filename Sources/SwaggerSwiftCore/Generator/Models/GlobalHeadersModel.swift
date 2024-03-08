@@ -70,7 +70,7 @@ struct GlobalHeadersModel {
             .sorted(by: { $0.swiftyName < $1.swiftyName })
             .map { """
 if let \($0.swiftyName) = \($0.swiftyName) {
-    request.addValue(\($0.swiftyName), forHTTPHeaderField: \"\($0.fullHeaderName)\")
+    request.setValue(\($0.swiftyName), forHTTPHeaderField: \"\($0.fullHeaderName)\")
 }
 """ }
             .joined(separator: "\n\n")
