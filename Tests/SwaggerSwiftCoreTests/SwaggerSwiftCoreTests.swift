@@ -22,13 +22,18 @@ public struct Test: Codable, Sendable {
     }
 
     public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let container = try decoder.container(keyedBy: StringCodingKey.self)
         // Allows the backend to return badly formatted urls
-        if let urlString = try container.decodeIfPresent(String.self, forKey: .url) {
+        if let urlString = try container.decodeIfPresent(String.self, forKey: "url") {
             self.url = URL(string: urlString)
         } else {
             self.url = nil
         }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: StringCodingKey.self)
+        try container.encodeIfPresent(url, forKey: "url")
     }
 }
 """)
@@ -51,6 +56,16 @@ public struct Test: Codable, Sendable {
 
     public init(url: URL) {
         self.url = url
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: StringCodingKey.self)
+        self.url = try container.decode(URL.self, forKey: "url")
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: StringCodingKey.self)
+        try container.encode(url, forKey: "url")
     }
 }
 """)
