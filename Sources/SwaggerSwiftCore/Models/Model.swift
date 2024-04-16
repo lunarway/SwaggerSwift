@@ -86,7 +86,6 @@ struct Model {
         let encodeFields = fields.map {
             let variableName = $0.safePropertyName.value.variableNameFormatted
             let codingKey = $0.argumentLabel
-            let typeName = $0.type.toString(required: true)
             let encodeIfPresent: String
             if $0.isRequired == false || $0.defaultValue != nil {
                 encodeIfPresent = "IfPresent"
@@ -101,7 +100,7 @@ struct Model {
                 defaultValue = ""
             }
 
-            return "try container.encode\(encodeIfPresent)(\(variableName)\(defaultValue), forKey: \"\(codingKey)\")"
+            return "try container.encode\(encodeIfPresent)(\(variableName), forKey: \"\(codingKey)\")"
         }.joined(separator: "\n")
 
         let functionBody = """
