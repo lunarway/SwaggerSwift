@@ -60,14 +60,11 @@ struct Model {
         let fieldHasDefaultValue = fields.contains(where: { $0.defaultValue != nil })
         let fieldHasOptionalURL = fields.contains(where: { $0.type.toString(required: true) == "URL" && !$0.isRequired })
 
-        if isCodable && (fieldsChangesSwaggerFieldNames || fieldHasDefaultValue || fieldHasOptionalURL) {
+        if isCodable {
             model += "\n\n"
-            model += decodeFunction().indentLines(1)
-        }
-
-        if isCodable && fieldsChangesSwaggerFieldNames {
+            model += decodeFunction(accessControl: accessControl).indentLines(1)
             model += "\n\n"
-            model += codingKeysFunction().indentLines(1)
+            model += encodeFunction(accessControl: accessControl).indentLines(1)
         }
 
         if embeddedDefinitions.count > 0 {
@@ -85,19 +82,44 @@ struct Model {
         return model
     }
 
-    private func codingKeysFunction() -> String {
-        let cases = fields.map { "case \($0.safeParameterName.value.variableNameFormatted) = \"\($0.argumentLabel)\"" }.joined(separator: "\n").indentLines(1)
+    private func encodeFunction(accessControl: APIAccessControl) -> String {
+        let encodeFields = fields.map {
+            let variableName = $0.safePropertyName.value.variableNameFormatted
+            let codingKey = $0.argumentLabel
+            let typeName = $0.type.toString(required: true)
+            let encodeIfPresent: String
+            if $0.isRequired == false || $0.defaultValue != nil {
+                encodeIfPresent = "IfPresent"
+            } else {
+                encodeIfPresent = ""
+            }
+
+            let defaultValue: String
+            if let defaultValueValue = $0.defaultValue {
+                defaultValue = " ?? \(defaultValueValue)"
+            } else {
+                defaultValue = ""
+            }
+
+            return "try container.encode\(encodeIfPresent)(\(variableName)\(defaultValue), forKey: \"\(codingKey)\")"
+        }.joined(separator: "\n")
+
+        let functionBody = """
+var container = encoder.container(keyedBy: StringCodingKey.self)
+\(encodeFields)
+"""
 
         return """
-        enum CodingKeys: String, CodingKey {
-        \(cases)
-        }
-        """
+\(accessControl.rawValue) func encode(to encoder: Encoder) throws {
+\(functionBody.indentLines(1))
+}
+"""
     }
 
-    private func decodeFunction() -> String {
+    private func decodeFunction(accessControl: APIAccessControl) -> String {
         let decodeFields = fields.map {
             let variableName = $0.safePropertyName.value.variableNameFormatted
+            let codingKey = $0.argumentLabel
             let typeName = $0.type.toString(required: true)
             let decodeIfPresent: String
             if $0.isRequired == false || $0.defaultValue != nil {
@@ -116,24 +138,24 @@ struct Model {
             if !$0.isRequired, typeName == "URL" {
                 return """
             // Allows the backend to return badly formatted urls
-            if let urlString = try container.decode\(decodeIfPresent)(String.self, forKey: .\(variableName))\(defaultValue) {
+            if let urlString = try container.decode\(decodeIfPresent)(String.self, forKey: \"\(codingKey)\")\(defaultValue) {
                 self.\(variableName) = URL(string: urlString)
             } else {
                 self.\(variableName) = nil
             }
             """
             } else {
-                return "self.\(variableName) = try container.decode\(decodeIfPresent)(\(typeName).self, forKey: .\(variableName))\(defaultValue)"
+                return "self.\(variableName) = try container.decode\(decodeIfPresent)(\(typeName).self, forKey: \"\(codingKey)\")\(defaultValue)"
             }
         }.joined(separator: "\n")
 
         let functionBody = """
-let container = try decoder.container(keyedBy: CodingKeys.self)
+let container = try decoder.container(keyedBy: StringCodingKey.self)
 \(decodeFields)
 """
 
         return """
-public init(from decoder: Decoder) throws {
+\(accessControl.rawValue) init(from decoder: Decoder) throws {
 \(functionBody.indentLines(1))
 }
 """

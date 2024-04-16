@@ -313,6 +313,7 @@ public struct Generator {
         try dateDecodingStrategy.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(toFile: "\(targetPath)/DateDecodingStrategy.swift")
         try apiInitializeFile.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(toFile: "\(targetPath)/APIInitialize.swift")
         try apiInitializerFile.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(toFile: "\(targetPath)/APIInitializer.swift")
+        try stringCodingKey.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(toFile: "\(targetPath)/StringCodingKey.swift")
 
         if swaggerFile.createSwiftPackage == false {
             let globalHeadersDefinitions = globalHeadersModel.writeExtensions(inCommonPackageNamed: nil)
