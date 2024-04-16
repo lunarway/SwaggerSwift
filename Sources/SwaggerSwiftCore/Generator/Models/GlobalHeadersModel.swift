@@ -54,7 +54,7 @@ struct GlobalHeadersModel {
         return model
     }
 
-    func addToRequestFunction() -> String {
+    private func addToRequestFunction() -> String {
         let fields = headerFields.map {
             APIRequestHeaderField(
                 headerName: $0,
@@ -70,7 +70,7 @@ struct GlobalHeadersModel {
             .sorted(by: { $0.swiftyName < $1.swiftyName })
             .map { """
 if let \($0.swiftyName) = \($0.swiftyName) {
-    request.addValue(\($0.swiftyName), forHTTPHeaderField: \"\($0.fullHeaderName)\")
+    request.setValue(\($0.swiftyName), forHTTPHeaderField: \"\($0.fullHeaderName)\")
 }
 """ }
             .joined(separator: "\n\n")
@@ -83,7 +83,7 @@ if let \($0.swiftyName) = \($0.swiftyName) {
         return function
     }
 
-    func asDictionaryFunction() -> String {
+    private func asDictionaryFunction() -> String {
         let fields = headerFields.map {
             APIRequestHeaderField(
                 headerName: $0,

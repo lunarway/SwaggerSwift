@@ -9,6 +9,13 @@ enum ParamLocation {
     case body
 }
 
+struct HeaderParameter {
+    let type: ParameterType
+    let name: String
+    let required: Bool
+    let description: String?
+}
+
 extension Sequence where Element == SwaggerSwiftML.Parameter {
     /// Convenience function that searches a set of SwaggerSwiftML.Parameter's to find those that are used in a specific location, based on `ParamLocation`
     /// - Parameter type: the type of api parameter that is needed

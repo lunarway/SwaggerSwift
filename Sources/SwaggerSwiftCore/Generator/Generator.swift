@@ -59,9 +59,10 @@ public struct Generator {
                         swaggerPath: service.value.path ?? swaggerFile.path
                     )
 
-                    let apiSpec = try await APIFactory(apiRequestFactory: apiRequestFactory,
-                                                       modelTypeResolver: modelTypeResolver)
-                        .generate(for: swagger, withSwaggerFile: swaggerFile)
+                    let apiSpec = try await APIFactory(
+                        apiRequestFactory: apiRequestFactory,
+                        modelTypeResolver: modelTypeResolver
+                    ).generate(for: swagger, withSwaggerFile: swaggerFile)
 
                     return apiSpec
                 }
@@ -97,7 +98,7 @@ public struct Generator {
 
         log("Creating Swift Project at \(destination)")
 
-        let globalHeadersModel = GlobalHeadersModel(headerFields: swaggerFile.globalHeaders ?? [])
+        let globalHeadersModel = GlobalHeadersModel(headerFields: swaggerFile.globalHeaders)
         let commonLibraryName = "\(swaggerFile.projectName)Shared"
 
         if swaggerFile.createSwiftPackage {
@@ -187,19 +188,28 @@ public struct Generator {
     private func download(githubToken: String, organisation: String, serviceName: String, branch: String, swaggerPath: String, urlSession: URLSession) async throws -> Data {
         let url = URL(string: "https://raw.githubusercontent.com/\(organisation)/\(serviceName)/\(branch)/\(swaggerPath)")!
         var request = URLRequest(url: url)
-        request.addValue("token \(githubToken)", forHTTPHeaderField: "Authorization")
-        request.addValue("application/vnd.github.v3.raw", forHTTPHeaderField: "Accept")
+        request.setValue("token \(githubToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/vnd.github.v3.raw", forHTTPHeaderField: "Accept")
 
         log("Downloading Swagger at: \(url.absoluteString)")
         let (data, response) = try await fetchSwagger(request)
         if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
             if branch != "master" || branch != "main" {
                 log(" ⚠️ \(serviceName): Failed to download with custom branch ´\(branch)´ - Trying master instead.", error: true)
-                return try await download(githubToken: githubToken, organisation: organisation, serviceName: serviceName, branch: "master", swaggerPath: swaggerPath, urlSession: urlSession)
+                return try await download(
+                    githubToken: githubToken,
+                    organisation: organisation,
+                    serviceName: serviceName,
+                    branch: "master",
+                    swaggerPath: swaggerPath,
+                    urlSession: urlSession
+                )
             } else {
-                throw FetchSwaggerError.requestFailed(serviceName: serviceName,
-                                                      branch: branch,
-                                                      statusCode: httpResponse.statusCode)
+                throw FetchSwaggerError.requestFailed(
+                    serviceName: serviceName,
+                    branch: branch,
+                    statusCode: httpResponse.statusCode
+                )
             }
         }
 
@@ -226,7 +236,17 @@ public struct Generator {
         }
     }
 
-    private func write(apiDefinition: APIDefinition, modelDefinitions: [ModelDefinition], swaggerFile: SwaggerFile, rootDirectory: String, commonLibraryName: String?, accessControl: APIAccessControl, globalHeadersModel: GlobalHeadersModel, fileManager: FileManager, dummyMode: Bool) throws {
+    private func write(
+        apiDefinition: APIDefinition,
+        modelDefinitions: [ModelDefinition],
+        swaggerFile: SwaggerFile,
+        rootDirectory: String,
+        commonLibraryName: String?,
+        accessControl: APIAccessControl,
+        globalHeadersModel: GlobalHeadersModel,
+        fileManager: FileManager,
+        dummyMode: Bool
+    ) throws {
         log("Parsing contents of Swagger: \(apiDefinition.serviceName)")
 
         let apiDirectory = rootDirectory + "/" + apiDefinition.serviceName
@@ -301,8 +321,8 @@ public struct Generator {
             try globalHeadersDefinitions.write(toFile: globalHeaderExtensionsPath)
         }
 
-        if let globalHeaderFields = swaggerFile.globalHeaders {
-            let globalHeadersModel = GlobalHeadersModel(headerFields: globalHeaderFields)
+        if swaggerFile.globalHeaders.count > 0 {
+            let globalHeadersModel = GlobalHeadersModel(headerFields: swaggerFile.globalHeaders)
             let globalHeadersFileContents = globalHeadersModel.toSwift(swaggerFile: swaggerFile, accessControl: accessControl)
             try globalHeadersFileContents.write(toFile: "\(targetPath)/GlobalHeaders.swift")
         }

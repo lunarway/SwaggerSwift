@@ -8,21 +8,37 @@ extension ParameterType {
             switch format {
             case .none:
                 if let enumValues = enumValues {
-                    return (.object(typeName: enumTypeName), [.enumeration(.init(serviceName: swagger.serviceName,
-                                                                                 description: description,
-                                                                                 typeName: enumTypeName,
-                                                                                 values: enumValues,
-                                                                                 isCodable: true))])
+                    return (
+                        .object(typeName: enumTypeName),
+                        [.enumeration(
+                            .init(
+                                serviceName: swagger.serviceName,
+                                description: description,
+                                typeName: enumTypeName,
+                                values: enumValues,
+                                isCodable: true,
+                                collectionFormat: nil
+                            )
+                        )]
+                    )
                 } else {
                     return (.string(defaultValue: nil), [])
                 }
             case .some(let some):
                 if let enumValues = enumValues {
-                    return (.object(typeName: enumTypeName), [.enumeration(.init(serviceName: swagger.serviceName,
-                                                                                 description: description,
-                                                                                 typeName: enumTypeName,
-                                                                                 values: enumValues,
-                                                                                 isCodable: true))])
+                    return (
+                        .object(typeName: enumTypeName),
+                        [.enumeration(
+                            .init(
+                                serviceName: swagger.serviceName,
+                                description: description,
+                                typeName: enumTypeName,
+                                values: enumValues,
+                                isCodable: true,
+                                collectionFormat: nil
+                            )
+                        )]
+                    )
                 } else {
                     return (try typeOfDataFormat(some), [])
                 }
@@ -43,8 +59,14 @@ extension ParameterType {
             }
         case .boolean:
             return (.boolean(defaultValue: nil), [])
-        case .array(let items, collectionFormat: _, maxItems: _, minItems: _, uniqueItems: _):
-            let (type, embedddedDefinitions) = try typeOfItems(items.type, typePrefix: typePrefix, swagger: swagger)
+        case .array(let items, let collectionFormat, maxItems: _, minItems: _, uniqueItems: _):
+            let (type, embedddedDefinitions) = try typeOfItems(
+                items.type,
+                collectionFormat: collectionFormat,
+                typePrefix: typePrefix,
+                swagger: swagger
+            )
+
             return (.array(typeName: type), embedddedDefinitions)
         case .file:
             return (.object(typeName: "FormData"), [])
@@ -52,12 +74,25 @@ extension ParameterType {
     }
 }
 
-private func typeOfItems(_ itemsType: ItemsType, typePrefix: String, swagger: Swagger) throws -> (TypeType, [ModelDefinition]) {
+private func typeOfItems(_ itemsType: ItemsType, collectionFormat: CollectionFormat, typePrefix: String, swagger: Swagger) throws -> (TypeType, [ModelDefinition]) {
     switch itemsType {
     case .string(format: let format, let enumValues, _, _, _):
         let modelDefinitions: [ModelDefinition]
         if let enumValues = enumValues {
-            modelDefinitions = [.enumeration(Enumeration(serviceName: swagger.serviceName, description: nil, typeName: "\(typePrefix)Enum", values: enumValues, isCodable: true))]
+            let modelDefinitions: [ModelDefinition] = [
+                .enumeration(
+                    Enumeration(
+                        serviceName: swagger.serviceName,
+                        description: nil,
+                        typeName: "\(typePrefix)Enum",
+                        values: enumValues,
+                        isCodable: true,
+                        collectionFormat: collectionFormat
+                    )
+                )
+            ]
+
+            return (.object(typeName: "\(typePrefix)Enum"), modelDefinitions)
         } else {
             modelDefinitions = []
         }
@@ -81,8 +116,13 @@ private func typeOfItems(_ itemsType: ItemsType, typePrefix: String, swagger: Sw
         }
     case .boolean:
         return (.boolean(defaultValue: nil), [])
-    case .array(let itemsType, collectionFormat: _, maxItems: _, minItems: _, uniqueItems: _):
-        return try typeOfItems(itemsType.type, typePrefix: typePrefix, swagger: swagger)
+    case .array(let itemsType, let collectionFormat, maxItems: _, minItems: _, uniqueItems: _):
+        return try typeOfItems(
+            itemsType.type,
+            collectionFormat: collectionFormat,
+            typePrefix: typePrefix,
+            swagger: swagger
+        )
     case .object(required: _, properties: _, allOf: _):
         fatalError("I dont think this can happen")
     }

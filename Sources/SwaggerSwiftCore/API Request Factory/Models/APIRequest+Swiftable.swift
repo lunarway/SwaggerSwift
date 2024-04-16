@@ -5,7 +5,17 @@ extension APIRequest {
     /// The arguments of the function, e.g. "myValue: String, myOtherValue: Int"
     private var functionArguments: String {
         parameters.map {
-            "\($0.name.variableNameFormatted): \($0.typeName.toString(required: $0.required))\($0.required ? "" : " = nil")"
+            let paramName = $0.name.variableNameFormatted
+            let typeName = $0.typeName.toString(required: $0.required)
+
+            let defaultValue: String
+            if !$0.required {
+                defaultValue = " = nil"
+            } else {
+                defaultValue = ""
+            }
+
+            return "\(paramName): \(typeName)\(defaultValue)"
         }.joined(separator: ", ")
     }
 
@@ -28,25 +38,34 @@ extension APIRequest {
             }.joined(separator: "/")
 
         var globalHeaders = [String]()
-        if let globalHeaderFields = swaggerFile.globalHeaders, globalHeaderFields.count > 0 {
+        if swaggerFile.globalHeaders.count > 0 {
             globalHeaders.append("let globalHeaders = self.headerProvider()")
             globalHeaders.append("globalHeaders.add(to: &request)")
         }
 
-        var headerStatements: [String] = headers
+        let uniquelyGlobalHeaders = swaggerFile.globalHeaders.filter { globalHeaderName in headers.contains(where: { $0.fullHeaderName == globalHeaderName }) == false }
+
+        let allHeaders = headers + uniquelyGlobalHeaders.map {
+            APIRequestHeaderField(headerName: $0, isRequired: false) // not required as they are default from the global header provider
+        }
+
+        let headersName = headers.filter { $0.isRequired }.count > 0 ? "headers" : "headers?"
+
+        let setHeaderValues: [String] = allHeaders
             .sorted(by: { $0.swiftyName < $1.swiftyName })
-            .filter { !(swaggerFile.globalHeaders ?? []).map { $0.lowercased() }.contains($0.fullHeaderName.lowercased()) }
             .map {
                 if $0.isRequired {
-                    return "request.addValue(headers.\($0.swiftyName), forHTTPHeaderField: \"\($0.fullHeaderName)\")"
+                    return "request.setValue(\(headersName).\($0.swiftyName), forHTTPHeaderField: \"\($0.fullHeaderName)\")"
                 } else {
                     return """
-if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
-        request.addValue(\($0.swiftyName), forHTTPHeaderField: \"\($0.fullHeaderName)\")
-    }
+if let \(($0.swiftyName)) = \(headersName).\($0.swiftyName) {
+    request.setValue(\($0.swiftyName), forHTTPHeaderField: \"\($0.fullHeaderName)\")
+}
 """
                 }
             }
+
+        var headerStatements = setHeaderValues
 
         var bodyInjection: String = ""
         if let body = parameters.first(where: { $0.in == .body }) {
@@ -121,7 +140,7 @@ if let \(($0.swiftyName)) = headers.\($0.swiftyName) {
         switch consumes {
         case .json:
             urlSessionMethodName = "data(for: request)"
-            headerStatements.append("request.addValue(\"application/json\", forHTTPHeaderField: \"Content-Type\")")
+            headerStatements.append("request.setValue(\"application/json\", forHTTPHeaderField: \"Content-Type\")")
 
         case .formUrlEncoded: fallthrough
         case .multiPartFormData:
@@ -219,7 +238,7 @@ private func _\(functionName)(\(functionArguments)) async -> \(functionReturnTyp
         body += "\n"
 
         body += """
-        \(accessControl) func \(functionName)(\(functionArguments)\(functionArguments.isEmpty ? "" : ", ")completion: @escaping (\(functionReturnType)) -> Void = { _ in }) {
+        \(accessControl) func \(functionName)(\(functionArguments)\(functionArguments.isEmpty ? "" : ", ")completion: @Sendable @escaping (\(functionReturnType)) -> Void = { _ in }) {
             _Concurrency.Task {
                 let result = await _\(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ", ")))
                 completion(result)

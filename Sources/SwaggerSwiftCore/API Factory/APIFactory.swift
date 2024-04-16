@@ -45,10 +45,12 @@ struct APIFactory {
         var networkRequestFunctions = [APIRequest]()
         var inlineModelDefinitions = [ModelDefinition]()
         for swaggerPath in swagger.paths {
-            let (pathNetworkRequestFunctions, pathCurrentInlineDefinitions) = try apisAndModels(fromPath: swaggerPath.value,
-                                                                                                servicePath: swaggerPath.key,
-                                                                                                swagger: swagger,
-                                                                                                swaggerFile: swaggerFile)
+            let (pathNetworkRequestFunctions, pathCurrentInlineDefinitions) = try apisAndModels(
+                fromPath: swaggerPath.value,
+                servicePath: swaggerPath.key,
+                swagger: swagger,
+                swaggerFile: swaggerFile
+            )
 
             networkRequestFunctions.append(contentsOf: pathNetworkRequestFunctions)
             inlineModelDefinitions.append(contentsOf: pathCurrentInlineDefinitions)
@@ -130,6 +132,7 @@ struct APIFactory {
                 break
             }
         }
+        
         return allDefinitions
     }
 
@@ -201,7 +204,7 @@ struct APIFactory {
                                defaultValue: nil)
         ]
 
-        let hasGlobalHeaders = (swaggerFile.globalHeaders ?? []).count > 0
+        let hasGlobalHeaders = swaggerFile.globalHeaders.count > 0
 
         if hasGlobalHeaders {
             fields.append(APIDefinitionField(name: "headerProvider",

@@ -8,6 +8,7 @@ struct Enumeration {
     let typeName: String
     let values: [String]
     let isCodable: Bool
+    let collectionFormat: CollectionFormat?
 
     static func toCasename(_ str: String, _ isCodable: Bool) -> String {
         let str = isCodable ? str.camelized : str

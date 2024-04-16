@@ -8,7 +8,7 @@ struct SwaggerFile: Decodable {
     let path: String
     let organisation: String
     let services: [String: Service]
-    let globalHeaders: [String]?
+    let globalHeaders: [String]
     let createSwiftPackage: Bool
     /// What is the name of the directory the files will be placed in? This is also the name as the project in the Swift Package (if created)
     let projectName: String
@@ -27,7 +27,16 @@ struct SwaggerFile: Decodable {
         case destination
     }
 
-    init(path: String, organisation: String, services: [String: Service], globalHeaders: [String]?, createSwiftPackage: Bool = true, accessControl: APIAccessControl = .public, destination: String = "./", projectName: String = "Services") {
+    init(
+        path: String,
+        organisation: String,
+        services: [String: Service],
+        globalHeaders: [String] = [],
+        createSwiftPackage: Bool = true,
+        accessControl: APIAccessControl = .public,
+        destination: String = "./",
+        projectName: String = "Services"
+    ) {
         self.path = path
         self.organisation = organisation
         self.services = services
@@ -43,7 +52,7 @@ struct SwaggerFile: Decodable {
         self.path = try container.decode(String.self, forKey: .path)
         self.organisation = try container.decode(String.self, forKey: .organisation)
         self.services = try container.decode([String: Service].self, forKey: .services)
-        self.globalHeaders = try container.decodeIfPresent([String].self, forKey: .globalHeaders)
+        self.globalHeaders = (try container.decodeIfPresent([String].self, forKey: .globalHeaders)) ?? []
         self.accessControl = try container.decodeIfPresent(APIAccessControl.self, forKey: .accessControl) ?? .public
         self.createSwiftPackage = try container.decodeIfPresent(Bool.self, forKey: .createSwiftPackage) ?? true
         self.projectName = try container.decodeIfPresent(String.self, forKey: .projectName) ?? "Services"
