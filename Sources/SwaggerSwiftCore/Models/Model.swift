@@ -56,10 +56,6 @@ struct Model {
 
         model += "\n\n" + initMethod.indentLines(1)
 
-        let fieldsChangesSwaggerFieldNames = fields.contains(where: { $0.usesSwaggerFieldName == false })
-        let fieldHasDefaultValue = fields.contains(where: { $0.defaultValue != nil })
-        let fieldHasOptionalURL = fields.contains(where: { $0.type.toString(required: true) == "URL" && !$0.isRequired })
-
         if isCodable {
             model += "\n\n"
             model += decodeFunction(accessControl: accessControl).indentLines(1)
@@ -93,20 +89,17 @@ struct Model {
                 encodeIfPresent = ""
             }
 
-            let defaultValue: String
-            if let defaultValueValue = $0.defaultValue {
-                defaultValue = " ?? \(defaultValueValue)"
-            } else {
-                defaultValue = ""
-            }
-
             return "try container.encode\(encodeIfPresent)(\(variableName), forKey: \"\(codingKey)\")"
         }.joined(separator: "\n")
 
-        let functionBody = """
+        var functionBody = ""
+
+        if !encodeFields.isEmpty {
+        functionBody = """
 var container = encoder.container(keyedBy: StringCodingKey.self)
 \(encodeFields)
 """
+        }
 
         return """
 \(accessControl.rawValue) func encode(to encoder: Encoder) throws {
@@ -148,10 +141,13 @@ var container = encoder.container(keyedBy: StringCodingKey.self)
             }
         }.joined(separator: "\n")
 
-        let functionBody = """
+        var functionBody = ""
+        if !decodeFields.isEmpty {
+            functionBody = """
 let container = try decoder.container(keyedBy: StringCodingKey.self)
 \(decodeFields)
 """
+}
 
         return """
 \(accessControl.rawValue) init(from decoder: Decoder) throws {
