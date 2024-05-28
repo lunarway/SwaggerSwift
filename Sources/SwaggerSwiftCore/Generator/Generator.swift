@@ -194,7 +194,7 @@ public struct Generator {
         log("Downloading Swagger at: \(url.absoluteString)")
         let (data, response) = try await fetchSwagger(request)
         if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
-            if branch != "master" || branch != "main" {
+            if branch != "master" && branch != "main" {
                 log(" ⚠️ \(serviceName): Failed to download with custom branch ´\(branch)´ - Trying master instead.", error: true)
                 return try await download(
                     githubToken: githubToken,
