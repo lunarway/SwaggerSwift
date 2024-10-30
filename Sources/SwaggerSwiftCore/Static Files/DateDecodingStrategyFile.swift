@@ -1,54 +1,25 @@
 let dateDecodingStrategy = """
 import Foundation
 
-// first try decoding date time format (yyyy-MM-ddTHH:mm:ss.fffZ)
-private let dateFractionalTimeFormatter: ISO8601DateFormatter = {
-    let formatter = ISO8601DateFormatter()
-    formatter.formatOptions = [
-        .withFullDate,
-        .withDashSeparatorInDate,
-        .withTime,
-        .withColonSeparatorInTime,
-        .withFractionalSeconds
-    ]
-    return formatter
-}()
-
-// then try decoding date time format (yyyy-MM-ddTHH:mm:ssZ)
-private let dateTimeFormatter: ISO8601DateFormatter = {
-    let formatter = ISO8601DateFormatter()
-    formatter.formatOptions = [
-        .withFullDate,
-        .withDashSeparatorInDate,
-        .withTime,
-        .withColonSeparatorInTime
-    ]
-    return formatter
-}()
-
-// then try decoding date only format (yyyy-MM-dd)
-private let dateFormatter: ISO8601DateFormatter = {
-    let formatter = ISO8601DateFormatter()
-    formatter.formatOptions = [
-        .withFullDate,
-        .withDashSeparatorInDate
-    ]
-    return formatter
-}()
-
-@Sendable <ACCESSCONTROL> func dateDecodingStrategy(_ decoder: Decoder) throws -> Date {
+@Sendable internal func dateDecodingStrategy(_ decoder: Decoder) throws -> Date {
     let container = try decoder.singleValueContainer()
     let stringValue = try container.decode(String.self)
 
-    if let date = dateFractionalTimeFormatter.date(from: stringValue) {
+    // first try decoding date time format (yyyy-MM-ddTHH:mm:ss.fffZ)
+    if let date = try? Date(
+        stringValue,
+        strategy: .iso8601.year().month().day().dateSeparator(.dash).time(includingFractionalSeconds: true)
+    ) {
         return date
     }
 
-    if let date = dateTimeFormatter.date(from: stringValue) {
+    // then try decoding date time format (yyyy-MM-ddTHH:mm:ssZ)
+    if let date = try? Date(stringValue, strategy: .iso8601) {
         return date
     }
 
-    if let date = dateFormatter.date(from: stringValue) {
+    // then try decoding date only format (yyyy-MM-dd)
+    if let date = try? Date(stringValue, strategy: .iso8601.year().month().day().dateSeparator(.dash)) {
         return date
     }
 
