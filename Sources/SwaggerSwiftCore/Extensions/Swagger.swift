@@ -1,6 +1,10 @@
 import Foundation
 import SwaggerSwiftML
 
+struct NotFound: Error {
+    let reference: String
+}
+
 extension Swagger {
     /// The name of the service the Swagger file exposes
     var serviceName: String {
@@ -10,7 +14,7 @@ extension Swagger {
             .joined()
     }
 
-    func findParameter(node: Node<Parameter>) -> Parameter {
+    func findParameter(node: Node<Parameter>) throws -> Parameter {
         switch node {
         case .reference(let reference):
             for (key, value) in self.parameters ?? [:] {
@@ -20,13 +24,13 @@ extension Swagger {
                 }
             }
 
-            fatalError("Failed to find parameter named: \(reference)")
+            throw NotFound(reference: reference)
         case .node(let node):
             return node
         }
     }
 
-    func findSchema(reference: String) -> Schema? {
+    func findSchema(reference: String) throws -> Schema {
         for (key, value) in self.definitions ?? [:] {
             let searchName = "#/definitions/\(key)"
             if reference == searchName {
@@ -39,13 +43,13 @@ extension Swagger {
             if reference == searchName, let schemaNode = value.schema {
                 switch schemaNode {
                 case .reference(let reference):
-                    return findSchema(reference: reference)
+                    return try findSchema(reference: reference)
                 case .node(let schema):
                     return schema
                 }
             }
         }
 
-        return nil
+        throw NotFound(reference: reference)
     }
 }

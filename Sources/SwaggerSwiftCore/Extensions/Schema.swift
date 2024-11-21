@@ -34,7 +34,7 @@ extension Schema {
         case .boolean(let defaultValue):
             return .boolean(defaultValue: defaultValue)
         case .array:
-            return .array(typeName: .object(typeName: name))
+            return .array(type: .object(typeName: name))
         case .object:
             return .object(typeName: name)
         case .freeform:

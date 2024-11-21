@@ -23,7 +23,7 @@ public struct ModelTypeResolver {
     ///   - namespace: the namespace of any inline type
     ///   - swagger: the swagger spec
     /// - Returns:the resolved models
-    func resolve(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, namespace: String, swagger: Swagger) -> ResolvedModel {
+    func resolve(forSchema schema: SwaggerSwiftML.Schema, typeNamePrefix: String, namespace: String, swagger: Swagger) throws -> ResolvedModel {
         switch schema.type {
         case .string(let format, let enumValues, _, _, _, let defaultValue):
             let type = StringResolver.resolve(format: format,
@@ -56,15 +56,15 @@ public struct ModelTypeResolver {
             let type = BooleanResolver.resolve(with: defaultValue)
             return .init(type)
         case .array(let items, _, _, _, _):
-            let (type, inlineModels) = typeOfItems(schema: schema,
+            let (type, inlineModels) = try typeOfItems(schema: schema,
                                                    items: items,
                                                    typeNamePrefix: "\(typeNamePrefix)Item",
                                                    namespace: namespace,
                                                    swagger: swagger)
 
-            return .init(.array(typeName: type), inlineModels)
+            return .init(.array(type: type), inlineModels)
         case .object(let properties, let allOf):
-            let resolvedType = objectModelFactory.make(properties: properties,
+            let resolvedType = try objectModelFactory.make(properties: properties,
                                                        requiredProperties: [],
                                                        allOf: allOf,
                                                        swagger: swagger,
@@ -78,13 +78,10 @@ public struct ModelTypeResolver {
             case .any:
                 return .init(.object(typeName: "[String: AdditionalProperty]"))
             case .reference(let reference):
-                guard let modelReference = ModelReference(rawValue: reference) else {
-                    return .init(.void)
-                }
-
+                let modelReference = try ModelReference(rawValue: reference)
                 return .init(.object(typeName: "[String: " + modelReference.typeName + "]"))
             case .schema(let schema):
-                let resolvedType = self.resolve(forSchema: schema,
+                let resolvedType = try self.resolve(forSchema: schema,
                                                 typeNamePrefix: typeNamePrefix,
                                                 namespace: namespace,
                                                 swagger: swagger)
@@ -98,24 +95,22 @@ public struct ModelTypeResolver {
         }
     }
 
-    private func typeOfItems(schema: Schema, items: Node<Items>, typeNamePrefix: String, namespace: String, swagger: Swagger) -> (TypeType, [ModelDefinition]) {
+    private func typeOfItems(schema: Schema, items: Node<Items>, typeNamePrefix: String, namespace: String, swagger: Swagger) throws -> (TypeType, [ModelDefinition]) {
         switch items {
         case .reference(let reference):
-            guard let schema = swagger.findSchema(reference: reference) else {
-                log("[\(swagger.serviceName)] Could not resolve reference: \(reference) - are you sure it exists?", error: true)
-                return (.void, [])
-            }
+            let schema = try swagger.findSchema(reference: reference)
 
             switch schema.type {
             case .object:
-                if let typeName = ModelReference(rawValue: reference)?.typeName {
-                    return (.object(typeName: swagger.serviceName + "." + typeName), [])
-                } else {
-                    log("[\(swagger.serviceName)] Invalid reference found: \(reference)", error: true)
-                    return (.void, [])
-                }
+                let typeName = try ModelReference(rawValue: reference).typeName
+                return (.object(typeName: swagger.serviceName + "." + typeName), [])
             case .string:
-                let resolved = resolve(forSchema: schema, typeNamePrefix: typeNamePrefix, namespace: namespace, swagger: swagger)
+                let resolved = try resolve(
+                    forSchema: schema,
+                    typeNamePrefix: typeNamePrefix,
+                    namespace: namespace,
+                    swagger: swagger
+                )
                 return (resolved.propertyType, resolved.inlineModelDefinitions)
             default:
                 log("[\(swagger.serviceName)] Unsupported schema type: \(schema.type)")
@@ -177,13 +172,13 @@ public struct ModelTypeResolver {
             case .boolean:
                 return (.boolean(defaultValue: nil), [])
             case .array(let items, collectionFormat: _, maxItems: _, minItems: _, uniqueItems: _):
-                return typeOfItems(schema: schema,
+                return try typeOfItems(schema: schema,
                                    items: Node.node(items),
                                    typeNamePrefix: typeNamePrefix,
                                    namespace: namespace,
                                    swagger: swagger)
             case .object(let required, let properties, let allOf):
-                return objectModelFactory.make(
+                return try objectModelFactory.make(
                     properties: properties,
                     requiredProperties: required,
                     allOf: allOf,

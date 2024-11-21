@@ -7,8 +7,8 @@ struct APIFactory {
 
     func generate(for swagger: Swagger, withSwaggerFile swaggerFile: SwaggerFile) throws -> (APIDefinition, [ModelDefinition]) {
         let (apiFunctions, inlineModelDefinitions) = try getApiList(fromSwagger: swagger, swaggerFile: swaggerFile)
-        let modelDefinitions = getModelDefinitions(fromSwagger: swagger)
-        let responseModelDefinitions = getResponseModelDefinitions(fromSwagger: swagger)
+        let modelDefinitions = try getModelDefinitions(fromSwagger: swagger)
+        let responseModelDefinitions = try getResponseModelDefinitions(fromSwagger: swagger)
 
         // Model Definitions can be a lot of things - when resolving the inheritance tree for
         // the model definitions we just need the actual models, and a model can only inherit
@@ -63,9 +63,7 @@ struct APIFactory {
         var apis = [APIRequest]()
         var modelDefinitions = [ModelDefinition]()
 
-        let parameters: [Parameter] = (path.parameters ?? []).map {
-            return swagger.findParameter(node: $0)
-        }
+        let parameters: [Parameter] = try (path.parameters ?? []).map(swagger.findParameter(node:))
 
         for httpMethod in HTTPMethod.allCases {
             guard let operation = path.operationForMethod(httpMethod)
@@ -90,14 +88,14 @@ struct APIFactory {
     /// Get the global set of model definitions. This is the normal specified list, and not the inline definitions that are defined in e.g. path definitions and other places
     /// - Parameter swagger: the swagger
     /// - Returns: model definitions
-    private func getModelDefinitions(fromSwagger swagger: Swagger) -> [ModelDefinition] {
+    private func getModelDefinitions(fromSwagger swagger: Swagger) throws -> [ModelDefinition] {
         guard let definitions = swagger.definitions else {
             return []
         }
 
         var allDefinitions = [ModelDefinition]()
         for (typeName, schema) in definitions {
-            let resolved = modelTypeResolver.resolve(forSchema: schema,
+            let resolved = try modelTypeResolver.resolve(forSchema: schema,
                                                      typeNamePrefix: typeName,
                                                      namespace: swagger.serviceName,
                                                      swagger: swagger)
@@ -139,7 +137,7 @@ struct APIFactory {
     /// Get the global set of response model definitions
     /// - Parameter swagger: the swagger
     /// - Returns: the set of global response model definitions
-    private func getResponseModelDefinitions(fromSwagger swagger: Swagger) -> [ModelDefinition] {
+    private func getResponseModelDefinitions(fromSwagger swagger: Swagger) throws -> [ModelDefinition] {
         var modelDefinitions = [ModelDefinition]()
         for (typeName, response) in swagger.responses ?? [:] {
             guard let schema = response.schema else {
@@ -161,7 +159,7 @@ struct APIFactory {
             case .reference(let reference):
                 if let (_, typeSchema) = swagger.definitions?.first(where: { reference == "#/definitions/\($0.key)" }) {
                     // we dont need the type part as it just represents the primary model definition returned from this function
-                    let resolvedModel = modelTypeResolver.resolve(forSchema: typeSchema,
+                    let resolvedModel = try modelTypeResolver.resolve(forSchema: typeSchema,
                                                                   typeNamePrefix: typeName,
                                                                   namespace: swagger.serviceName,
                                                                   swagger: swagger)
@@ -172,7 +170,7 @@ struct APIFactory {
                 }
             case .node(let schema):
                 // we dont need the type part as it just represents the primary model definition returned from this function
-                let resolvedModel = modelTypeResolver.resolve(forSchema: schema,
+                let resolvedModel = try modelTypeResolver.resolve(forSchema: schema,
                                                               typeNamePrefix: typeName,
                                                               namespace: swagger.serviceName,
                                                               swagger: swagger)
