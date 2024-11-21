@@ -217,12 +217,14 @@ public struct Generator {
     }
 
     private func downloadSwagger(githubToken: String, organisation: String, serviceName: String, branch: String, swaggerPath: String, urlSession: URLSession = .shared) async throws -> Swagger {
-        let data = try await download(githubToken: githubToken,
-                                      organisation: organisation,
-                                      serviceName: serviceName,
-                                      branch: branch,
-                                      swaggerPath: swaggerPath,
-                                      urlSession: urlSession)
+        let data = try await download(
+            githubToken: githubToken,
+            organisation: organisation,
+            serviceName: serviceName,
+            branch: branch,
+            swaggerPath: swaggerPath,
+            urlSession: urlSession
+        )
 
         guard let stringValue = String(data: data, encoding: .utf8) else {
             throw FetchSwaggerError.invalidResponse(serviceName: serviceName)

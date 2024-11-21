@@ -59,22 +59,36 @@ extension ParameterType {
             }
         case .boolean:
             return (.boolean(defaultValue: nil), [])
-        case .array(let items, let collectionFormat, maxItems: _, minItems: _, uniqueItems: _):
-            let (type, embedddedDefinitions) = try typeOfItems(
-                items.type,
-                collectionFormat: collectionFormat,
-                typePrefix: typePrefix,
-                swagger: swagger
-            )
+        case .array(let items, let collectionFormat, _, _, _):
+            switch items {
+            case .node(let items):
+                let (type, embedddedDefinitions) = try typeOfItems(
+                    items.type,
+                    collectionFormat: collectionFormat,
+                    typePrefix: typePrefix,
+                    swagger: swagger
+                )
 
-            return (.array(typeName: type), embedddedDefinitions)
+                return (.array(type: type), embedddedDefinitions)
+            case .reference(let reference):
+                let schema = try swagger.findSchema(reference: reference)
+                let modelDefinition = try ModelReference(rawValue: reference)
+                let typeType = schema.type(named: modelDefinition.typeName)
+                return (.array(type: typeType), [])
+            }
+
         case .file:
             return (.object(typeName: "FormData"), [])
         }
     }
 }
 
-private func typeOfItems(_ itemsType: ItemsType, collectionFormat: CollectionFormat, typePrefix: String, swagger: Swagger) throws -> (TypeType, [ModelDefinition]) {
+private func typeOfItems(
+    _ itemsType: ItemsType,
+    collectionFormat: CollectionFormat,
+    typePrefix: String,
+    swagger: Swagger
+) throws -> (TypeType, [ModelDefinition]) {
     switch itemsType {
     case .string(format: let format, let enumValues, _, _, _):
         let modelDefinitions: [ModelDefinition]

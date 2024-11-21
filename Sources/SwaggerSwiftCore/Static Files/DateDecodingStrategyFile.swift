@@ -1,7 +1,7 @@
 let dateDecodingStrategy = """
 import Foundation
 
-@Sendable internal func dateDecodingStrategy(_ decoder: Decoder) throws -> Date {
+@Sendable package func dateDecodingStrategy(_ decoder: Decoder) throws -> Date {
     let container = try decoder.singleValueContainer()
     let stringValue = try container.decode(String.self)
 

@@ -9,7 +9,7 @@ indirect enum TypeType {
     case float(defaultValue: Float?)
     case boolean(defaultValue: Bool?)
     case int64(defaultValue: Int64?)
-    case array(typeName: TypeType)
+    case array(type: TypeType)
     case object(typeName: String)
     case enumeration(typeName: String)
     case date
