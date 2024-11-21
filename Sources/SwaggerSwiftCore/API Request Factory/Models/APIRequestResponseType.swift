@@ -36,17 +36,16 @@ enum APIRequestResponseType {
         }
     }
 
-    func print(apiName: String) -> String {
+    func print(apiName: String, errorType: String) -> String {
         let failed = !statusCode.isSuccess
-        let swiftResult = failed ? "failure" : "success"
 
         let resultType: (String, Bool) -> String = { resultType, enumBased -> String in
             let resultBlock = resultType.count == 0 ? "" : "(\(resultType))"
             if failed {
                 if enumBased {
-                    return ".backendError(error: .\(statusCode.name)\(resultBlock))"
+                    return "\(errorType).backendError(error: .\(statusCode.name)\(resultBlock))"
                 } else {
-                    return ".backendError(error: \(resultType))"
+                    return "\(errorType).backendError(error: \(resultType))"
                 }
             } else {
                 return enumBased ? ".\(statusCode.name)\(resultBlock)" : resultType
@@ -58,27 +57,28 @@ enum APIRequestResponseType {
             return """
 case \(statusCode.rawValue):
     let result = String(data: data, encoding: .utf8) ?? ""
-    return .\(swiftResult)(\(resultType("result", resultIsEnum)))
+    \(failed ? "throw" : "return") \(resultType("result", resultIsEnum))
 """
         case .object(let statusCode, let resultIsEnum, let responseType):
             if responseType == "Data" {
                 return """
     case \(statusCode.rawValue):
-        return .\(swiftResult)(data)
+        \(failed ? "throw" : "return") data
     """
             } else {
                 return """
 case \(statusCode.rawValue):
     do {
         let result = try decoder.decode(\(responseType.modelNamed).self, from: data)
-
-        return .\(swiftResult)(\(resultType("result", resultIsEnum)))
+        \(failed ? "throw" : "return") \(resultType("result", resultIsEnum))
     } catch let error {
-        interceptor?.networkFailedToParseObject(urlRequest: request,
-                                                urlResponse: response,
-                                                data: data,
-                                                error: error)
-        return .failure(.requestFailed(error: error))
+        interceptor?.networkFailedToParseObject(
+            urlRequest: request,
+            urlResponse: response,
+            data: data,
+            error: error
+        )
+        throw \(errorType).requestFailed(error: error)
     }
 """
             }
@@ -86,12 +86,12 @@ case \(statusCode.rawValue):
             if resultIsEnum {
                 return """
 case \(statusCode.rawValue):
-    return .\(swiftResult)(\(resultType("", resultIsEnum)))
+    \(failed ? "throw" : "return") \(resultType("", resultIsEnum))
 """
             } else {
                 return """
 case \(statusCode.rawValue):
-    return .\(swiftResult)(\(resultType("()", resultIsEnum)))
+    \(failed ? "throw" : "return") \(resultType("()", resultIsEnum))
 """
             }
         case .int(let statusCode, _):
@@ -107,14 +107,14 @@ case \(statusCode.rawValue):
                             ]
         )
 
-        return .failure(.requestFailed(error: error))
+        throw \(errorType).requestFailed(error: error)
     }
 """
         case .double(let statusCode, _):
             return """
 case \(statusCode.rawValue):
     if let stringValue = String(data: data, encoding: .utf8), let value = Double(stringValue) {
-        return .success(value)
+        return value
     } else {
         let error = NSError(domain: "\(apiName)",
                             code: 0,
@@ -123,14 +123,14 @@ case \(statusCode.rawValue):
                             ]
         )
 
-        return .failure(.requestFailed(error: error))
+        throw \(errorType).requestFailed(error: error)
     }
 """
         case .float(let statusCode, _):
             return """
 case \(statusCode.rawValue):
     if let stringValue = String(data: data, encoding: .utf8), let value = Float(stringValue) {
-        return .success(value)
+        return value
     } else {
         let error = NSError(domain: "\(apiName)",
                             code: 0,
@@ -139,14 +139,14 @@ case \(statusCode.rawValue):
                             ]
         )
 
-        return .failure(.requestFailed(error: error))
+        throw \(errorType).requestFailed(error: error)
     }
 """
         case .boolean(let statusCode, _):
             return """
 case \(statusCode.rawValue):
     if let stringValue = String(data: data, encoding: .utf8), let value = Bool(stringValue) {
-        return .success(value)
+        return value
     } else {
         let error = NSError(domain: "\(apiName)",
                             code: 0,
@@ -155,14 +155,14 @@ case \(statusCode.rawValue):
                             ]
         )
 
-        return .failure(.requestFailed(error: error))
+        throw \(errorType).requestFailed(error: error)
     }
 """
         case .int64(let statusCode, _):
             return """
 case \(statusCode.rawValue):
     if let stringValue = String(data: data, encoding: .utf8), let value = Int64(stringValue) {
-        return .success(value)
+        return value
     } else {
         let error = NSError(domain: "\(apiName)",
                             code: 0,
@@ -171,7 +171,7 @@ case \(statusCode.rawValue):
                             ]
         )
 
-        return .failure(.requestFailed(error: error))
+        throw \(errorType).requestFailed(error: error)
     }
 """
         case .array(let statusCode, let resultIsEnum, let innerType):
@@ -179,10 +179,9 @@ case \(statusCode.rawValue):
 case \(statusCode.rawValue):
     do {
         let result = try decoder.decode([\(innerType)].self, from: data)
-
-        return .\(swiftResult)(\(resultType("result", resultIsEnum)))
+        \(failed ? "throw" : "return") \(resultType("result", resultIsEnum))
     } catch let error {
-        return .failure(.requestFailed(error: error))
+        throw \(errorType).requestFailed(error: error))
     }
 """
         case .enumeration(let statusCode, let resultIsEnum, let responseType):
@@ -197,7 +196,7 @@ case \(statusCode.rawValue):
                         .trimmingCharacters(in: CharacterSet(charactersIn: "\\""))
 
                     let enumValue = \(responseType)(rawValue: cleanedStringValue)
-                    return .\(swiftResult)(\(resultType("enumValue", resultIsEnum)))
+                    \(failed ? "throw" : "return") \(resultType("enumValue", resultIsEnum))
                 } else {
                     let error = NSError(domain: "\(apiName)",
                                         code: 0,
@@ -206,7 +205,7 @@ case \(statusCode.rawValue):
                                         ]
                     )
 
-                    return .failure(.requestFailed(error: error))
+                    throw \(errorType).requestFailed(error: error)
                 }
             """
         }
