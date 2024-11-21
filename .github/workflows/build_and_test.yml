@@ -7,23 +7,23 @@ on:
 
 jobs:
   build:
-    runs-on: macos-13
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Set Xcode
-        run: xcodes select 15.2
+        run: xcodes select 16.1
 
       - name: Build
         run: swift build -v
 
   test:
-    runs-on: macos-13
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Set Xcode
-        run: xcodes select 15.2
+        run: xcodes select 16.1
 
       - name: Run tests
         run: swift test -v --parallel --xunit-output test.xml
