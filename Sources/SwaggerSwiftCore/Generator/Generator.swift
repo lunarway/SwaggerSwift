@@ -46,34 +46,24 @@ public struct Generator {
 
         typealias APISpec = (APIDefinition, [ModelDefinition])
 
-        let apiSpecs: [APISpec] = await withThrowingTaskGroup(of: APISpec?.self) { group in
-            var apiSpecs = [APISpec]()
+        var apiSpecs = [APISpec]()
 
-            for service in services {
-                group.addTask {
-                    async let swagger = try await downloadSwagger(
-                        githubToken: githubToken,
-                        organisation: swaggerFile.organisation,
-                        serviceName: service.key,
-                        branch: service.value.branch ?? "master",
-                        swaggerPath: service.value.path ?? swaggerFile.path
-                    )
-
-                    let apiSpec = try await APIFactory(
-                        apiRequestFactory: apiRequestFactory,
-                        modelTypeResolver: modelTypeResolver
-                    ).generate(for: swagger, withSwaggerFile: swaggerFile)
-
-                    return apiSpec
-                }
-            }
-
+        for service in services {
             do {
-                for try await spec in group {
-                    if let spec = spec {
-                        apiSpecs.append(spec)
-                    }
-                }
+                async let swagger = try await downloadSwagger(
+                    githubToken: githubToken,
+                    organisation: swaggerFile.organisation,
+                    serviceName: service.key,
+                    branch: service.value.branch ?? "master",
+                    swaggerPath: service.value.path ?? swaggerFile.path
+                )
+
+                let apiSpec = try await APIFactory(
+                    apiRequestFactory: apiRequestFactory,
+                    modelTypeResolver: modelTypeResolver
+                ).generate(for: swagger, withSwaggerFile: swaggerFile)
+
+                apiSpecs.append(apiSpec)
             } catch {
                 if let error = error as? FetchSwaggerError {
                     error.logError()
@@ -88,8 +78,6 @@ public struct Generator {
                     log("Failed to download Swagger: \(error.localizedDescription)", error: true)
                 }
             }
-
-            return apiSpecs
         }
 
         let destination = URL(fileURLWithPath: swaggerFilePath).deletingLastPathComponent().appendingPathComponent(swaggerFile.destination).path
