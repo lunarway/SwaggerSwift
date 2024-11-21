@@ -19,9 +19,7 @@ public struct RequestParameterFactory {
     ///   - swaggerFile: the swagger file
     /// - Returns: the list of all parameters to the API request
     func make(forOperation operation: SwaggerSwiftML.Operation, functionName: String, responseTypes: [ResponseTypeMap], pathParameters: [Parameter], swagger: Swagger, swaggerFile: SwaggerFile) throws -> ([FunctionParameter], [ModelDefinition], ReturnType) {
-        let parameters: [Parameter] = (operation.parameters ?? []).map {
-            swagger.findParameter(node: $0)
-        } + pathParameters
+        let parameters: [Parameter] = try (operation.parameters ?? []).map(swagger.findParameter(node:)) + pathParameters
 
         var resolvedParameters = [FunctionParameter]()
         var resolvedModelDefinitions = [ModelDefinition]()
@@ -60,7 +58,7 @@ public struct RequestParameterFactory {
         resolvedModelDefinitions.append(contentsOf: queryModels)
 
         // Body
-        if let (bodyParameter, bodyModels) = resolveBodyParameters(parameters: parameters,
+        if let (bodyParameter, bodyModels) = try resolveBodyParameters(parameters: parameters,
                                                                    typePrefix: typeName,
                                                                    namespace: swagger.serviceName,
                                                                    swagger: swagger) {
@@ -279,7 +277,7 @@ public struct RequestParameterFactory {
         return (functionParameters, modelDefinitions)
     }
 
-    private func resolveBodyParameters(parameters: [SwaggerSwiftML.Parameter], typePrefix: String, namespace: String, swagger: Swagger) -> (FunctionParameter, [ModelDefinition])? {
+    private func resolveBodyParameters(parameters: [SwaggerSwiftML.Parameter], typePrefix: String, namespace: String, swagger: Swagger) throws -> (FunctionParameter, [ModelDefinition])? {
         var schemaNode: Node<Schema>?
         var parameter: Parameter?
         for param in parameters {
@@ -296,7 +294,7 @@ public struct RequestParameterFactory {
 
         switch schemaNode {
         case .node(let schema):
-            let resolvedType = modelTypeResolver.resolve(forSchema: schema,
+            let resolvedType = try modelTypeResolver.resolve(forSchema: schema,
                                                          typeNamePrefix: typePrefix,
                                                          namespace: namespace,
                                                          swagger: swagger)
@@ -310,13 +308,8 @@ public struct RequestParameterFactory {
 
             return (param, resolvedType.inlineModelDefinitions)
         case .reference(let reference):
-            guard let schema = swagger.findSchema(reference: reference) else {
-                return nil
-            }
-
-            guard let modelDefinition = ModelReference(rawValue: reference) else {
-                return nil
-            }
+            let schema = try swagger.findSchema(reference: reference)
+            let modelDefinition = try ModelReference(rawValue: reference)
 
             let type = schema.type(named: modelDefinition.typeName)
 

@@ -2,9 +2,9 @@ enum ModelReference {
     case responses(typeName: String)
     case definitions(typeName: String)
 
-    init?(rawValue: String) {
+    init(rawValue: String) throws {
         guard rawValue.hasPrefix("#/") else {
-            return nil
+            throw InvalidReference()
         }
 
         let reference = rawValue
@@ -12,7 +12,7 @@ enum ModelReference {
             .split(separator: "/")
 
         guard reference.count == 2 else {
-            return nil
+            throw InvalidReference()
         }
 
         let type = String(reference[0])
@@ -26,7 +26,7 @@ enum ModelReference {
         case "responses":
             self = .responses(typeName: typeName)
         default:
-            return nil
+            throw InvalidReference()
         }
     }
 
@@ -37,3 +37,5 @@ enum ModelReference {
         }
     }
 }
+
+struct InvalidReference: Error { }

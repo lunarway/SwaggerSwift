@@ -26,7 +26,7 @@ public struct APIRequestFactory {
 
         var inlineResponseModels = [ModelDefinition]()
 
-        let responses: [Response] = operation.responses.compactMap {
+        let responses: [Response] = try operation.responses.compactMap {
             let statusCodeString = $0.key
             guard let statusCode = HTTPStatusCode(rawValue: statusCodeString) else {
                 fatalError("Unknown status code received: \(statusCodeString)")
@@ -34,12 +34,12 @@ public struct APIRequestFactory {
 
             guard let requestResponse = $0.value else { return nil }
 
-            if let (responseType, embeddedDefinitions) = parse(request: requestResponse,
-                                                               httpMethod: httpMethod,
-                                                               servicePath: servicePath,
-                                                               statusCode: statusCodeString,
-                                                               swagger: swagger,
-                                                               modelTypeResolver: modelTypeResolver) {
+            if let (responseType, embeddedDefinitions) = try parse(request: requestResponse,
+                                                                   httpMethod: httpMethod,
+                                                                   servicePath: servicePath,
+                                                                   statusCode: statusCodeString,
+                                                                   swagger: swagger,
+                                                                   modelTypeResolver: modelTypeResolver) {
                 return .init(statusCode: statusCode,
                              responseType: responseType,
                              inlineModels: embeddedDefinitions)
@@ -64,8 +64,8 @@ public struct APIRequestFactory {
 
         inlineResponseModels.append(contentsOf: inlineModels)
 
-        let allParameters: [Parameter] = (operation.parameters ?? []).map {
-            swagger.findParameter(node: $0)
+        let allParameters: [Parameter] = try (operation.parameters ?? []).map {
+            try swagger.findParameter(node: $0)
         } + pathParameters
 
         let requestSpecificHeaders = allParameters
@@ -90,7 +90,7 @@ public struct APIRequestFactory {
 
         let headers = requestSpecificHeaders
 
-        let queryItems = resolveQueries(parameters: allParameters, swagger: swagger)
+        let queryItems = try resolveQueries(parameters: allParameters, swagger: swagger)
 
         let apiResponseTypes = apiResponseTypeFactory.make(
             forResponses: responses,
@@ -132,7 +132,7 @@ public struct APIRequestFactory {
     ///   - parameters: the total set of parameters available to the api request
     ///   - swagger: the swagger spec
     /// - Returns: the list of query elements that should be set in the request
-    private func resolveQueries(parameters: [Parameter], swagger: Swagger) -> [QueryElement] {
+    private func resolveQueries(parameters: [Parameter], swagger: Swagger) throws -> [QueryElement] {
         let queryParameters = parameters.filter {
             if case ParameterLocation.query = $0.location {
                 return true
@@ -141,51 +141,56 @@ public struct APIRequestFactory {
             }
         }
 
-        let queries: [QueryElement] = queryParameters.compactMap { parameter in
-            switch parameter.location {
-            case .query(let type, _):
-                switch type {
-                case .string(let format, let enumValues, _, _, _):
-                    let isEnum = (enumValues?.count ?? 0) > 0
-                    let valueType: QueryElement.ValueType = isEnum ? .enum : .default
+        return try queryParameters.map { try queryParameterToQueryElement(parameter: $0, swagger: swagger) }
+    }
 
-                    if let format = format {
-                        switch format {
-                        case .int32: fallthrough
-                        case .long: fallthrough
-                        case .float: fallthrough
-                        case .double: fallthrough
-                        case .string: fallthrough
-                        case .byte: fallthrough
-                        case .binary: fallthrough
-                        case .boolean: fallthrough
-                        case .password: fallthrough
-                        case .email: fallthrough
-                        case .unsupported:
-                            return QueryElement(
-                                fieldName: parameter.name,
-                                fieldValue: parameter.name.camelized,
-                                isOptional: parameter.required == false,
-                                valueType: valueType
-                            )
-                        case .date: fallthrough
-                        case .dateTime:
-                            return QueryElement(
-                                fieldName: parameter.name,
-                                fieldValue: parameter.name.camelized,
-                                isOptional: parameter.required == false,
-                                valueType: .date
-                            )
-                        }
-                    } else {
+    private func queryParameterToQueryElement(parameter: Parameter, swagger: Swagger) throws -> QueryElement {
+        switch parameter.location {
+        case .query(let type, _):
+            switch type {
+            case .string(let format, let enumValues, _, _, _):
+                let isEnum = (enumValues?.count ?? 0) > 0
+                let valueType: QueryElement.ValueType = isEnum ? .enum : .default
+
+                if let format = format {
+                    switch format {
+                    case .int32: fallthrough
+                    case .long: fallthrough
+                    case .float: fallthrough
+                    case .double: fallthrough
+                    case .string: fallthrough
+                    case .byte: fallthrough
+                    case .binary: fallthrough
+                    case .boolean: fallthrough
+                    case .password: fallthrough
+                    case .email: fallthrough
+                    case .unsupported:
                         return QueryElement(
                             fieldName: parameter.name,
                             fieldValue: parameter.name.camelized,
                             isOptional: parameter.required == false,
                             valueType: valueType
                         )
+                    case .date: fallthrough
+                    case .dateTime:
+                        return QueryElement(
+                            fieldName: parameter.name,
+                            fieldValue: parameter.name.camelized,
+                            isOptional: parameter.required == false,
+                            valueType: .date
+                        )
                     }
-                case .array(let items, let collectionFormat, maxItems: _, minItems: _, uniqueItems: _):
+                } else {
+                    return QueryElement(
+                        fieldName: parameter.name,
+                        fieldValue: parameter.name.camelized,
+                        isOptional: parameter.required == false,
+                        valueType: valueType
+                    )
+                }
+            case .array(let items, let collectionFormat, _, _, _):
+                switch items {
+                case .node(let items):
                     if case .string(_, let enumValues, _, _, _) = items.type {
                         if enumValues != nil {
                             return QueryElement(
@@ -196,30 +201,48 @@ public struct APIRequestFactory {
                             )
                         }
                     }
-                    
+
                     return QueryElement(
                         fieldName: parameter.name,
                         fieldValue: parameter.name.camelized,
                         isOptional: parameter.required == false,
                         valueType: .array(isEnum: false, collectionFormat: collectionFormat)
                     )
-                case .number: fallthrough
-                case .integer: fallthrough
-                case .boolean: fallthrough
-                case .file:
+                case .reference(let reference):
+                    let schema = try swagger.findSchema(reference: reference)
+
+                    if case .string(_, let enumValues, _, _, _, _) = schema.type {
+                        if enumValues != nil {
+                            return QueryElement(
+                                fieldName: parameter.name,
+                                fieldValue: parameter.name.camelized,
+                                isOptional: parameter.required == false,
+                                valueType: .array(isEnum: true, collectionFormat: collectionFormat)
+                            )
+                        }
+                    }
+
                     return QueryElement(
                         fieldName: parameter.name,
                         fieldValue: parameter.name.camelized,
                         isOptional: parameter.required == false,
-                        valueType: .default
+                        valueType: .array(isEnum: false, collectionFormat: collectionFormat)
                     )
                 }
-            default:
-                fatalError("This should not happen")
+            case .number: fallthrough
+            case .integer: fallthrough
+            case .boolean: fallthrough
+            case .file:
+                return QueryElement(
+                    fieldName: parameter.name,
+                    fieldValue: parameter.name.camelized,
+                    isOptional: parameter.required == false,
+                    valueType: .default
+                )
             }
+        default:
+            fatalError("This should not happen")
         }
-
-        return queries
     }
 
     private func consumeMimeType(forOperation operation: SwaggerSwiftML.Operation, swagger: Swagger, httpMethod: String, servicePath: String) throws -> APIRequestConsumes {

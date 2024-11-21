@@ -1,6 +1,6 @@
 import SwaggerSwiftML
 
-func parse(request requestNode: Node<SwaggerSwiftML.Response>, httpMethod: HTTPMethod, servicePath: String, statusCode: Int, swagger: Swagger, modelTypeResolver: ModelTypeResolver) -> (TypeType, [ModelDefinition])? {
+func parse(request requestNode: Node<SwaggerSwiftML.Response>, httpMethod: HTTPMethod, servicePath: String, statusCode: Int, swagger: Swagger, modelTypeResolver: ModelTypeResolver) throws -> (TypeType, [ModelDefinition])? {
     let requestName = servicePath
         .replacingOccurrences(of: "{", with: "")
         .replacingOccurrences(of: "}", with: "")
@@ -16,10 +16,7 @@ func parse(request requestNode: Node<SwaggerSwiftML.Response>, httpMethod: HTTPM
     let request: SwaggerSwiftML.Response
     switch requestNode {
     case .reference(let reference):
-        guard let modelReference = ModelReference(rawValue: reference) else {
-            log("[\(swagger.serviceName) \(httpMethod) \(servicePath)]: Failed to parse reference: \(reference)")
-            return nil
-        }
+        let modelReference = try ModelReference(rawValue: reference)
 
         switch modelReference {
         case .definitions:
@@ -44,20 +41,14 @@ func parse(request requestNode: Node<SwaggerSwiftML.Response>, httpMethod: HTTPM
     if let schemaNode = request.schema {
         switch schemaNode {
         case .node(let schema):
-            let resolvedType = modelTypeResolver.resolve(forSchema: schema,
+            let resolvedType = try modelTypeResolver.resolve(forSchema: schema,
                                                          typeNamePrefix: prefix,
                                                          namespace: swagger.serviceName,
                                                          swagger: swagger)
             return (resolvedType.propertyType, resolvedType.inlineModelDefinitions)
         case .reference(let ref):
-            guard let schema = swagger.findSchema(reference: ref) else {
-                log("[\(swagger.serviceName) \(httpMethod) \(servicePath)] Failed to find definition named: \(ref)", error: true)
-                return nil
-            }
-
-            guard let modelReference = ModelReference(rawValue: ref) else {
-                return nil
-            }
+            let schema = try swagger.findSchema(reference: ref)
+            let modelReference = try ModelReference(rawValue: ref)
 
             let resolvedType = schema.type(named: modelReference.typeName)
 
