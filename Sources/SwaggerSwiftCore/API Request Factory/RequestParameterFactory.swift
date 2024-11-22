@@ -89,7 +89,8 @@ public struct RequestParameterFactory {
 
         let returnType = ReturnType(
             description: "The completion handler of the function returns as soon as the request completes",
-            typeName: .object(typeName: "Result<\(successTypeName), ServiceError<\(failureTypeName)>>")
+            successType: .object(typeName: successTypeName),
+            failureType: .object(typeName: "ServiceError<\(failureTypeName)>")
         )
 
         return (resolvedParameters, resolvedModelDefinitions, returnType)

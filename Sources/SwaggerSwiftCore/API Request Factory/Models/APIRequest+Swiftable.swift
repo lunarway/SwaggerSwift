@@ -19,10 +19,6 @@ extension APIRequest {
         }.joined(separator: ", ")
     }
 
-    private var functionReturnType: String {
-        returnType.typeName.toString(required: true)
-    }
-
     private func makeRequestFunction(serviceName: String?, swaggerFile: SwaggerFile) -> String {
         let servicePath = self.servicePath.split(separator: "/")
             .map {
@@ -155,11 +151,11 @@ if let \(($0.swiftyName)) = \(headersName).\($0.swiftyName) {
             .addNewlinesIfNonEmpty()
 
         let responseTypes = self.responseTypes
-            .map { $0.print(apiName: serviceName ?? "") }
+            .map { $0.print(apiName: serviceName ?? "", errorType: returnType.failureType.toString(required: true)) }
             .joined(separator: "\n")
 
         return """
-private func _\(functionName)(\(functionArguments)) async -> \(functionReturnType) {
+private func _\(functionName)(\(functionArguments)) async throws(\(returnType.failureType.toString(required: true))) -> \(returnType.successType.toString(required: true)) {
     let endpointUrl = baseUrlProvider().appendingPathComponent("\(servicePath)")
 
     \(queries.count > 0 ? "var" : "let") urlComponents = URLComponents(url: endpointUrl, resolvingAgainstBaseURL: true)!
@@ -175,20 +171,24 @@ private func _\(functionName)(\(functionArguments)) async -> \(functionReturnTyp
     do {
         (data, response) = try await urlSession().\(urlSessionMethodName)
     } catch {
-        return .failure(.requestFailed(error: error))
+        throw .requestFailed(error: error)
     }
 
     if let interceptor {
         do {
-            try await interceptor.networkDidPerformRequest(urlRequest: request, urlResponse: response, data: data, error: nil)
+            try await interceptor.networkDidPerformRequest(
+                urlRequest: request,
+                urlResponse: response,
+                data: data,
+                error: nil
+            )
         } catch {
-            return .failure(.requestFailed(error: error))
+            throw .requestFailed(error: error)
         }
     }
 
     guard let httpResponse = response as? HTTPURLResponse else {
-        let error = NSError(domain: "\(serviceName ?? "Generic")", code: 0, userInfo: [NSLocalizedDescriptionKey: "Returned response object wasnt a HTTP URL Response as expected, but was instead a \\(String(describing: response))"])
-        return .failure(.requestFailed(error: error))
+    fatalError("The response must be a URL response")
     }
 
     let decoder = JSONDecoder()
@@ -199,7 +199,7 @@ private func _\(functionName)(\(functionArguments)) async -> \(functionReturnTyp
     default:
         let result = String(data: data, encoding: .utf8) ?? ""
         let error = NSError(domain: "\(serviceName ?? "Generic")", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: result])
-        return .failure(.requestFailed(error: error))
+        throw .requestFailed(error: error)
     }
 }
 
@@ -238,10 +238,31 @@ private func _\(functionName)(\(functionArguments)) async -> \(functionReturnTyp
         body += "\n"
 
         body += """
-        \(accessControl) func \(functionName)(\(functionArguments)\(functionArguments.isEmpty ? "" : ", ")completion: @Sendable @escaping (\(functionReturnType)) -> Void = { _ in }) {
+        \(accessControl) func \(functionName)(\(functionArguments)\(functionArguments.isEmpty ? "" : ", ")completion: @Sendable @escaping (Result<\(returnType.successType.toString(required: true)), \(returnType.failureType.toString(required: true))>) -> Void = { _ in }) {
             _Concurrency.Task {
-                let result = await _\(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ", ")))
-                completion(result)
+                do {
+
+"""
+
+        if returnType.successType.toString(required: true) == "Void" {
+            body += """
+                    try await _\(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ", ")))
+                    completion(.success(()))
+
+        """
+        } else {
+            body += """
+                    let result = try await _\(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ", ")))
+                    completion(.success(result))
+
+        """
+        }
+
+        body += """
+                } catch let error {
+                    let error = error as! \(returnType.failureType.toString(required: true)) 
+                    completion(.failure(error))
+                }
             }
         }
 
@@ -256,11 +277,14 @@ private func _\(functionName)(\(functionArguments)) async -> \(functionReturnTyp
 
         body += "\n"
 
+        if returnType.successType.toString(required: true) != "Void" {
+            body += "@discardableResult\n"
+        }
+
         body +=
         """
-        @discardableResult
-        \(accessControl) func \(functionName)(\(functionArguments)) async -> \(functionReturnType) {
-            await _\(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ", ")))
+        \(accessControl) func \(functionName)(\(functionArguments)) async throws(\(returnType.failureType.toString(required: true))) -> \(returnType.successType.toString(required: true)) {
+            try await _\(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ", ")))
         }
 
         """

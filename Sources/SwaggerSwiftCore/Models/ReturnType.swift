@@ -2,5 +2,6 @@ import Foundation
 
 struct ReturnType {
     let description: String
-    let typeName: TypeType
+    let successType: TypeType
+    let failureType: TypeType
 }
