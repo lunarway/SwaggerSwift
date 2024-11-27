@@ -68,9 +68,9 @@ case \(statusCode.rawValue):
             } else {
                 return """
 case \(statusCode.rawValue):
+    let result: \(responseType.modelNamed)
     do {
-        let result = try decoder.decode(\(responseType.modelNamed).self, from: data)
-        \(failed ? "throw" : "return") \(resultType("result", resultIsEnum))
+        result = try decoder.decode(\(responseType.modelNamed).self, from: data)
     } catch let error {
         interceptor?.networkFailedToParseObject(
             urlRequest: request,
@@ -80,6 +80,7 @@ case \(statusCode.rawValue):
         )
         throw \(errorType).requestFailed(error: error)
     }
+        \(failed ? "throw" : "return") \(resultType("result", resultIsEnum))
 """
             }
         case .void(let statusCode, let resultIsEnum):
