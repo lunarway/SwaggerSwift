@@ -178,12 +178,13 @@ case \(statusCode.rawValue):
         case .array(let statusCode, let resultIsEnum, let innerType):
             return """
 case \(statusCode.rawValue):
+    let result: [\(innerType)]
     do {
-        let result = try decoder.decode([\(innerType)].self, from: data)
-        \(failed ? "throw" : "return") \(resultType("result", resultIsEnum))
+        result = try decoder.decode([\(innerType)].self, from: data)
     } catch let error {
         throw \(errorType).requestFailed(error: error))
     }
+    \(failed ? "throw" : "return") \(resultType("result", resultIsEnum))
 """
         case .enumeration(let statusCode, let resultIsEnum, let responseType):
             // This is necessary as iOS 12 doesnt support JSON fragments in JSONDecoder,
