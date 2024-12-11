@@ -35,7 +35,7 @@ extension APIRequest {
 
         var globalHeaders = [String]()
         if swaggerFile.globalHeaders.count > 0 {
-            globalHeaders.append("let globalHeaders = self.headerProvider()")
+            globalHeaders.append("let globalHeaders = await self.headerProvider()")
             globalHeaders.append("globalHeaders.add(to: &request)")
         }
 
