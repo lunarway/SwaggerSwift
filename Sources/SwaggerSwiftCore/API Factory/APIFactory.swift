@@ -207,7 +207,7 @@ struct APIFactory {
         if hasGlobalHeaders {
             fields.append(APIDefinitionField(name: "headerProvider",
                                              description: "a block provider for the set of globally defined headers",
-                                             typeName: "() -> any GlobalHeaders",
+                                             typeName: "() async -> any GlobalHeaders",
                                              isRequired: true,
                                              typeIsAutoclosure: false,
                                              typeIsBlock: true,
