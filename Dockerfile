@@ -6,7 +6,6 @@ RUN yum -y install \
 WORKDIR /swaggerswift
 COPY . .
 
-RUN swift package clean
 RUN swift build -c release
 RUN mkdir /swaggerswift/bin
 
