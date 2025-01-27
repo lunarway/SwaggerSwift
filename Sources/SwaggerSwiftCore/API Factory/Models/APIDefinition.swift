@@ -27,7 +27,7 @@ struct APIDefinition {
         }
 
         let properties = fields
-            .map { "private let \($0.name): \($0.typeName)\($0.isRequired ? "" : "?")" }
+            .map { "private let \($0.name): \($0.typeIsBlock ? "@Sendable " : "")\($0.typeName)\($0.isRequired ? "" : "?")" }
             .joined(separator: "\n")
             .indentLines(1)
 
@@ -44,7 +44,7 @@ struct APIDefinition {
             .trimmingCharacters(in: CharacterSet.newlines)
 
         serviceDefinition += """
-\(accessControl) struct \(serviceName): @unchecked Sendable, APIInitialize {
+\(accessControl) struct \(serviceName): APIInitialize {
 \(properties)
 
 \(initMethod)

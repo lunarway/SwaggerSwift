@@ -15,6 +15,7 @@ struct SwaggerFile: Decodable {
     /// Where should the project be created?
     let destination: String
     let accessControl: APIAccessControl
+    let onlyAsync: Bool
 
     enum CodingKeys: String, CodingKey {
         case path
@@ -25,6 +26,7 @@ struct SwaggerFile: Decodable {
         case createSwiftPackage
         case projectName
         case destination
+        case onlyAsync
     }
 
     init(
@@ -35,7 +37,8 @@ struct SwaggerFile: Decodable {
         createSwiftPackage: Bool = true,
         accessControl: APIAccessControl = .public,
         destination: String = "./",
-        projectName: String = "Services"
+        projectName: String = "Services",
+        onlyAsync: Bool
     ) {
         self.path = path
         self.organisation = organisation
@@ -45,6 +48,7 @@ struct SwaggerFile: Decodable {
         self.createSwiftPackage = createSwiftPackage
         self.destination = destination
         self.projectName = projectName
+        self.onlyAsync = onlyAsync
     }
 
     init(from decoder: Decoder) throws {
@@ -57,6 +61,7 @@ struct SwaggerFile: Decodable {
         self.createSwiftPackage = try container.decodeIfPresent(Bool.self, forKey: .createSwiftPackage) ?? true
         self.projectName = try container.decodeIfPresent(String.self, forKey: .projectName) ?? "Services"
         self.destination = try container.decodeIfPresent(String.self, forKey: .destination) ?? "./"
+        self.onlyAsync = try container.decodeIfPresent(Bool.self, forKey: .onlyAsync) ?? true
     }
 
     struct Service: Decodable {
