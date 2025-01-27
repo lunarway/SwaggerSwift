@@ -19,7 +19,7 @@ extension APIRequest {
         }.joined(separator: ", ")
     }
 
-    private func makeRequestFunction(serviceName: String?, swaggerFile: SwaggerFile) -> String {
+    private func makeRequestFunction(serviceName: String?, swaggerFile: SwaggerFile, accessControl: String) -> String {
         let servicePath = self.servicePath.split(separator: "/")
             .map {
                 let path = String($0)
@@ -154,9 +154,14 @@ if let \(($0.swiftyName)) = \(headersName).\($0.swiftyName) {
             .map { $0.print(apiName: serviceName ?? "", errorType: returnType.failureType.toString(required: true)) }
             .joined(separator: "\n")
 
+        var functionDeclaration: String = "private func _\(functionName)"
+        if swaggerFile.onlyAsync && !isInternalOnly {
+            functionDeclaration = "\(accessControl) func \(functionName)"
+        }
+
         return """
-private func _\(functionName)(\(functionArguments)) async throws(\(returnType.failureType.toString(required: true))) -> \(returnType.successType.toString(required: true)) {
-    let endpointUrl = baseUrlProvider().appendingPathComponent("\(servicePath)")
+\(functionDeclaration)(\(functionArguments)) async throws(\(returnType.failureType.toString(required: true))) -> \(returnType.successType.toString(required: true)) {
+    let endpointUrl = await baseUrlProvider().appendingPathComponent("\(servicePath)")
 
     \(queries.count > 0 ? "var" : "let") urlComponents = URLComponents(url: endpointUrl, resolvingAgainstBaseURL: true)!
 \(queries.toQueryItems().indentLines(1))
@@ -226,68 +231,83 @@ private func _\(functionName)(\(functionArguments)) async throws(\(returnType.fa
             body += "#if DEBUG\n"
         }
 
-        body += makeRequestFunction(serviceName: serviceName, swaggerFile: swaggerFile)
-
         if isDeprecated {
             body += "\n"
             body += "@available(*, deprecated)\n"
         }
 
-        body += documentation
+        body += documentation + "\n"
 
-        body += "\n"
+        body += makeRequestFunction(
+            serviceName: serviceName,
+            swaggerFile: swaggerFile,
+            accessControl: accessControl
+        )
 
-        body += """
+        if swaggerFile.onlyAsync == false {
+            if isDeprecated {
+                body += "\n"
+                body += "@available(*, deprecated)\n"
+            }
+
+            body += documentation
+
+            body += "\n"
+
+            body += """
         \(accessControl) func \(functionName)(\(functionArguments)\(functionArguments.isEmpty ? "" : ", ")completion: @Sendable @escaping (Result<\(returnType.successType.toString(required: true)), \(returnType.failureType.toString(required: true))>) -> Void = { _ in }) {
             _Concurrency.Task {
                 do {
 
 """
 
-        if returnType.successType.toString(required: true) == "Void" {
-            body += """
+            if returnType.successType.toString(required: true) == "Void" {
+                body += """
                     try await _\(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ", ")))
                     completion(.success(()))
-
+        
         """
-        } else {
-            body += """
+            } else {
+                body += """
                     let result = try await _\(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ", ")))
                     completion(.success(result))
-
+        
         """
-        }
+            }
 
-        body += """
+            body += """
                 } catch let error {
                     let error = error as! \(returnType.failureType.toString(required: true)) 
                     completion(.failure(error))
                 }
             }
         }
-
+        
         """
+        }
 
-        if isDeprecated {
+        if swaggerFile.onlyAsync == false {
+            if isDeprecated {
+                body += "\n"
+                body += "@available(*, deprecated)\n"
+            }
+
+            body += documentation
+
             body += "\n"
-            body += "@available(*, deprecated)\n"
-        }
 
-        body += documentation
+            if returnType.successType.toString(required: true) != "Void" {
+                body += "@discardableResult\n"
+            }
 
-        body += "\n"
-
-        if returnType.successType.toString(required: true) != "Void" {
-            body += "@discardableResult\n"
-        }
-
-        body +=
+            body +=
         """
         \(accessControl) func \(functionName)(\(functionArguments)) async throws(\(returnType.failureType.toString(required: true))) -> \(returnType.successType.toString(required: true)) {
             try await _\(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ", ")))
         }
-
+        
         """
+        }
 
         if isInternalOnly {
             body += "#endif\n"

@@ -8,14 +8,14 @@ struct APIDefinitionField {
     let defaultValue: String?
 
     var documentationString: String {
-        return "///   - \(name): \(description ?? "")"
+        "///   - \(name): \(description ?? "")"
     }
 
     var initProperty: String {
-        return "\(name): \(typeIsAutoclosure ? "@autoclosure " : "")\(typeIsBlock ? "@escaping " : "")\(typeName)\(isRequired ? "" : "?")\(defaultValue != nil ? " = \(defaultValue!)" : "")"
+        "\(name): \(typeIsAutoclosure ? "@autoclosure " : "")\(typeIsBlock ? "@escaping @Sendable" : "")\(typeName)\(isRequired ? "" : "?")\(defaultValue != nil ? " = \(defaultValue!)" : "")"
     }
 
     var initAssignment: String {
-        return "self.\(name) = \(name)"
+        "self.\(name) = \(name)"
     }
 }

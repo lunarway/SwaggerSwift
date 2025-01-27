@@ -186,41 +186,53 @@ struct APIFactory {
     /// - Returns: the model fields
     private func apiDefinitionsModelFields(swaggerFile: SwaggerFile) -> [APIDefinitionField] {
         var fields = [
-            APIDefinitionField(name: "urlSession",
-                               description: "the underlying URLSession. This is an autoclosure to allow updated instances to come into this instance.",
-                               typeName: "() -> URLSession",
-                               isRequired: true,
-                               typeIsAutoclosure: false,
-                               typeIsBlock: true,
-                               defaultValue: nil),
-            APIDefinitionField(name: "baseUrlProvider",
-                               description: "the block provider for the baseUrl of the service. The reason this is a block is that this enables automatically updating the network layer on backend environment change.",
-                               typeName: "() -> URL",
-                               isRequired: true,
-                               typeIsAutoclosure: false,
-                               typeIsBlock: true,
-                               defaultValue: nil)
+            APIDefinitionField(
+                name: "urlSession",
+                description: "the underlying URLSession. This is an autoclosure to allow updated instances to come into this instance.",
+                typeName: "() async -> URLSession",
+                isRequired: true,
+                typeIsAutoclosure: false,
+                typeIsBlock: true,
+                defaultValue: nil
+            ),
+            APIDefinitionField(
+                name: "baseUrlProvider",
+                description: "the block provider for the baseUrl of the service. The reason this is a block is that this enables automatically updating the network layer on backend environment change.",
+                typeName: "() async -> URL",
+                isRequired: true,
+                typeIsAutoclosure: false,
+                typeIsBlock: true,
+                defaultValue: nil
+            )
         ]
 
         let hasGlobalHeaders = swaggerFile.globalHeaders.count > 0
 
         if hasGlobalHeaders {
-            fields.append(APIDefinitionField(name: "headerProvider",
-                                             description: "a block provider for the set of globally defined headers",
-                                             typeName: "() async -> any GlobalHeaders",
-                                             isRequired: true,
-                                             typeIsAutoclosure: false,
-                                             typeIsBlock: true,
-                                             defaultValue: nil))
+            fields.append(
+                APIDefinitionField(
+                    name: "headerProvider",
+                    description: "a block provider for the set of globally defined headers",
+                    typeName: "() async -> any GlobalHeaders",
+                    isRequired: true,
+                    typeIsAutoclosure: false,
+                    typeIsBlock: true,
+                    defaultValue: nil
+                )
+            )
         }
 
-        fields.append(APIDefinitionField(name: "interceptor",
-                                         description: "use this if you need to intercept overall requests",
-                                         typeName: "(any NetworkInterceptor)",
-                                         isRequired: false,
-                                         typeIsAutoclosure: false,
-                                         typeIsBlock: false,
-                                         defaultValue: "nil"))
+        fields.append(
+            APIDefinitionField(
+                name: "interceptor",
+                description: "use this if you need to intercept overall requests",
+                typeName: "(any NetworkInterceptor)",
+                isRequired: false,
+                typeIsAutoclosure: false,
+                typeIsBlock: false,
+                defaultValue: "nil"
+            )
+        )
 
         return fields
     }
