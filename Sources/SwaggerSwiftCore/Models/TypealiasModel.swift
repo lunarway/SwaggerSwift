@@ -15,34 +15,37 @@ import SwaggerSwiftML
 // in this case `coolString` will just be a property named `coolString` with type `String`
 //
 struct TypeAliasModel {
-    let typeName: String
-    let type: String
+  let typeName: String
+  let type: String
 }
 
 extension TypeAliasModel {
-    func toSwift(serviceName: String?, embedded: Bool, accessControl: APIAccessControl, packagesToImport: [String]) -> String {
-        let typeString = "\(accessControl.rawValue) typealias \(typeName) = \(type)"
+  func toSwift(
+    serviceName: String?, embedded: Bool, accessControl: APIAccessControl,
+    packagesToImport: [String]
+  ) -> String {
+    let typeString = "\(accessControl.rawValue) typealias \(typeName) = \(type)"
 
-        if !embedded {
-            var model = ""
-            model.appendLine("import Foundation")
-            packagesToImport.forEach { model.appendLine("import \($0)") }
-            model.appendLine()
+    if !embedded {
+      var model = ""
+      model.appendLine("import Foundation")
+      packagesToImport.forEach { model.appendLine("import \($0)") }
+      model.appendLine()
 
-            if let serviceName = serviceName {
-                model.appendLine("extension \(serviceName) {")
-            }
+      if let serviceName = serviceName {
+        model.appendLine("extension \(serviceName) {")
+      }
 
-            model += typeString.indentLines(1)
+      model += typeString.indentLines(1)
 
-            if let _ = serviceName {
-                model.appendLine()
-                model.appendLine("}")
-            }
+      if serviceName != nil {
+        model.appendLine()
+        model.appendLine("}")
+      }
 
-            return model
-        } else {
-            return typeString
-        }
+      return model
+    } else {
+      return typeString
     }
+  }
 }

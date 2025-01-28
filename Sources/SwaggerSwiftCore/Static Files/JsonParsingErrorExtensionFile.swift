@@ -1,7 +1,7 @@
 let jsonParsingErrorExtension = """
-import Foundation
+  import Foundation
 
-<ACCESSCONTROL> enum JSONParsingError: Error {
-    case invalidDate(String)
-}
-"""
+  <ACCESSCONTROL> enum JSONParsingError: Error {
+      case invalidDate(String)
+  }
+  """
