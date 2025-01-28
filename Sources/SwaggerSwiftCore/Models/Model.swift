@@ -158,7 +158,7 @@ struct Model {
     }
 
     return """
-      \(accessControl.rawValue) init(from decoder: Decoder) throws {
+      \(accessControl.rawValue) init(from decoder: any Decoder) throws {
       \(functionBody.indentLines(1))
       }
       """
