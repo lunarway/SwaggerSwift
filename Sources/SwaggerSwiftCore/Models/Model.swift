@@ -109,7 +109,7 @@ struct Model {
     }
 
     return """
-      \(accessControl.rawValue) func encode(to encoder: Encoder) throws {
+      \(accessControl.rawValue) func encode(to encoder: any Encoder) throws {
       \(functionBody.indentLines(1))
       }
       """
@@ -158,7 +158,7 @@ struct Model {
     }
 
     return """
-      \(accessControl.rawValue) init(from decoder: Decoder) throws {
+      \(accessControl.rawValue) init(from decoder: any Decoder) throws {
       \(functionBody.indentLines(1))
       }
       """

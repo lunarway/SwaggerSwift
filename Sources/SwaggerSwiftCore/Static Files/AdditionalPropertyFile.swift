@@ -10,7 +10,7 @@ let additionalPropertyUtil = """
       case bool(Bool)
       case null
 
-      <ACCESSCONTROL> init(from decoder: Decoder) throws {
+      <ACCESSCONTROL> init(from decoder: any Decoder) throws {
           let container = try decoder.singleValueContainer()
 
           if let stringValue = try? container.decode(String.self) {
@@ -36,7 +36,7 @@ let additionalPropertyUtil = """
           }
       }
 
-      <ACCESSCONTROL> func encode(to encoder: Encoder) throws {
+      <ACCESSCONTROL> func encode(to encoder: any Encoder) throws {
           var container = encoder.singleValueContainer()
           switch self {
           case .string(let stringValue):

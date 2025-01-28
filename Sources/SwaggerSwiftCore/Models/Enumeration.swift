@@ -56,7 +56,7 @@ struct Enumeration {
       model += """
 
 
-        \(accessControl.rawValue) init(from decoder: Decoder) throws {
+        \(accessControl.rawValue) init(from decoder: any Decoder) throws {
             let container = try decoder.singleValueContainer()
             let stringValue = try container.decode(String.self)
             switch stringValue {
@@ -77,7 +77,7 @@ struct Enumeration {
 
       model += """
 
-        \(accessControl.rawValue) func encode(to encoder: Encoder) throws {
+        \(accessControl.rawValue) func encode(to encoder: any Encoder) throws {
             var container = encoder.singleValueContainer()
             switch self {
         \(encodeCases)
