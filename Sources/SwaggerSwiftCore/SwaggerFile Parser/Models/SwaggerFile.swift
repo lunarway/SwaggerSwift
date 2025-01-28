@@ -51,7 +51,7 @@ struct SwaggerFile: Decodable {
     self.onlyAsync = onlyAsync
   }
 
-  init(from decoder: Decoder) throws {
+  init(from decoder: any Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     self.path = try container.decode(String.self, forKey: .path)
     self.organisation = try container.decode(String.self, forKey: .organisation)

@@ -27,7 +27,7 @@ final class SwaggerSwiftTests: XCTestCase {
               self.url = url
           }
 
-          public init(from decoder: Decoder) throws {
+          public init(from decoder: any Decoder) throws {
               let container = try decoder.container(keyedBy: StringCodingKey.self)
               // Allows the backend to return badly formatted urls
               if let urlString = try container.decodeIfPresent(String.self, forKey: "url") {
@@ -37,7 +37,7 @@ final class SwaggerSwiftTests: XCTestCase {
               }
           }
 
-          public func encode(to encoder: Encoder) throws {
+          public func encode(to encoder: any Encoder) throws {
               var container = encoder.container(keyedBy: StringCodingKey.self)
               try container.encodeIfPresent(url, forKey: "url")
           }
@@ -69,12 +69,12 @@ final class SwaggerSwiftTests: XCTestCase {
               self.url = url
           }
 
-          public init(from decoder: Decoder) throws {
+          public init(from decoder: any Decoder) throws {
               let container = try decoder.container(keyedBy: StringCodingKey.self)
               self.url = try container.decode(URL.self, forKey: "url")
           }
 
-          public func encode(to encoder: Encoder) throws {
+          public func encode(to encoder: any Encoder) throws {
               var container = encoder.container(keyedBy: StringCodingKey.self)
               try container.encode(url, forKey: "url")
           }
