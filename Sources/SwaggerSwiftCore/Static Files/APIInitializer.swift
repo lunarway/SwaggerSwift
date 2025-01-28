@@ -1,8 +1,8 @@
 let apiInitializerFile = """
-import Foundation
+  import Foundation
 
-public protocol APIInitializer {
-    func initializeApi<API: APIInitialize>(path: String) -> API
-}
+  public protocol APIInitializer {
+      func initializeApi<API: APIInitialize>(path: String) -> API
+  }
 
-"""
+  """

@@ -1,9 +1,9 @@
 let dummyTest = """
-import XCTest
+  import XCTest
 
-public struct DummyTest {
-    func testNetwork() {
-        XCTAssertTrue(true)
-    }
-}
-"""
+  public struct DummyTest {
+      func testNetwork() {
+          XCTAssertTrue(true)
+      }
+  }
+  """
