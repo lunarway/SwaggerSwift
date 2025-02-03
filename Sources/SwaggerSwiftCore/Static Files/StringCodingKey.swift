@@ -1,5 +1,5 @@
 let stringCodingKey = """
-  import Foundation
+  public import Foundation
 
   <ACCESSCONTROL> struct StringCodingKey: CodingKey, ExpressibleByStringLiteral {
       private let string: String
