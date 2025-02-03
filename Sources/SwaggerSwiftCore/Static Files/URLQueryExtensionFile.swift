@@ -1,5 +1,5 @@
 let urlQueryItemExtension = """
-  import Foundation
+  public import Foundation
 
   <ACCESSCONTROL> extension URLQueryItem {
       init(name: String, value: Bool) {

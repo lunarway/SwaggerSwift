@@ -1,5 +1,5 @@
 let networkInterceptor = """
-  import Foundation
+  public import Foundation
 
   public protocol NetworkInterceptor: Sendable {
       func networkWillPerformRequest(
