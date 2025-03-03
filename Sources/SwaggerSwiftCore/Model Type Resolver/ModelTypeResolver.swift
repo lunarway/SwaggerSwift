@@ -51,15 +51,21 @@ public struct ModelTypeResolver {
       return .init(type)
     case .integer(let format, _, _, _, _, _, let defaultValue):
       let type = IntegerResolver.resolve(
-        serviceName: swagger.serviceName, format: format, defaultValue: defaultValue)
+        serviceName: swagger.serviceName,
+        format: format,
+        defaultValue: defaultValue
+      )
+
       return .init(type)
 
     case .number(let format, _, _, _, _, _, let defaultValue):
       let type = NumberResolver.resolve(
         format: format,
         defaultValue: defaultValue,
-        serviceName: swagger.serviceName)
-      return .init(type)
+        serviceName: swagger.serviceName
+      )
+
+      return ResolvedModel(type)
     case .boolean(let defaultValue):
       let type = BooleanResolver.resolve(with: defaultValue)
       return .init(type)

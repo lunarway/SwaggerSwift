@@ -125,25 +125,31 @@ struct APIFactory {
             containsType: containsType.toString(required: true)))
         allDefinitions.append(arrayModel)
       case .string:
-        break
+        allDefinitions.append(
+          .typeAlias(.init(typeName: typeName, type: "String")))
       case .int:
-        break
+        allDefinitions.append(
+          .typeAlias(.init(typeName: typeName, type: "Int")))
       case .double:
-        break
+        allDefinitions.append(
+          .typeAlias(.init(typeName: typeName, type: "Double")))
       case .float:
-        break
+        allDefinitions.append(
+          .typeAlias(.init(typeName: typeName, type: "Double")))
       case .boolean:
-        break
+        allDefinitions.append(
+          .typeAlias(.init(typeName: typeName, type: "Bool")))
       case .int64:
-        break
+        allDefinitions.append(
+          .typeAlias(.init(typeName: typeName, type: "Int64")))
       case .date:
-        break
+        allDefinitions.append(
+          .typeAlias(.init(typeName: typeName, type: "Date")))
       case .void:
-        break
-      case .object:
-        break
-      case .enumeration:
-        break
+        allDefinitions.append(
+          .typeAlias(.init(typeName: typeName, type: "Void")))
+      case .object: break
+      case .enumeration: break
       }
     }
 
