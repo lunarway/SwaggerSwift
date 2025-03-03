@@ -1,6 +1,4 @@
 let stringCodingKey = """
-  public import Foundation
-
   <ACCESSCONTROL> struct StringCodingKey: CodingKey, ExpressibleByStringLiteral {
       private let string: String
       private var int: Int?
