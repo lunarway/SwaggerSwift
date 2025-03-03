@@ -41,6 +41,8 @@ extension DataFormat: @retroactive CustomStringConvertible {
         return "Int"
       } else if type == "integer" {
         return "Int"
+      } else if type == "uuid" {
+          return "UUID"
       } else {
         fatalError("Unsupported type: \(type)")
       }

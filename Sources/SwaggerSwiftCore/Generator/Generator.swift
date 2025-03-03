@@ -52,9 +52,14 @@ public struct Generator {
 
     var apiSpecs = [APISpec]()
 
+      let apiFactory = APIFactory(
+        apiRequestFactory: apiRequestFactory,
+        modelTypeResolver: modelTypeResolver
+      )
+
     for service in services {
       do {
-        async let swagger = try await downloadSwagger(
+        let swagger = try await downloadSwagger(
           githubToken: githubToken,
           organisation: swaggerFile.organisation,
           serviceName: service.key,
@@ -62,10 +67,10 @@ public struct Generator {
           swaggerPath: service.value.path ?? swaggerFile.path
         )
 
-        let apiSpec = try await APIFactory(
-          apiRequestFactory: apiRequestFactory,
-          modelTypeResolver: modelTypeResolver
-        ).generate(for: swagger, withSwaggerFile: swaggerFile)
+          let apiSpec = try apiFactory.generate(
+            for: swagger,
+            withSwaggerFile: swaggerFile
+          )
 
         apiSpecs.append(apiSpec)
       } catch {
