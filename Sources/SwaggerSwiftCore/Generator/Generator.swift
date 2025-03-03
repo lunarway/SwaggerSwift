@@ -52,10 +52,10 @@ public struct Generator {
 
     var apiSpecs = [APISpec]()
 
-      let apiFactory = APIFactory(
-        apiRequestFactory: apiRequestFactory,
-        modelTypeResolver: modelTypeResolver
-      )
+    let apiFactory = APIFactory(
+      apiRequestFactory: apiRequestFactory,
+      modelTypeResolver: modelTypeResolver
+    )
 
     for service in services {
       do {
@@ -67,10 +67,10 @@ public struct Generator {
           swaggerPath: service.value.path ?? swaggerFile.path
         )
 
-          let apiSpec = try apiFactory.generate(
-            for: swagger,
-            withSwaggerFile: swaggerFile
-          )
+        let apiSpec = try apiFactory.generate(
+          for: swagger,
+          withSwaggerFile: swaggerFile
+        )
 
         apiSpecs.append(apiSpec)
       } catch {
