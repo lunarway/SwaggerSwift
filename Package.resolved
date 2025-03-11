@@ -1,6 +1,15 @@
 {
   "pins" : [
     {
+      "identity" : "swaggerswiftml",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/lunarway/SwaggerSwiftML",
+      "state" : {
+        "revision" : "08d62c3c8bb32638299222ab5c6acf67aba98aad",
+        "version" : "2.0.0"
+      }
+    },
+    {
       "identity" : "swift-argument-parser",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-argument-parser",
@@ -14,8 +23,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/jpsim/Yams.git",
       "state" : {
-        "revision" : "b4b8042411dc7bbb696300a34a4bf3ba1b7ad19b",
-        "version" : "5.3.1"
+        "revision" : "81a65c4069c28011ee432f2858ba0de49b086677",
+        "version" : "3.0.1"
       }
     }
   ],
