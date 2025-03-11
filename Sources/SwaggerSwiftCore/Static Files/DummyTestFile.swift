@@ -1,9 +1,9 @@
 let dummyTest = """
-  import Testing
+    import Testing
 
-  public struct DummyTest {
-      @Test func testNetwork() {
-          #expect(true)
-      }
-  }
-  """
+    public struct DummyTest {
+        @Test func testNetwork() {
+            #expect(true)
+        }
+    }
+    """
