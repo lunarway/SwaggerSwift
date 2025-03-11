@@ -110,7 +110,15 @@ struct APIFactory {
         }
 
         var allDefinitions = [ModelDefinition]()
-        for (typeName, schema) in definitions {
+        for (typeName, schemaNode) in definitions {
+            if case .reference(let reference) = schemaNode {
+                allDefinitions.append(
+                    .typeAlias(.init(typeName: typeName, type: String(reference.split(separator: "/").last!)))
+                )
+            }
+
+            guard case .node(let schema) = schemaNode else { continue }
+
             let resolved = try modelTypeResolver.resolve(
                 forSchema: schema,
                 typeNamePrefix: typeName,
@@ -199,9 +207,7 @@ struct APIFactory {
 
             switch schema {
             case .reference(let reference):
-                if let (_, typeSchema) = swagger.definitions?.first(where: {
-                    reference == "#/definitions/\($0.key)"
-                }) {
+                if let typeSchema = try? swagger.findSchema(reference: reference) {
                     // we dont need the type part as it just represents the primary model definition returned from this function
                     let resolvedModel = try modelTypeResolver.resolve(
                         forSchema: typeSchema,

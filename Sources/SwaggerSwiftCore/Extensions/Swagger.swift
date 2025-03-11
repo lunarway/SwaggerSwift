@@ -31,10 +31,20 @@ extension Swagger {
     }
 
     func findSchema(reference: String) throws -> Schema {
+        var reference = reference
+        if reference.hasPrefix("#/") == false {
+            reference = "#/definitions/\(reference)"
+        }
+
         for (key, value) in self.definitions ?? [:] {
             let searchName = "#/definitions/\(key)"
             if reference == searchName {
-                return value
+                switch value {
+                case .reference(let reference):
+                    return try findSchema(reference: reference)
+                case .node(let schema):
+                    return schema
+                }
             }
         }
 

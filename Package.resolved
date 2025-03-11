@@ -1,15 +1,6 @@
 {
   "pins" : [
     {
-      "identity" : "swaggerswiftml",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/lunarway/SwaggerSwiftML",
-      "state" : {
-        "revision" : "08d62c3c8bb32638299222ab5c6acf67aba98aad",
-        "version" : "2.0.0"
-      }
-    },
-    {
       "identity" : "swift-argument-parser",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-argument-parser",
