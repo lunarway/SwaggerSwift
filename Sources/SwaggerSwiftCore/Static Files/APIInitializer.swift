@@ -1,8 +1,8 @@
 let apiInitializerFile = """
-  import Foundation
+    import Foundation
 
-  public protocol APIInitializer: Sendable {
-      func initializeApi<API: APIInitialize>(path: String) -> API
-  }
+    public protocol APIInitializer: Sendable {
+        func initializeApi<API: APIInitialize>(path: String) -> API
+    }
 
-  """
+    """
