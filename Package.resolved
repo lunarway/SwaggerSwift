@@ -5,8 +5,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/lunarway/SwaggerSwiftML",
       "state" : {
-        "revision" : "08d62c3c8bb32638299222ab5c6acf67aba98aad",
-        "version" : "2.0.0"
+        "revision" : "6bb95577fcf7946a1e09f3627c875bc6b6128382",
+        "version" : "3.0.0"
       }
     },
     {
@@ -14,8 +14,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-argument-parser",
       "state" : {
-        "revision" : "f3c9084a71ef4376f2fabbdf1d3d90a49f1fabdb",
-        "version" : "1.1.2"
+        "revision" : "41982a3656a71c768319979febd796c6fd111d5c",
+        "version" : "1.5.0"
       }
     },
     {
@@ -23,8 +23,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/jpsim/Yams.git",
       "state" : {
-        "revision" : "81a65c4069c28011ee432f2858ba0de49b086677",
-        "version" : "3.0.1"
+        "revision" : "b4b8042411dc7bbb696300a34a4bf3ba1b7ad19b",
+        "version" : "5.3.1"
       }
     }
   ],

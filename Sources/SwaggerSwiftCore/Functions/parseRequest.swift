@@ -29,9 +29,7 @@ func parse(
         switch modelReference {
         case .definitions:
             guard
-                let schema = swagger.definitions?.first(where: {
-                    $0.key.lowercased() == modelReference.typeName.lowercased()
-                })?.value
+                let schema = try? swagger.findSchema(reference: modelReference.typeName)
             else {
                 log(
                     "[\(swagger.serviceName) \(httpMethod) \(servicePath)] : Failed to find referenced definitions object: \(reference)",

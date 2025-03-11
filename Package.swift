@@ -8,8 +8,8 @@ let package = Package(
     platforms: [.macOS(.v12)],
     products: [.executable(name: "swaggerswift", targets: ["SwaggerSwift"])],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.1.1"),
-        .package(url: "https://github.com/lunarway/SwaggerSwiftML", from: "2.0.0"),
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0"),
+        .package(url: "https://github.com/lunarway/SwaggerSwiftML", from: "3.0.0"),
     ],
     targets: [
         .executableTarget(
