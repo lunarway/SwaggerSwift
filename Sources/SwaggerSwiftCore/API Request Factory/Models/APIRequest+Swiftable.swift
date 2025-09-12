@@ -55,23 +55,16 @@ extension APIRequest {
 
         let headersName = headers.filter { $0.isRequired }.count > 0 ? "headers" : "headers?"
 
-        let setHeaderValues: [String] =
+        let _headersDict: String = [
             allHeaders
-            .sorted(by: { $0.swiftyName < $1.swiftyName })
-            .map {
-                if $0.isRequired {
-                    return
-                        "request.setValue(\(headersName).\($0.swiftyName), forHTTPHeaderField: \"\($0.fullHeaderName)\")"
-                } else {
-                    return """
-                        if let \(($0.swiftyName)) = \(headersName).\($0.swiftyName) {
-                            request.setValue(\($0.swiftyName), forHTTPHeaderField: \"\($0.fullHeaderName)\")
-                        }
-                        """
-                }
-            }
+                .sorted(by: { $0.swiftyName < $1.swiftyName })
+                .map { "\"\($0.fullHeaderName)\": \(headersName).\($0.swiftyName)" }
+                .joined(separator: ", ")
+        ].joined()
 
-        var headerStatements = setHeaderValues
+        var headerStatements = [
+            "applyHeaders([\(_headersDict)], to: &request)"
+        ]
 
         var bodyInjection: String = ""
         if let body = parameters.first(where: { $0.in == .body }) {
@@ -82,6 +75,7 @@ extension APIRequest {
                 """
         }
 
+        var performUploadArg: String = ""
         if parameters.contains(where: { $0.in == .formData }) {
             bodyInjection += """
                 let boundary = "Boundary-\\(UUID().uuidString)"
@@ -141,6 +135,7 @@ extension APIRequest {
                     requestData.append(endBoundaryData)
                 }
                 """
+            performUploadArg = "uploadData: requestData as Data, "
         }
 
         let urlSessionMethodName: String
@@ -186,42 +181,12 @@ extension APIRequest {
                 var request = URLRequest(url: requestUrl)
                 request.httpMethod = "\(httpMethod.rawValue.uppercased())"
             \(requestPart)
-                request = interceptor?.networkWillPerformRequest(request) ?? request
-
-                let data: Data
-                let response: URLResponse
-                do {
-                    (data, response) = try await urlSession().\(urlSessionMethodName)
-                } catch {
-                    throw .requestFailed(error: error)
-                }
-
-                if let interceptor {
-                    do {
-                        try await interceptor.networkDidPerformRequest(
-                            urlRequest: request,
-                            urlResponse: response,
-                            data: data,
-                            error: nil
-                        )
-                    } catch {
-                        throw .requestFailed(error: error)
-                    }
-                }
-
-                guard let httpResponse = response as? HTTPURLResponse else {
-                fatalError("The response must be a URL response")
-                }
-
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .custom(dateDecodingStrategy)
+                let (data, httpResponse) = try await perform( request, \(performUploadArg)urlSession: urlSession, interceptor: interceptor)
 
                 switch httpResponse.statusCode {
             \(responseTypes.indentLines(1))
                 default:
-                    let result = String(data: data, encoding: .utf8) ?? ""
-                    let error = NSError(domain: "\(serviceName ?? "Generic")", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: result])
-                    throw .requestFailed(error: error)
+                    throw .requestFailed(error: httpError(domain: "\(serviceName ?? "Generic")", statusCode: httpResponse.statusCode, data: data))
                 }
             }
 

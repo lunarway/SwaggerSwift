@@ -68,19 +68,8 @@ enum APIRequestResponseType {
             } else {
                 return """
                     case \(statusCode.rawValue):
-                        let result: \(responseType.modelNamed)
-                        do {
-                            result = try decoder.decode(\(responseType.modelNamed).self, from: data)
-                        } catch let error {
-                            interceptor?.networkFailedToParseObject(
-                                urlRequest: request,
-                                urlResponse: response,
-                                data: data,
-                                error: error
-                            )
-                            throw \(errorType).requestFailed(error: error)
-                        }
-                            \(failed ? "throw" : "return") \(resultType("result", resultIsEnum))
+                        let result: \(responseType.modelNamed) = try decode(\(responseType.modelNamed).self, from: data, request: request, response: httpResponse, interceptor: interceptor, errorType: \(errorType).self)
+                        \(failed ? "throw" : "return") \(resultType("result", resultIsEnum))
                     """
             }
         case .void(let statusCode, let resultIsEnum):
@@ -98,92 +87,37 @@ enum APIRequestResponseType {
         case .int(let statusCode, _):
             return """
                 case \(statusCode.rawValue):
-                    if let stringValue = String(data: data, encoding: .utf8), let value = Int(stringValue) {
-                        return .success(value)
-                    } else {
-                        let error = NSError(domain: "\(apiName)",
-                                            code: 0,
-                                            userInfo: [
-                                                NSLocalizedDescriptionKey: "Failed to convert backend result to expected type"
-                                            ]
-                        )
-
-                        throw \(errorType).requestFailed(error: error)
-                    }
+                    let value: Int = try decodeScalar(Int.self, from: data, apiName: \(String(reflecting: apiName)), errorType: \(errorType).self)
+                    return value
                 """
         case .double(let statusCode, _):
             return """
                 case \(statusCode.rawValue):
-                    if let stringValue = String(data: data, encoding: .utf8), let value = Double(stringValue) {
-                        return value
-                    } else {
-                        let error = NSError(domain: "\(apiName)",
-                                            code: 0,
-                                            userInfo: [
-                                                NSLocalizedDescriptionKey: "Failed to convert backend result to expected type"
-                                            ]
-                        )
-
-                        throw \(errorType).requestFailed(error: error)
-                    }
+                    let value: Double = try decodeScalar(Double.self, from: data, apiName: \(String(reflecting: apiName)), errorType: \(errorType).self)
+                    return value
                 """
         case .float(let statusCode, _):
             return """
                 case \(statusCode.rawValue):
-                    if let stringValue = String(data: data, encoding: .utf8), let value = Float(stringValue) {
-                        return value
-                    } else {
-                        let error = NSError(domain: "\(apiName)",
-                                            code: 0,
-                                            userInfo: [
-                                                NSLocalizedDescriptionKey: "Failed to convert backend result to expected type"
-                                            ]
-                        )
-
-                        throw \(errorType).requestFailed(error: error)
-                    }
+                    let value: Float = try decodeScalar(Float.self, from: data, apiName: \(String(reflecting: apiName)), errorType: \(errorType).self)
+                    return value
                 """
         case .boolean(let statusCode, _):
             return """
                 case \(statusCode.rawValue):
-                    if let stringValue = String(data: data, encoding: .utf8), let value = Bool(stringValue) {
-                        return value
-                    } else {
-                        let error = NSError(domain: "\(apiName)",
-                                            code: 0,
-                                            userInfo: [
-                                                NSLocalizedDescriptionKey: "Failed to convert backend result to expected type"
-                                            ]
-                        )
-
-                        throw \(errorType).requestFailed(error: error)
-                    }
+                    let value: Bool = try decodeScalar(Bool.self, from: data, apiName: \(String(reflecting: apiName)), errorType: \(errorType).self)
+                    return value
                 """
         case .int64(let statusCode, _):
             return """
                 case \(statusCode.rawValue):
-                    if let stringValue = String(data: data, encoding: .utf8), let value = Int64(stringValue) {
-                        return value
-                    } else {
-                        let error = NSError(domain: "\(apiName)",
-                                            code: 0,
-                                            userInfo: [
-                                                NSLocalizedDescriptionKey: "Failed to convert backend result to expected type"
-                                            ]
-                        )
-
-                        throw \(errorType).requestFailed(error: error)
-                    }
+                    let value: Int64 = try decodeScalar(Int64.self, from: data, apiName: \(String(reflecting: apiName)), errorType: \(errorType).self)
+                    return value
                 """
         case .array(let statusCode, let resultIsEnum, let innerType):
             return """
                 case \(statusCode.rawValue):
-                    let result: [\(innerType)]
-                    do {
-                        result = try decoder.decode([\(innerType)].self, from: data)
-                    } catch let error {
-                        throw \(errorType).requestFailed(error: error))
-                    }
+                    let result: [\(innerType)] = try decode([\(innerType)].self, from: data, request: request, response: httpResponse, interceptor: interceptor, errorType: \(errorType).self)
                     \(failed ? "throw" : "return") \(resultType("result", resultIsEnum))
                 """
         case .enumeration(let statusCode, let resultIsEnum, let responseType):
