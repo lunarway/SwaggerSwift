@@ -40,30 +40,16 @@ extension APIRequest {
         // Build request-specific headers dictionary
         let requestHeaders = headers.map { header in
             let headersName = headers.filter { $0.isRequired }.count > 0 ? "headers" : "headers?"
-            if header.isRequired {
-                return "\"\(header.fullHeaderName)\": \(headersName).\(header.swiftyName)"
-            } else {
-                return "\"\(header.fullHeaderName)\": \(headersName).\(header.swiftyName)"
-            }
+            return "\"\(header.fullHeaderName)\": \(headersName).\(header.swiftyName)"
         }.joined(separator: ",\n                ")
 
         // Build request body
         let requestBody: String
-        if let body = parameters.first(where: { $0.in == .body }) {
-            requestBody = """
-                let jsonEncoder = JSONEncoder()
-                jsonEncoder.dateEncodingStrategy = .iso8601
-                let requestBody = try? jsonEncoder.encode(\(body.name))
-                """
-        } else {
-            requestBody = "let requestBody: Data? = nil"
-        }
-
-        // Handle form data if present
-        let formDataBody: String
         let contentType: String?
+        
         if parameters.contains(where: { $0.in == .formData }) {
-            formDataBody = """
+            // Handle form data
+            requestBody = """
                 let boundary = "Boundary-\\(UUID().uuidString)"
                 var requestData = Data()
 
@@ -116,9 +102,18 @@ extension APIRequest {
                 let requestBody = requestData
                 """
             contentType = "multipart/form-data; boundary=\\(boundary)"
+        } else if let body = parameters.first(where: { $0.in == .body }) {
+            // Handle JSON body
+            requestBody = """
+                let jsonEncoder = JSONEncoder()
+                jsonEncoder.dateEncodingStrategy = .iso8601
+                let requestBody = try? jsonEncoder.encode(\(body.name))
+                """
+            contentType = "application/json"
         } else {
-            formDataBody = ""
-            contentType = consumes == .json ? "application/json" : nil
+            // No body
+            requestBody = "let requestBody: Data? = nil"
+            contentType = nil
         }
 
         let responseTypes = self.responseTypes
@@ -149,7 +144,6 @@ extension APIRequest {
                 let requestUrl = urlComponents.url!
                 
                 \(requestBody)
-                \(formDataBody)
                 
                 let requestBuilder = RequestBuilder(
                     baseUrlProvider: baseUrlProvider,
