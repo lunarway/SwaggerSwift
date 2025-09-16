@@ -379,6 +379,15 @@ public struct Generator {
         try stringCodingKey.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
             toFile: "\(targetPath)/StringCodingKey.swift"
         )
+        try requestBuilder.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
+            toFile: "\(targetPath)/RequestBuilder.swift"
+        )
+        try responseDecoder.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
+            toFile: "\(targetPath)/ResponseDecoder.swift"
+        )
+        try networkExecutor.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
+            toFile: "\(targetPath)/NetworkExecutor.swift"
+        )
 
         if swaggerFile.createSwiftPackage == false {
             let globalHeadersDefinitions = globalHeadersModel.writeExtensions(inCommonPackageNamed: nil)
