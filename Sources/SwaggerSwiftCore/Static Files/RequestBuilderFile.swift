@@ -17,14 +17,13 @@ let requestBuilder = """
         }
         
         func buildRequest(
-            path: String,
+            url: URL,
             method: String,
             headers: [String: String?] = [:],
             body: Data? = nil,
             contentType: String? = nil
         ) async -> URLRequest {
-            let endpointUrl = await baseUrlProvider().appendingPathComponent(path)
-            var request = URLRequest(url: endpointUrl)
+            var request = URLRequest(url: url)
             request.httpMethod = method.uppercased()
             
             // Apply global headers first

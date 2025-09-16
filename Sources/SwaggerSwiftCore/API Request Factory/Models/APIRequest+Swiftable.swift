@@ -152,7 +152,7 @@ extension APIRequest {
                 )
                 
                 let request = await requestBuilder.buildRequest(
-                    path: "\(servicePath)",
+                    url: requestUrl,
                     method: "\(httpMethod.rawValue)",
                     headers: \(headersDict),
                     body: requestBody,
@@ -164,7 +164,12 @@ extension APIRequest {
                     interceptor: interceptor
                 )
                 
-                let (data, httpResponse) = try await networkExecutor.executeRequest(request)
+                let (data, httpResponse): (Data, HTTPURLResponse)
+                if parameters.contains(where: { $0.in == .formData }) {
+                    (data, httpResponse) = try await networkExecutor.executeUploadRequest(request, from: requestBody ?? Data())
+                } else {
+                    (data, httpResponse) = try await networkExecutor.executeRequest(request)
+                }
 
                 let decoder = ResponseDecoder()
 
