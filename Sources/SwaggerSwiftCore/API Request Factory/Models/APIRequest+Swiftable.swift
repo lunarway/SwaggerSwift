@@ -44,12 +44,12 @@ extension APIRequest {
         }.joined(separator: ",\n                ")
 
         // Build request body
-        let requestBody: String
+        let requestBodyCode: String
         let contentType: String?
         
         if parameters.contains(where: { $0.in == .formData }) {
             // Handle form data
-            requestBody = """
+            requestBodyCode = """
                 let boundary = "Boundary-\\(UUID().uuidString)"
                 var requestData = Data()
 
@@ -104,7 +104,7 @@ extension APIRequest {
             contentType = "multipart/form-data; boundary=\\(boundary)"
         } else if let body = parameters.first(where: { $0.in == .body }) {
             // Handle JSON body
-            requestBody = """
+            requestBodyCode = """
                 let jsonEncoder = JSONEncoder()
                 jsonEncoder.dateEncodingStrategy = .iso8601
                 let requestBody = try? jsonEncoder.encode(\(body.name))
@@ -112,7 +112,7 @@ extension APIRequest {
             contentType = "application/json"
         } else {
             // No body
-            requestBody = "let requestBody: Data? = nil"
+            requestBodyCode = "let requestBody: Data? = nil"
             contentType = nil
         }
 
@@ -143,7 +143,7 @@ extension APIRequest {
             \(queries.toQueryItems().indentLines(1))
                 let requestUrl = urlComponents.url!
                 
-                \(requestBody)
+                \(requestBodyCode)
                 
                 let requestBuilder = RequestBuilder(
                     baseUrlProvider: baseUrlProvider,
@@ -165,7 +165,7 @@ extension APIRequest {
                 )
                 
                 let (data, httpResponse): (Data, HTTPURLResponse)
-                if parameters.contains(where: { $0.in == .formData }) {
+                if consumes == .multiPartFormData || consumes == .formUrlEncoded {
                     (data, httpResponse) = try await networkExecutor.executeUploadRequest(request, from: requestBody ?? Data())
                 } else {
                     (data, httpResponse) = try await networkExecutor.executeRequest(request)
