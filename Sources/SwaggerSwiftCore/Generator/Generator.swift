@@ -14,6 +14,24 @@ public struct Generator {
         self.modelTypeResolver = modelTypeResolver
     }
 
+    private func performRequest(_ request: URLRequest) async throws -> (Data, URLResponse) {
+        try await withCheckedThrowingContinuation { continuation in
+            URLSession.shared.dataTask(with: request) { data, response, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+
+                guard let response else {
+                    continuation.resume(throwing: URLError(.badServerResponse))
+                    return
+                }
+
+                continuation.resume(returning: (data ?? Data(), response))
+            }.resume()
+        }
+    }
+
     /// Parse and generate the network layer for a SwaggerFile
     /// - Parameters:
     ///   - swaggerFilePath: The path to the SwaggerFile
@@ -203,7 +221,7 @@ public struct Generator {
         request.setValue("application/vnd.github.v3.raw", forHTTPHeaderField: "Accept")
 
         log("Downloading Swagger at: \(url.absoluteString)")
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await performRequest(request)
         if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
             if branch != "master" && branch != "main" {
                 log(

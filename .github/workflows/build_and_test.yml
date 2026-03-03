@@ -17,6 +17,19 @@ jobs:
       - name: Build
         run: swift build -v
 
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.0"
+
+      - name: Build
+        run: swift build -v
+
   test:
     runs-on: macos-latest
     steps:
@@ -33,3 +46,16 @@ jobs:
         if: always()
         with:
           files: "test.xml"
+
+  test-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.0"
+
+      - name: Run tests
+        run: swift test -v --parallel
