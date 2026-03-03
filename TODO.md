@@ -2,12 +2,11 @@
 
 **Judge: Senior Swift Engineer**
 
-## 🔴 Critical (2 issues)
+## 🔴 Critical (1 issue)
 
 | # | File(s) | Issue | Fix |
 |---|---------|-------|-----|
 | 1 | `ObjectModelFactory.swift:10` | **IUO crash risk**: `public var modelTypeResolver: ModelTypeResolver!` — crash if accessed before assignment | Break circular dep with a protocol |
-| 2 | `APIRequest+Swiftable.swift:183,185,213,303` | **Force unwraps/casts in generated client code** (`URLComponents!`, `url!`, `fatalError`, `as!`) — crash risk in production iOS apps | Generate guard-let + throw patterns |
 
 ## 🟠 High (1 issue)
 
@@ -28,5 +27,5 @@
 ## Effort Estimates
 
 - **M (1–3h)**: Replace positional token arg with env var/stdin; remove `fatalError` hot paths
-- **L (1–2d)**: Remove IUO circular dependency; rework generated code to avoid `as!` and `!`; add snapshot tests
+- **L (1–2d)**: Remove IUO circular dependency; add snapshot tests
 - **XL (>2d)**: Introduce intermediate representation for codegen
