@@ -76,9 +76,10 @@ extension QueryElement {
 
 extension Sequence where Element == QueryElement {
     func toQueryItems() -> String {
-        guard self.underestimatedCount > 0 else { return "" }
+        let elements = Array(self)
+        guard !elements.isEmpty else { return "" }
 
-        let queryItems = self.map {
+        let queryItems = elements.map {
             $0.toString()
         }.joined(separator: "\n")
 

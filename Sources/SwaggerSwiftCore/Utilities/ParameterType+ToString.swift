@@ -82,14 +82,14 @@ extension ParameterType {
         case .array(let items, let collectionFormat, _, _, _):
             switch items {
             case .node(let items):
-                let (type, embedddedDefinitions) = try typeOfItems(
+                let (type, embeddedDefinitions) = try typeOfItems(
                     items.type,
                     collectionFormat: collectionFormat,
                     typePrefix: typePrefix,
                     swagger: swagger
                 )
 
-                return (.array(type: type), embedddedDefinitions)
+                return (.array(type: type), embeddedDefinitions)
             case .reference(let reference):
                 let schema = try swagger.findSchema(reference: reference)
                 let modelDefinition = try ModelReference(rawValue: reference)
@@ -158,7 +158,7 @@ private func typeOfItems(
             swagger: swagger
         )
     case .object(required: _, properties: _, allOf: _):
-        fatalError("I dont think this can happen")
+        throw TypeOfDataFormatError.unsupportedType("object")
     }
 }
 
@@ -179,9 +179,9 @@ private func typeOfDataFormat(_ dataFormat: DataFormat) throws -> TypeType {
     case .string:
         return .string(defaultValue: nil)
     case .byte:
-        fatalError("Bytes is not supported as a dataformat yet")
+        throw TypeOfDataFormatError.unsupportedType("byte")
     case .binary:
-        fatalError("Binary is not supported as a dataformat yet")
+        throw TypeOfDataFormatError.unsupportedType("binary")
     case .boolean:
         return .boolean(defaultValue: nil)
     case .date:

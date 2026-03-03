@@ -101,17 +101,23 @@ extension APIRequest {
 
                         """
                 case .int:
-                    fatalError("not implemented")
+                    log("⚠️ Form data type 'int' is not yet supported", error: true)
+                    return nil
                 case .double:
-                    fatalError("not implemented")
+                    log("⚠️ Form data type 'double' is not yet supported", error: true)
+                    return nil
                 case .float:
-                    fatalError("not implemented")
+                    log("⚠️ Form data type 'float' is not yet supported", error: true)
+                    return nil
                 case .boolean:
-                    fatalError("not implemented")
+                    log("⚠️ Form data type 'boolean' is not yet supported", error: true)
+                    return nil
                 case .int64:
-                    fatalError("not implemented")
+                    log("⚠️ Form data type 'int64' is not yet supported", error: true)
+                    return nil
                 case .array:
-                    fatalError("not implemented")
+                    log("⚠️ Form data type 'array' is not yet supported", error: true)
+                    return nil
                 case .enumeration(let typeName): fallthrough
                 case .object(let typeName):
                     if typeName == "FormData" {
@@ -124,14 +130,18 @@ extension APIRequest {
                             }
                             """
                     } else {
-                        fatalError("not implemented")
+                        log("⚠️ Form data type 'object' is not yet supported", error: true)
+                        return nil
                     }
                 case .date:
-                    fatalError("not implemented")
+                    log("⚠️ Form data type 'date' is not yet supported", error: true)
+                    return nil
                 case .void:
-                    fatalError("not implemented")
+                    log("⚠️ Form data type 'void' is not yet supported", error: true)
+                    return nil
                 case .typeAlias:
-                    fatalError("not implemented")
+                    log("⚠️ Form data type 'typeAlias' is not yet supported", error: true)
+                    return nil
                 }
             }.joined(separator: "\n")
 

@@ -45,7 +45,8 @@ public struct APIRequestFactory {
         let responses: [Response] = try operation.responses.compactMap {
             let statusCodeString = $0.key
             guard let statusCode = HTTPStatusCode(rawValue: statusCodeString) else {
-                fatalError("Unknown status code received: \(statusCodeString)")
+                log("⚠️ Unknown or unsupported status code '\(statusCodeString)' — skipping", error: true)
+                return nil
             }
 
             guard let requestResponse = $0.value else { return nil }
@@ -120,8 +121,6 @@ public struct APIRequestFactory {
             at: servicePath,
             swagger: swagger
         )
-
-        inlineResponseModels.append(contentsOf: inlineModels)
 
         let apiRequest = APIRequest(
             description: operation.description,

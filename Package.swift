@@ -10,6 +10,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0"),
         .package(url: "https://github.com/lunarway/SwaggerSwiftML", from: "3.0.0"),
+        .package(url: "https://github.com/jpsim/Yams.git", from: "5.3.1"),
     ],
     targets: [
         .executableTarget(
@@ -22,12 +23,13 @@ let package = Package(
         .target(
             name: "SwaggerSwiftCore",
             dependencies: [
-                .product(name: "SwaggerSwiftML", package: "SwaggerSwiftML")
+                .product(name: "SwaggerSwiftML", package: "SwaggerSwiftML"),
+                .product(name: "Yams", package: "Yams"),
             ]
         ),
         .testTarget(
             name: "SwaggerSwiftCoreTests",
-            dependencies: ["SwaggerSwift"]
+            dependencies: ["SwaggerSwiftCore"]
         ),
     ]
 )

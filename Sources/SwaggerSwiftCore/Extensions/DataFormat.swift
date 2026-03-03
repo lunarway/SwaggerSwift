@@ -44,7 +44,7 @@ extension DataFormat: @retroactive CustomStringConvertible {
             } else if type == "uuid" {
                 return "UUID"
             } else {
-                fatalError("Unsupported type: \(type)")
+                return type.uppercasingFirst
             }
         }
     }
