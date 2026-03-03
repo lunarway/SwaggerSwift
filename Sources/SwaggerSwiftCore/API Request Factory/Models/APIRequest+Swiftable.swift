@@ -190,9 +190,13 @@ extension APIRequest {
             \(functionDeclaration)(\(functionArguments)) async throws(\(returnType.failureType.toString(required: true))) -> \(returnType.successType.toString(required: true)) {
                 let endpointUrl = await baseUrlProvider().appendingPathComponent("\(servicePath)")
 
-                \(queries.count > 0 ? "var" : "let") urlComponents = URLComponents(url: endpointUrl, resolvingAgainstBaseURL: true)!
+                guard var urlComponents = URLComponents(url: endpointUrl, resolvingAgainstBaseURL: true) else {
+                    throw .requestFailed(error: URLError(.badURL))
+                }
             \(queries.toQueryItems().indentLines(1))
-                let requestUrl = urlComponents.url!
+                guard let requestUrl = urlComponents.url else {
+                    throw .requestFailed(error: URLError(.badURL))
+                }
                 var request = URLRequest(url: requestUrl)
                 request.httpMethod = "\(httpMethod.rawValue.uppercased())"
             \(requestPart)
@@ -220,7 +224,7 @@ extension APIRequest {
                 }
 
                 guard let httpResponse = response as? HTTPURLResponse else {
-                fatalError("The response must be a URL response")
+                    throw .requestFailed(error: URLError(.badServerResponse))
                 }
 
                 let decoder = JSONDecoder()
@@ -310,8 +314,11 @@ extension APIRequest {
 
             body += """
                         } catch let error {
-                            let error = error as! \(returnType.failureType.toString(required: true)) 
-                            completion(.failure(error))
+                            if let error = error as? \(returnType.failureType.toString(required: true)) {
+                                completion(.failure(error))
+                            } else {
+                                completion(.failure(.requestFailed(error: error)))
+                            }
                         }
                     }
                 }
