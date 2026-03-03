@@ -179,28 +179,12 @@ public struct Generator {
         }
     }
 
-    private func fetchSwagger(_ request: URLRequest) async throws -> (Data, URLResponse) {
-        enum FetchError: Error {
-            case noData
-        }
-        return try await withCheckedThrowingContinuation { continuation in
-            URLSession.shared.dataTask(with: request) { data, response, _ in
-                guard let data = data, let response = response else {
-                    continuation.resume(throwing: FetchError.noData)
-                    return
-                }
-                continuation.resume(returning: (data, response))
-            }.resume()
-        }
-    }
-
     private func download(
         githubToken: String,
         organisation: String,
         serviceName: String,
         branch: String,
-        swaggerPath: String,
-        urlSession: URLSession
+        swaggerPath: String
     ) async throws -> Data {
         guard
             let url = URL(
@@ -219,7 +203,7 @@ public struct Generator {
         request.setValue("application/vnd.github.v3.raw", forHTTPHeaderField: "Accept")
 
         log("Downloading Swagger at: \(url.absoluteString)")
-        let (data, response) = try await fetchSwagger(request)
+        let (data, response) = try await URLSession.shared.data(for: request)
         if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
             if branch != "master" && branch != "main" {
                 log(
@@ -231,8 +215,7 @@ public struct Generator {
                     organisation: organisation,
                     serviceName: serviceName,
                     branch: "master",
-                    swaggerPath: swaggerPath,
-                    urlSession: urlSession
+                    swaggerPath: swaggerPath
                 )
             } else {
                 throw FetchSwaggerError.requestFailed(
@@ -251,16 +234,14 @@ public struct Generator {
         organisation: String,
         serviceName: String,
         branch: String,
-        swaggerPath: String,
-        urlSession: URLSession = .shared
+        swaggerPath: String
     ) async throws -> Swagger {
         let data = try await download(
             githubToken: githubToken,
             organisation: organisation,
             serviceName: serviceName,
             branch: branch,
-            swaggerPath: swaggerPath,
-            urlSession: urlSession
+            swaggerPath: swaggerPath
         )
 
         guard let stringValue = String(data: data, encoding: .utf8) else {
