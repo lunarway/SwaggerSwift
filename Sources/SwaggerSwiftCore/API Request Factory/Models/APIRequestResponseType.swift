@@ -99,7 +99,7 @@ enum APIRequestResponseType {
             return """
                 case \(statusCode.rawValue):
                     if let stringValue = String(data: data, encoding: .utf8), let value = Int(stringValue) {
-                        return .success(value)
+                        return value
                     } else {
                         let error = NSError(domain: "\(apiName)",
                                             code: 0,
@@ -182,7 +182,7 @@ enum APIRequestResponseType {
                     do {
                         result = try decoder.decode([\(innerType)].self, from: data)
                     } catch let error {
-                        throw \(errorType).requestFailed(error: error))
+                        throw \(errorType).requestFailed(error: error)
                     }
                     \(failed ? "throw" : "return") \(resultType("result", resultIsEnum))
                 """

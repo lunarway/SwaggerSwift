@@ -202,10 +202,18 @@ public struct Generator {
         swaggerPath: String,
         urlSession: URLSession
     ) async throws -> Data {
-        let url = URL(
-            string:
-                "https://raw.githubusercontent.com/\(organisation)/\(serviceName)/\(branch)/\(swaggerPath)"
-        )!
+        guard
+            let url = URL(
+                string:
+                    "https://raw.githubusercontent.com/\(organisation)/\(serviceName)/\(branch)/\(swaggerPath)"
+            )
+        else {
+            throw FetchSwaggerError.requestFailed(
+                serviceName: serviceName,
+                branch: branch,
+                statusCode: 0
+            )
+        }
         var request = URLRequest(url: url)
         request.setValue("token \(githubToken)", forHTTPHeaderField: "Authorization")
         request.setValue("application/vnd.github.v3.raw", forHTTPHeaderField: "Accept")
@@ -429,7 +437,7 @@ public struct Generator {
 
         let packageFile = packageBuilder.buildPackageFile()
 
-        let expandedPath = path.replacingOccurrences(of: "~", with: NSHomeDirectory())
+        let expandedPath = NSString(string: path).expandingTildeInPath
         // create the initial directory
         try fileManager.createDirectory(atPath: expandedPath, withIntermediateDirectories: true)
 

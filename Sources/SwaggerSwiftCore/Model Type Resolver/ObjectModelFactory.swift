@@ -3,7 +3,7 @@ import SwaggerSwiftML
 private struct AllOfPart {
     let typeName: String?
     let fields: [ModelField]
-    let embedddedDefinitions: [ModelDefinition]
+    let embeddedDefinitions: [ModelDefinition]
 }
 
 public class ObjectModelFactory {
@@ -37,7 +37,7 @@ public class ObjectModelFactory {
                 swagger: swagger
             )
 
-            let embedddedDefinitions = allOfParts.flatMap { $0.embedddedDefinitions }
+            let embeddedDefinitions = allOfParts.flatMap { $0.embeddedDefinitions }
             let inherits = allOfParts.compactMap { $0.typeName }
 
             let model = Model(
@@ -46,7 +46,7 @@ public class ObjectModelFactory {
                 fields: allOfParts.flatMap { $0.fields },
                 inheritsFrom: inherits,
                 isInternalOnly: schema.isInternalOnly,
-                embeddedDefinitions: embedddedDefinitions,
+                embeddedDefinitions: embeddedDefinitions,
                 isCodable: true
             )
 
@@ -188,12 +188,12 @@ public class ObjectModelFactory {
                 let part = AllOfPart(
                     typeName: modelReference.typeName,
                     fields: [],
-                    embedddedDefinitions: []
+                    embeddedDefinitions: []
                 )
 
                 allOfParts.append(part)
             case .node(let schema):
-                guard case let SchemaType.object(properties, allOfItems) = schema.type else {
+                guard case SchemaType.object(let properties, let allOfItems) = schema.type else {
                     fatalError("Not implemented")
                 }
 
@@ -221,7 +221,7 @@ public class ObjectModelFactory {
                 let allOfPart = AllOfPart(
                     typeName: nil,
                     fields: allFields,
-                    embedddedDefinitions: allInlineModels
+                    embeddedDefinitions: allInlineModels
                 )
 
                 allOfParts.append(allOfPart)
