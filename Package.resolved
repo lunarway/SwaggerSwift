@@ -5,8 +5,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/lunarway/SwaggerSwiftML",
       "state" : {
-        "revision" : "6bb95577fcf7946a1e09f3627c875bc6b6128382",
-        "version" : "3.0.0"
+        "revision" : "b394a4845dbc98378c6f237b41f8af456b91db80",
+        "version" : "3.1.0"
       }
     },
     {
@@ -23,8 +23,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/jpsim/Yams.git",
       "state" : {
-        "revision" : "b4b8042411dc7bbb696300a34a4bf3ba1b7ad19b",
-        "version" : "5.3.1"
+        "revision" : "deaf82e867fa2cbd3cd865978b079bfcf384ac28",
+        "version" : "6.2.1"
       }
     }
   ],

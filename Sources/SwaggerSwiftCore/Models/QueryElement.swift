@@ -30,6 +30,22 @@ extension QueryElement {
                     }
                     """
             case .array(let isEnum, let collectionFormat):
+                if collectionFormat == .multi {
+                    if isEnum {
+                        return """
+                            if let \(fieldName)Value = \(self.fieldName) {
+                                \(fieldName)Value.forEach { queryItems.append(URLQueryItem(name: \"\(self.fieldName)\", value: $0.rawValue)) }
+                            }
+                            """
+                    } else {
+                        return """
+                            if let \(fieldName)Value = \(self.fieldName) {
+                                \(fieldName)Value.forEach { queryItems.append(URLQueryItem(name: \"\(self.fieldName)\", value: $0)) }
+                            }
+                            """
+                    }
+                }
+
                 if isEnum {
                     if collectionFormat == .csv {
                         return """
@@ -60,6 +76,15 @@ extension QueryElement {
             case .enum:
                 fieldValue = "\(self.fieldValue).rawValue"
             case .array(let isEnum, let collectionFormat):
+                if collectionFormat == .multi {
+                    if isEnum {
+                        return
+                            "\(self.fieldValue).forEach { queryItems.append(URLQueryItem(name: \"\(self.fieldName)\", value: $0.rawValue)) }"
+                    } else {
+                        return
+                            "\(self.fieldValue).forEach { queryItems.append(URLQueryItem(name: \"\(self.fieldName)\", value: $0)) }"
+                    }
+                }
                 if isEnum && collectionFormat == .csv {
                     fieldValue = "\(self.fieldValue).map { $0.rawValue }.joined(separator: \",\")"
                 } else {
