@@ -1,5 +1,4 @@
 import Foundation
-import SwaggerSwiftML
 
 /// Represents some kind of network model. This could be a response type or a request type.
 struct GlobalHeadersModel {
@@ -25,9 +24,7 @@ struct GlobalHeadersModel {
 }
 
 extension GlobalHeadersModel {
-    func toSwift(swaggerFile: SwaggerFile, accessControl: APIAccessControl, templateRenderer: TemplateRenderer) throws
-        -> String
-    {
+    func toSwift(templateRenderer: TemplateRenderer) throws -> String {
         let context: [String: Any] = [
             "typeName": typeName,
             "fields": sortedFields(),
