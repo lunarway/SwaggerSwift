@@ -134,30 +134,26 @@ extension Enumeration {
         serviceName: String?,
         embedded: Bool,
         accessControl: APIAccessControl,
-        packagesToImport: [String]
+        packagesToImport: [String],
+        templateRenderer: TemplateRenderer
     ) -> String {
-        if embedded {
-            return modelDefinition(embeddedFile: true, accessControl: accessControl)
-        }
+        let enumBody = modelDefinition(embeddedFile: embedded, accessControl: accessControl)
 
-        var fileSections = ""
-        fileSections += packagesToImport.map { "import \($0)" }.joined(separator: "\n")
-        if let serviceName = serviceName {
-            fileSections += "\n\nextension \(serviceName) {\n"
-        }
+        let descriptionComment: String? =
+            if let description = description, description.count > 0 {
+                description.replacingOccurrences(of: "\n", with: "\n//")
+            } else {
+                nil
+            }
 
-        let modelDef = modelDefinition(embeddedFile: false, accessControl: accessControl)
-        if let description = description, description.count > 0 {
-            let comment = "// \(description.replacingOccurrences(of: "\n", with: "\n//"))"
-            fileSections += "\(comment)\n\(modelDef)".indentLines(1) + "\n"
-        } else {
-            fileSections += modelDef.indentLines(1) + "\n"
-        }
+        let context: [String: Any] = [
+            "embedded": embedded,
+            "serviceName": serviceName as Any,
+            "packagesToImport": packagesToImport,
+            "description": descriptionComment as Any,
+            "enumBody": enumBody,
+        ]
 
-        if serviceName != nil {
-            fileSections += "}"
-        }
-
-        return fileSections + "\n"
+        return try! templateRenderer.render(template: "Enumeration.stencil", context: context)
     }
 }

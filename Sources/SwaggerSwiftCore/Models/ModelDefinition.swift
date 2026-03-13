@@ -35,7 +35,8 @@ extension ModelDefinition {
                 serviceName: serviceName,
                 embedded: embedded,
                 accessControl: accessControl,
-                packagesToImport: packagesToImport
+                packagesToImport: packagesToImport,
+                templateRenderer: templateRenderer
             )
         case .object(let model):
             return try model.toSwift(
