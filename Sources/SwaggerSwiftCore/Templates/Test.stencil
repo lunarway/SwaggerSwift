@@ -1,0 +1,5 @@
+{{ accessControl }} struct {{ typeName }} {
+{% for field in fields %}
+    {{ accessControl }} let {{ field.name }}: {{ field.type }}
+{% endfor %}
+}
