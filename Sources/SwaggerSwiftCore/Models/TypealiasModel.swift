@@ -24,30 +24,18 @@ extension TypeAliasModel {
         serviceName: String?,
         embedded: Bool,
         accessControl: APIAccessControl,
-        packagesToImport: [String]
+        packagesToImport: [String],
+        templateRenderer: TemplateRenderer
     ) -> String {
-        let typeString = "\(accessControl.rawValue) typealias \(typeName) = \(type)"
+        let context: [String: Any] = [
+            "typeName": typeName,
+            "type": type,
+            "accessControl": accessControl.rawValue,
+            "embedded": embedded,
+            "serviceName": serviceName as Any,
+            "packagesToImport": packagesToImport,
+        ]
 
-        if !embedded {
-            var model = ""
-            model.appendLine("import Foundation")
-            packagesToImport.forEach { model.appendLine("import \($0)") }
-            model.appendLine()
-
-            if let serviceName = serviceName {
-                model.appendLine("extension \(serviceName) {")
-            }
-
-            model += typeString.indentLines(1)
-
-            if serviceName != nil {
-                model.appendLine()
-                model.appendLine("}")
-            }
-
-            return model
-        } else {
-            return typeString
-        }
+        return try! templateRenderer.render(template: "Typealias.stencil", context: context)
     }
 }

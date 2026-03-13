@@ -30,7 +30,9 @@ struct Model {
         )
     }
 
-    func modelDefinition(serviceName: String?, accessControl: APIAccessControl) -> String {
+    func modelDefinition(serviceName: String?, accessControl: APIAccessControl, templateRenderer: TemplateRenderer)
+        -> String
+    {
         let comment: String?
         if let description = description {
             comment = description.split(separator: "\n").map {
@@ -78,7 +80,8 @@ struct Model {
                     serviceName: serviceName,
                     embedded: true,
                     accessControl: accessControl,
-                    packagesToImport: []
+                    packagesToImport: [],
+                    templateRenderer: templateRenderer
                 )
             }
             .joined(separator: "\n\n")
@@ -174,14 +177,19 @@ extension Model {
         serviceName: String?,
         embedded: Bool,
         accessControl: APIAccessControl,
-        packagesToImport: [String]
+        packagesToImport: [String],
+        templateRenderer: TemplateRenderer
     ) -> String {
         precondition(inheritsFrom.count == 0)
 
         let isInExtension = serviceName != nil
 
         if embedded {
-            return modelDefinition(serviceName: serviceName, accessControl: accessControl)
+            return modelDefinition(
+                serviceName: serviceName,
+                accessControl: accessControl,
+                templateRenderer: templateRenderer
+            )
         }
 
         var model = ""
@@ -198,7 +206,11 @@ extension Model {
             model.appendLine("extension \(serviceName) {")
         }
 
-        model += modelDefinition(serviceName: serviceName, accessControl: accessControl).indentLines(
+        model += modelDefinition(
+            serviceName: serviceName,
+            accessControl: accessControl,
+            templateRenderer: templateRenderer
+        ).indentLines(
             isInExtension ? 1 : 0
         )
 
