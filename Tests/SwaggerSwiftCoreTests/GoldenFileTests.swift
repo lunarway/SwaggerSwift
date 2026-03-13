@@ -34,6 +34,7 @@ final class GoldenFileTests: XCTestCase {
     private var swaggerFile: SwaggerFile!
     private var apiDefinition: APIDefinition!
     private var modelDefinitions: [ModelDefinition]!
+    private var templateRenderer: TemplateRenderer!
 
     override func setUp() async throws {
         let specURL = Self.fixturesURL.appendingPathComponent("test_spec.json")
@@ -77,6 +78,7 @@ final class GoldenFileTests: XCTestCase {
 
         self.apiDefinition = apiDef
         self.modelDefinitions = modelDefs
+        self.templateRenderer = TemplateRenderer()
     }
 
     // MARK: - API Definition
@@ -104,7 +106,8 @@ final class GoldenFileTests: XCTestCase {
                 serviceName: apiDefinition.serviceName,
                 embedded: false,
                 accessControl: .public,
-                packagesToImport: []
+                packagesToImport: [],
+                templateRenderer: templateRenderer
             )
 
             let filename = "TestService_\(model.typeName).swift"
