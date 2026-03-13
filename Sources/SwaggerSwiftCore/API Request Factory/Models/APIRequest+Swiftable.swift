@@ -22,7 +22,8 @@ extension APIRequest {
     private func makeRequestFunction(
         serviceName: String?,
         swaggerFile: SwaggerFile,
-        accessControl: String
+        accessControl: String,
+        templateRenderer: TemplateRenderer
     ) -> String {
         let servicePath = self.servicePath.split(separator: "/")
             .map {
@@ -186,56 +187,25 @@ extension APIRequest {
             functionDeclaration = "\(accessControl) func \(functionName)"
         }
 
-        return """
-            \(functionDeclaration)(\(functionArguments)) async throws(\(returnType.failureType.toString(required: true))) -> \(returnType.successType.toString(required: true)) {
-                let endpointUrl = await baseUrlProvider().appendingPathComponent("\(servicePath)")
+        let context: [String: Any] = [
+            "functionDeclaration": functionDeclaration,
+            "functionArguments": functionArguments,
+            "failureType": returnType.failureType.toString(required: true),
+            "successType": returnType.successType.toString(required: true),
+            "servicePath": servicePath,
+            "urlComponentsKeyword": queries.count > 0 ? "var" : "let",
+            "queryItems": queries.toQueryItems().indentLines(1),
+            "httpMethod": httpMethod.rawValue.uppercased(),
+            "requestPart": requestPart,
+            "urlSessionMethodName": urlSessionMethodName,
+            "responseTypes": responseTypes,
+            "serviceDomain": serviceName ?? "Generic",
+        ]
 
-                \(queries.count > 0 ? "var" : "let") urlComponents = URLComponents(url: endpointUrl, resolvingAgainstBaseURL: true)!
-            \(queries.toQueryItems().indentLines(1))
-                let requestUrl = urlComponents.url!
-                var request = URLRequest(url: requestUrl)
-                request.httpMethod = "\(httpMethod.rawValue.uppercased())"
-            \(requestPart)
-                request = interceptor?.networkWillPerformRequest(request) ?? request
-
-                let data: Data
-                let response: URLResponse
-                do {
-                    (data, response) = try await urlSession().\(urlSessionMethodName)
-                } catch {
-                    throw .requestFailed(error: error)
-                }
-
-                if let interceptor {
-                    do {
-                        try await interceptor.networkDidPerformRequest(
-                            urlRequest: request,
-                            urlResponse: response,
-                            data: data,
-                            error: nil
-                        )
-                    } catch {
-                        throw .requestFailed(error: error)
-                    }
-                }
-
-                guard let httpResponse = response as? HTTPURLResponse else {
-                fatalError("The response must be a URL response")
-                }
-
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .custom(dateDecodingStrategy)
-
-                switch httpResponse.statusCode {
-            \(responseTypes.indentLines(1))
-                default:
-                    let result = String(data: data, encoding: .utf8) ?? ""
-                    let error = NSError(domain: "\(serviceName ?? "Generic")", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: result])
-                    throw .requestFailed(error: error)
-                }
-            }
-
-            """
+        return try! templateRenderer.render(
+            template: "APIRequestFunction.stencil",
+            context: context
+        )
     }
 
     func toSwift(
@@ -243,7 +213,8 @@ extension APIRequest {
         swaggerFile: SwaggerFile,
         embedded: Bool,
         accessControl: String,
-        packagesToImport: [String]
+        packagesToImport: [String],
+        templateRenderer: TemplateRenderer
     ) -> String {
         var documentation = """
             \(description?.documentationFormat() ?? "/// No description provided")
@@ -274,7 +245,8 @@ extension APIRequest {
         body += makeRequestFunction(
             serviceName: serviceName,
             swaggerFile: swaggerFile,
-            accessControl: accessControl
+            accessControl: accessControl,
+            templateRenderer: templateRenderer
         )
 
         if swaggerFile.onlyAsync == false {
