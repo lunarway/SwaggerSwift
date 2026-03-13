@@ -36,7 +36,8 @@ let package = Package(
         ),
         .testTarget(
             name: "SwaggerSwiftCoreTests",
-            dependencies: ["SwaggerSwiftCore"]
+            dependencies: ["SwaggerSwiftCore"],
+            exclude: ["Fixtures"]
         ),
     ]
 )
