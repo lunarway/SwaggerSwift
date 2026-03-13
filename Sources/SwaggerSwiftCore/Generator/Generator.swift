@@ -14,6 +14,22 @@ public struct Generator {
         self.modelTypeResolver = modelTypeResolver
     }
 
+    private static let swaggerFileCandidates = [
+        "SwaggerFile.yml",
+        "SwaggerFile.yaml",
+    ]
+
+    /// Find a SwaggerFile in the current directory by checking known filenames.
+    private static func findSwaggerFile(fileManager: FileManager) -> String {
+        for candidate in swaggerFileCandidates {
+            let path = "./\(candidate)"
+            if fileManager.fileExists(atPath: path) {
+                return path
+            }
+        }
+        return "./\(swaggerFileCandidates[0])"
+    }
+
     /// Parse and generate the network layer for a SwaggerFile
     /// - Parameters:
     ///   - swaggerFilePath: The path to the SwaggerFile
@@ -34,7 +50,7 @@ public struct Generator {
 
         let fileManager = FileManager.default
 
-        let swaggerFilePath = swaggerFilePath ?? "./SwaggerFile.yml"
+        let swaggerFilePath = swaggerFilePath ?? Self.findSwaggerFile(fileManager: fileManager)
 
         log("Parsing SwaggerFile at: \(swaggerFilePath)")
         let swaggerFile = try SwaggerFileParser.parse(
