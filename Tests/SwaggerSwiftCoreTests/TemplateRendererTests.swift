@@ -35,17 +35,23 @@ final class TemplateRendererTests: XCTestCase {
     func testIndentedFilter() throws {
         let renderer = TemplateRenderer()
         let result = try renderer.render(
-            template: "Test.stencil",
+            template: "IndentedTest.stencil",
             context: [
-                "accessControl": "internal",
-                "typeName": "Inner",
-                "fields": [
-                    ["name": "value", "type": "Bool"]
-                ],
+                "body": "line1\nline2\n\nline4"
             ]
         )
 
-        XCTAssertTrue(result.contains("internal struct Inner"))
-        XCTAssertTrue(result.contains("internal let value: Bool"))
+        XCTAssertEqual(
+            result,
+            """
+            wrapper {
+                line1
+                line2
+
+                line4
+            }
+
+            """
+        )
     }
 }

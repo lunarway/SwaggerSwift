@@ -2,17 +2,6 @@ import Foundation
 import Stencil
 import StencilSwiftKit
 
-enum TemplateRendererError: Error, CustomStringConvertible {
-    case templateNotFound(String)
-
-    var description: String {
-        switch self {
-        case .templateNotFound(let name):
-            return "Template '\(name)' not found in bundle"
-        }
-    }
-}
-
 struct TemplateRenderer {
     private let environment: Environment
 
