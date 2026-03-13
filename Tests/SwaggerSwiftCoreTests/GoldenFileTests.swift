@@ -31,6 +31,7 @@ final class GoldenFileTests: XCTestCase {
     }()
 
     private var swagger: Swagger!
+    private var swaggerFile: SwaggerFile!
     private var apiDefinition: APIDefinition!
     private var modelDefinitions: [ModelDefinition]!
     private var templateRenderer: TemplateRenderer!
@@ -58,7 +59,7 @@ final class GoldenFileTests: XCTestCase {
             modelTypeResolver: modelTypeResolver
         )
 
-        let swaggerFile = SwaggerFile(
+        self.swaggerFile = SwaggerFile(
             path: "swagger.json",
             organisation: "test",
             services: [:],
@@ -83,18 +84,6 @@ final class GoldenFileTests: XCTestCase {
     // MARK: - API Definition
 
     func testAPIDefinitionGoldenFile() throws {
-        let swaggerFile = SwaggerFile(
-            path: "swagger.json",
-            organisation: "test",
-            services: [:],
-            globalHeaders: [],
-            createSwiftPackage: false,
-            accessControl: .public,
-            destination: "./",
-            projectName: "TestProject",
-            onlyAsync: true
-        )
-
         let output = apiDefinition.toSwift(
             swaggerFile: swaggerFile,
             accessControl: "public",
