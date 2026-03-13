@@ -51,7 +51,8 @@ extension ModelDefinition {
                 serviceName: serviceName,
                 embedded: embedded,
                 accessControl: accessControl,
-                packagesToImport: packagesToImport
+                packagesToImport: packagesToImport,
+                templateRenderer: templateRenderer
             )
         case .typeAlias(let model):
             return model.toSwift(
