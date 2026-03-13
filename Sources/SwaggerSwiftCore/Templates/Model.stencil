@@ -1,0 +1,22 @@
+{%- if not embedded -%}
+import Foundation
+{% for package in packagesToImport %}import {{ package }}
+{% endfor %}
+{%- if isInternalOnly -%}
+#if DEBUG
+
+{% endif -%}
+{%- if serviceName %}
+extension {{ serviceName }} {
+    {{ modelBody|indented:1 }}
+}
+{%- else -%}
+{{ modelBody }}
+{%- endif %}
+{%- if isInternalOnly %}
+
+#endif
+{%- endif %}
+{%- else -%}
+{{ modelBody }}
+{%- endif %}
