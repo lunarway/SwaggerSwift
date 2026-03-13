@@ -1,0 +1,13 @@
+import Foundation
+{% for package in packagesToImport %}import {{ package }}
+{% endfor %}
+{%- if description %}
+// {{ description }}
+{% endif -%}
+{{ accessControl }} struct {{ serviceName }}: APIInitialize {
+    {{ properties|indented:1 }}
+
+    {{ initMethod|indented:1 }}
+
+    {{ apiFunctions|indented:1 }}
+}

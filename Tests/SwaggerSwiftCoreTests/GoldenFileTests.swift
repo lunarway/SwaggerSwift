@@ -88,7 +88,8 @@ struct GoldenFileTests {
         let output = apiDefinition.toSwift(
             swaggerFile: swaggerFile,
             accessControl: "public",
-            packagesToImport: []
+            packagesToImport: [],
+            templateRenderer: templateRenderer
         )
 
         try assertGoldenFile(
