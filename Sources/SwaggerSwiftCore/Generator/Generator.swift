@@ -8,10 +8,12 @@ import FoundationNetworking
 public struct Generator {
     let apiRequestFactory: APIRequestFactory
     let modelTypeResolver: ModelTypeResolver
+    let templateRenderer: TemplateRenderer
 
     public init(apiRequestFactory: APIRequestFactory, modelTypeResolver: ModelTypeResolver) {
         self.apiRequestFactory = apiRequestFactory
         self.modelTypeResolver = modelTypeResolver
+        self.templateRenderer = TemplateRenderer()
     }
 
     private static let swaggerFileCandidates = [
@@ -372,37 +374,25 @@ public struct Generator {
             attributes: nil
         )
 
-        let accControl: String = accessControl.rawValue
+        let context: [String: Any] = ["accessControl": accessControl.rawValue]
 
-        try serviceError.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
-            toFile: "\(targetPath)/ServiceError.swift"
-        )
-        try urlQueryItemExtension.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
-            toFile: "\(targetPath)/URLQueryExtension.swift"
-        )
-        try jsonParsingErrorExtension.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl)
-            .write(toFile: "\(targetPath)/ParsingError.swift")
-        try networkInterceptor.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
-            toFile: "\(targetPath)/NetworkInterceptor.swift"
-        )
-        try additionalPropertyUtil.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
-            toFile: "\(targetPath)/AdditionalProperty.swift"
-        )
-        try formData.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
-            toFile: "\(targetPath)/FormData.swift"
-        )
-        try dateDecodingStrategy.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
-            toFile: "\(targetPath)/DateDecodingStrategy.swift"
-        )
-        try apiInitializeFile.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
-            toFile: "\(targetPath)/APIInitialize.swift"
-        )
-        try apiInitializerFile.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
-            toFile: "\(targetPath)/APIInitializer.swift"
-        )
-        try stringCodingKey.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
-            toFile: "\(targetPath)/StringCodingKey.swift"
-        )
+        let staticFiles: [(template: String, output: String)] = [
+            ("ServiceError.stencil", "ServiceError.swift"),
+            ("URLQueryExtension.stencil", "URLQueryExtension.swift"),
+            ("JsonParsingError.stencil", "ParsingError.swift"),
+            ("NetworkInterceptor.stencil", "NetworkInterceptor.swift"),
+            ("AdditionalProperty.stencil", "AdditionalProperty.swift"),
+            ("FormData.stencil", "FormData.swift"),
+            ("DateDecodingStrategy.stencil", "DateDecodingStrategy.swift"),
+            ("APIInitialize.stencil", "APIInitialize.swift"),
+            ("APIInitializer.stencil", "APIInitializer.swift"),
+            ("StringCodingKey.stencil", "StringCodingKey.swift"),
+        ]
+
+        for file in staticFiles {
+            try templateRenderer.render(template: file.template, context: context)
+                .write(toFile: "\(targetPath)/\(file.output)")
+        }
 
         if swaggerFile.createSwiftPackage == false {
             let globalHeadersDefinitions = globalHeadersModel.writeExtensions(inCommonPackageNamed: nil)
