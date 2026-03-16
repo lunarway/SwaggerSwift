@@ -1,5 +1,6 @@
+import Foundation
 import SwaggerSwiftML
-import XCTest
+import Testing
 
 @testable import SwaggerSwiftCore
 
@@ -16,7 +17,8 @@ import XCTest
 /// UPDATE_GOLDEN_FILES=1 swift test --filter GoldenFileTests
 /// ```
 /// Then review and commit the updated golden files.
-final class GoldenFileTests: XCTestCase {
+@Suite
+struct GoldenFileTests {
     private static let fixturesURL: URL = {
         let thisFile = URL(fileURLWithPath: #filePath)
         return thisFile.deletingLastPathComponent().appendingPathComponent("Fixtures")
@@ -30,17 +32,14 @@ final class GoldenFileTests: XCTestCase {
         ProcessInfo.processInfo.environment["UPDATE_GOLDEN_FILES"] == "1"
     }()
 
-    private var swagger: Swagger!
-    private var swaggerFile: SwaggerFile!
-    private var apiDefinition: APIDefinition!
-    private var modelDefinitions: [ModelDefinition]!
+    private let swaggerFile: SwaggerFile
+    private let apiDefinition: APIDefinition
+    private let modelDefinitions: [ModelDefinition]
 
-    override func setUp() async throws {
+    init() throws {
         let specURL = Self.fixturesURL.appendingPathComponent("test_spec.json")
         let specData = try Data(contentsOf: specURL)
         let specString = String(data: specData, encoding: .utf8)!
-
-        swagger = try SwaggerReader.read(text: specString)
 
         let objectModelFactory = ObjectModelFactory()
         let modelTypeResolver = ModelTypeResolver(objectModelFactory: objectModelFactory)
@@ -70,6 +69,7 @@ final class GoldenFileTests: XCTestCase {
             onlyAsync: true
         )
 
+        let swagger = try SwaggerReader.read(text: specString)
         let (apiDef, modelDefs) = try apiFactory.generate(
             for: swagger,
             withSwaggerFile: swaggerFile
@@ -81,7 +81,8 @@ final class GoldenFileTests: XCTestCase {
 
     // MARK: - API Definition
 
-    func testAPIDefinitionGoldenFile() throws {
+    @Test
+    func apiDefinitionGoldenFile() throws {
         let output = apiDefinition.toSwift(
             swaggerFile: swaggerFile,
             accessControl: "public",
@@ -96,20 +97,29 @@ final class GoldenFileTests: XCTestCase {
 
     // MARK: - Model Definitions
 
-    func testModelDefinitionsGoldenFiles() throws {
-        let sortedModels = modelDefinitions.sorted(by: { $0.typeName < $1.typeName })
-
-        for model in sortedModels {
-            let output = model.toSwift(
-                serviceName: apiDefinition.serviceName,
-                embedded: false,
-                accessControl: .public,
-                packagesToImport: []
-            )
-
-            let filename = "TestService_\(model.typeName).swift"
-            try assertGoldenFile(named: filename, actual: output)
+    @Test(arguments: [
+        "CreateUserRequest",
+        "ErrorResponse",
+        "User",
+        "UserId",
+        "UserList",
+        "UserRole",
+    ])
+    func modelDefinitionGoldenFile(typeName: String) throws {
+        guard let model = modelDefinitions.first(where: { $0.typeName == typeName }) else {
+            Issue.record("Model '\(typeName)' not found in generated definitions")
+            return
         }
+
+        let output = model.toSwift(
+            serviceName: apiDefinition.serviceName,
+            embedded: false,
+            accessControl: .public,
+            packagesToImport: []
+        )
+
+        let filename = "TestService_\(typeName).swift"
+        try assertGoldenFile(named: filename, actual: output)
     }
 
     // MARK: - Helpers
@@ -117,8 +127,7 @@ final class GoldenFileTests: XCTestCase {
     private func assertGoldenFile(
         named filename: String,
         actual: String,
-        file: StaticString = #filePath,
-        line: UInt = #line
+        sourceLocation: SourceLocation = #_sourceLocation
     ) throws {
         let goldenURL = Self.goldenFilesURL.appendingPathComponent(filename)
 
@@ -132,10 +141,9 @@ final class GoldenFileTests: XCTestCase {
         }
 
         guard FileManager.default.fileExists(atPath: goldenURL.path) else {
-            XCTFail(
+            Issue.record(
                 "Golden file '\(filename)' not found. Run with UPDATE_GOLDEN_FILES=1 to create it.",
-                file: file,
-                line: line
+                sourceLocation: sourceLocation
             )
             return
         }
@@ -143,7 +151,6 @@ final class GoldenFileTests: XCTestCase {
         let expected = try String(contentsOf: goldenURL, encoding: .utf8)
 
         if actual != expected {
-            // Show a useful diff
             let actualLines = actual.split(separator: "\n", omittingEmptySubsequences: false)
             let expectedLines = expected.split(separator: "\n", omittingEmptySubsequences: false)
 
@@ -160,7 +167,7 @@ final class GoldenFileTests: XCTestCase {
             }
             diffMessage += "\nRun with UPDATE_GOLDEN_FILES=1 to update."
 
-            XCTFail(diffMessage, file: file, line: line)
+            Issue.record(Comment(rawValue: diffMessage), sourceLocation: sourceLocation)
         }
     }
 }

@@ -3,8 +3,15 @@ import XCTest
 @testable import SwaggerSwiftCore
 
 final class TemplateRendererTests: XCTestCase {
+    private static let testTemplatesURL: URL = {
+        let thisFile = URL(fileURLWithPath: #filePath)
+        return thisFile.deletingLastPathComponent()
+            .appendingPathComponent("Fixtures")
+            .appendingPathComponent("Templates")
+    }()
+
     func testRenderSimpleTemplate() throws {
-        let renderer = TemplateRenderer()
+        let renderer = TemplateRenderer(templateDirectory: Self.testTemplatesURL)
         let result = try renderer.render(
             template: "Test.stencil",
             context: [
@@ -33,7 +40,7 @@ final class TemplateRendererTests: XCTestCase {
     }
 
     func testIndentedFilter() throws {
-        let renderer = TemplateRenderer()
+        let renderer = TemplateRenderer(templateDirectory: Self.testTemplatesURL)
         let result = try renderer.render(
             template: "IndentedTest.stencil",
             context: [

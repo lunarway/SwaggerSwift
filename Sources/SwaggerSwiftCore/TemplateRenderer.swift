@@ -6,8 +6,15 @@ struct TemplateRenderer {
     private let environment: Environment
 
     init() {
-        let templateURL = Bundle.module.resourceURL!.appendingPathComponent("Templates")
-        let loader = FileSystemLoader(paths: [.init(templateURL.path)])
+        guard let resourceURL = Bundle.module.resourceURL else {
+            fatalError("Templates resource bundle not found. Ensure SwaggerSwiftCore is built with SPM resources.")
+        }
+        let templateURL = resourceURL.appendingPathComponent("Templates")
+        self.init(templateDirectory: templateURL)
+    }
+
+    init(templateDirectory: URL) {
+        let loader = FileSystemLoader(paths: [.init(templateDirectory.path)])
         let ext = Extension()
         ext.registerStencilSwiftExtensions()
         ext.registerFilter("indented") { (value: Any?, arguments: [Any?]) in
