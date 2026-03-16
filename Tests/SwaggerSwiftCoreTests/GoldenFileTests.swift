@@ -35,6 +35,7 @@ struct GoldenFileTests {
     private let swaggerFile: SwaggerFile
     private let apiDefinition: APIDefinition
     private let modelDefinitions: [ModelDefinition]
+    private let templateRenderer: TemplateRenderer
 
     init() throws {
         let specURL = Self.fixturesURL.appendingPathComponent("test_spec.json")
@@ -77,6 +78,7 @@ struct GoldenFileTests {
 
         self.apiDefinition = apiDef
         self.modelDefinitions = modelDefs
+        self.templateRenderer = TemplateRenderer()
     }
 
     // MARK: - API Definition
@@ -115,7 +117,8 @@ struct GoldenFileTests {
             serviceName: apiDefinition.serviceName,
             embedded: false,
             accessControl: .public,
-            packagesToImport: []
+            packagesToImport: [],
+            templateRenderer: templateRenderer
         )
 
         let filename = "TestService_\(typeName).swift"

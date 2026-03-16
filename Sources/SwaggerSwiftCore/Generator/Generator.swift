@@ -331,8 +331,9 @@ public struct Generator {
         )
 
         if swaggerFile.createSwiftPackage {
-            let globalHeadersDefinitions = globalHeadersModel.writeExtensions(
-                inCommonPackageNamed: commonLibraryName
+            let globalHeadersDefinitions = try globalHeadersModel.writeExtensions(
+                inCommonPackageNamed: commonLibraryName,
+                templateRenderer: templateRenderer
             )
             let globalHeaderExtensionsPath = "\(apiDirectory)/GlobalHeaderExtensions.swift"
             try globalHeadersDefinitions.write(toFile: globalHeaderExtensionsPath)
@@ -348,7 +349,8 @@ public struct Generator {
                 serviceName: apiDefinition.serviceName,
                 embedded: false,
                 accessControl: swaggerFile.accessControl,
-                packagesToImport: commonLibraryName != nil ? [commonLibraryName!] : []
+                packagesToImport: commonLibraryName != nil ? [commonLibraryName!] : [],
+                templateRenderer: templateRenderer
             )
 
             let filename = "\(modelDirectory)/\(apiDefinition.serviceName)_\(apiModel.typeName).swift"
@@ -395,16 +397,20 @@ public struct Generator {
         }
 
         if swaggerFile.createSwiftPackage == false {
-            let globalHeadersDefinitions = globalHeadersModel.writeExtensions(inCommonPackageNamed: nil)
+            let globalHeadersDefinitions = try globalHeadersModel.writeExtensions(
+                inCommonPackageNamed: nil,
+                templateRenderer: templateRenderer
+            )
             let globalHeaderExtensionsPath = "\(targetPath)/GlobalHeaderExtensions.swift"
             try globalHeadersDefinitions.write(toFile: globalHeaderExtensionsPath)
         }
 
         if swaggerFile.globalHeaders.count > 0 {
             let globalHeadersModel = GlobalHeadersModel(headerFields: swaggerFile.globalHeaders)
-            let globalHeadersFileContents = globalHeadersModel.toSwift(
+            let globalHeadersFileContents = try globalHeadersModel.toSwift(
                 swaggerFile: swaggerFile,
-                accessControl: accessControl
+                accessControl: accessControl,
+                templateRenderer: templateRenderer
             )
             try globalHeadersFileContents.write(toFile: "\(targetPath)/GlobalHeaders.swift")
         }
