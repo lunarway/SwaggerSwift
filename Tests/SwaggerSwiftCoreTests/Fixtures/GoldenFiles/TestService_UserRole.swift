@@ -8,7 +8,6 @@ extension TestService {
         case unknown(String)
 
 
-
         public init(from decoder: any Decoder) throws {
             let container = try decoder.singleValueContainer()
             let stringValue = try container.decode(String.self)
@@ -16,10 +15,8 @@ extension TestService {
             case "admin": self = .admin
             case "guest": self = .guest
             case "user": self = .user
-
             default:
                 self = .unknown(stringValue)
-
             }
         }
 
@@ -32,7 +29,6 @@ extension TestService {
                 try container.encode("guest")
             case .user:
                 try container.encode("user")
-
             case .unknown(let stringValue):
                 try container.encode(stringValue)
             }
@@ -43,7 +39,6 @@ extension TestService {
             case "admin": self = .admin
             case "guest": self = .guest
             case "user": self = .user
-
             default:
                 self = .unknown(rawValue)
             }
@@ -57,11 +52,9 @@ extension TestService {
                 return "guest"
             case .user:
                 return "user"
-
             case .unknown(let stringValue):
                 return stringValue
             }
         }
-
     }
 }
