@@ -1,8 +1,10 @@
-import XCTest
+import Foundation
+import Testing
 
 @testable import SwaggerSwiftCore
 
-final class TemplateRendererTests: XCTestCase {
+@Suite
+struct TemplateRendererTests {
     private static let testTemplatesURL: URL = {
         let thisFile = URL(fileURLWithPath: #filePath)
         return thisFile.deletingLastPathComponent()
@@ -10,7 +12,7 @@ final class TemplateRendererTests: XCTestCase {
             .appendingPathComponent("Templates")
     }()
 
-    func testRenderSimpleTemplate() throws {
+    @Test func renderSimpleTemplate() throws {
         let renderer = TemplateRenderer(templateDirectory: Self.testTemplatesURL)
         let result = try renderer.render(
             template: "Test.stencil",
@@ -24,22 +26,22 @@ final class TemplateRendererTests: XCTestCase {
             ]
         )
 
-        XCTAssertEqual(
-            result,
-            """
-            public struct MyModel {
+        #expect(
+            result
+                == """
+                public struct MyModel {
 
-                public let id: String
+                    public let id: String
 
-                public let count: Int
+                    public let count: Int
 
-            }
+                }
 
-            """
+                """
         )
     }
 
-    func testIndentedFilter() throws {
+    @Test func indentedFilter() throws {
         let renderer = TemplateRenderer(templateDirectory: Self.testTemplatesURL)
         let result = try renderer.render(
             template: "IndentedTest.stencil",
@@ -48,17 +50,17 @@ final class TemplateRendererTests: XCTestCase {
             ]
         )
 
-        XCTAssertEqual(
-            result,
-            """
-            wrapper {
-                line1
-                line2
+        #expect(
+            result
+                == """
+                wrapper {
+                    line1
+                    line2
 
-                line4
-            }
+                    line4
+                }
 
-            """
+                """
         )
     }
 }

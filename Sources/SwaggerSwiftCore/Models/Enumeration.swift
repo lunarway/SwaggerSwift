@@ -60,7 +60,7 @@ struct Enumeration {
         ]
 
         do {
-            return try Self.templateRenderer.render(template: "Enumeration.stencil", context: context)
+            return try Self.templateRenderer.render(template: "EnumerationBody.stencil", context: context)
                 .trimmingCharacters(in: .newlines)
         } catch {
             fatalError("Failed to render Enumeration \(typeName): \(error)")
@@ -73,30 +73,26 @@ extension Enumeration {
         serviceName: String?,
         embedded: Bool,
         accessControl: APIAccessControl,
-        packagesToImport: [String]
-    ) -> String {
-        if embedded {
-            return modelDefinition(embeddedFile: true, accessControl: accessControl)
-        }
+        packagesToImport: [String],
+        templateRenderer: TemplateRenderer
+    ) throws -> String {
+        let enumBody = modelDefinition(embeddedFile: embedded, accessControl: accessControl)
 
-        var fileSections = ""
-        fileSections += packagesToImport.map { "import \($0)" }.joined(separator: "\n")
-        if let serviceName = serviceName {
-            fileSections += "\n\nextension \(serviceName) {\n"
-        }
+        let descriptionComment: String? =
+            if let description = description, description.count > 0 {
+                description.replacingOccurrences(of: "\n", with: "\n// ")
+            } else {
+                nil
+            }
 
-        let modelDef = modelDefinition(embeddedFile: false, accessControl: accessControl)
-        if let description = description, description.count > 0 {
-            let comment = "// \(description.replacingOccurrences(of: "\n", with: "\n//"))"
-            fileSections += "\(comment)\n\(modelDef)".indentLines(1) + "\n"
-        } else {
-            fileSections += modelDef.indentLines(1) + "\n"
-        }
+        var context: [String: Any] = [
+            "embedded": embedded,
+            "packagesToImport": packagesToImport,
+            "enumBody": enumBody,
+        ]
+        if let serviceName { context["serviceName"] = serviceName }
+        if let descriptionComment { context["description"] = descriptionComment }
 
-        if serviceName != nil {
-            fileSections += "}"
-        }
-
-        return fileSections + "\n"
+        return try templateRenderer.render(template: "Enumeration.stencil", context: context)
     }
 }

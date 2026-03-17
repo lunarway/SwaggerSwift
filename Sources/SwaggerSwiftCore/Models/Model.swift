@@ -30,7 +30,9 @@ struct Model {
         )
     }
 
-    func modelDefinition(serviceName: String?, accessControl: APIAccessControl) -> String {
+    func modelDefinition(serviceName: String?, accessControl: APIAccessControl, templateRenderer: TemplateRenderer) throws
+        -> String
+    {
         let comment: String?
         if let description = description {
             comment = description.split(separator: "\n").map {
@@ -71,14 +73,15 @@ struct Model {
         }
 
         model +=
-            embeddedDefinitions
+            try embeddedDefinitions
             .sorted(by: { $0.typeName < $1.typeName })
             .map {
-                $0.toSwift(
+                try $0.toSwift(
                     serviceName: serviceName,
                     embedded: true,
                     accessControl: accessControl,
-                    packagesToImport: []
+                    packagesToImport: [],
+                    templateRenderer: templateRenderer
                 )
             }
             .joined(separator: "\n\n")
@@ -174,44 +177,25 @@ extension Model {
         serviceName: String?,
         embedded: Bool,
         accessControl: APIAccessControl,
-        packagesToImport: [String]
-    ) -> String {
+        packagesToImport: [String],
+        templateRenderer: TemplateRenderer
+    ) throws -> String {
         precondition(inheritsFrom.count == 0)
 
-        let isInExtension = serviceName != nil
-
-        if embedded {
-            return modelDefinition(serviceName: serviceName, accessControl: accessControl)
-        }
-
-        var model = ""
-        model.appendLine("import Foundation")
-        packagesToImport.forEach { model.appendLine("import \($0)") }
-        model.appendLine()
-
-        if isInternalOnly {
-            model.appendLine("#if DEBUG")
-            model.appendLine()
-        }
-
-        if let serviceName = serviceName {
-            model.appendLine("extension \(serviceName) {")
-        }
-
-        model += modelDefinition(serviceName: serviceName, accessControl: accessControl).indentLines(
-            isInExtension ? 1 : 0
+        let modelBody = try modelDefinition(
+            serviceName: serviceName,
+            accessControl: accessControl,
+            templateRenderer: templateRenderer
         )
 
-        if serviceName != nil {
-            model.appendLine()
-            model.appendLine("}")
-        }
+        var context: [String: Any] = [
+            "embedded": embedded,
+            "packagesToImport": packagesToImport,
+            "isInternalOnly": isInternalOnly,
+            "modelBody": modelBody,
+        ]
+        if let serviceName { context["serviceName"] = serviceName }
 
-        if isInternalOnly {
-            model.appendLine()
-            model.appendLine("#endif")
-        }
-
-        return model
+        return try templateRenderer.render(template: "Model.stencil", context: context)
     }
 }
