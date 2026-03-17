@@ -227,6 +227,11 @@ extension Enumeration {
         if let serviceName { context["serviceName"] = serviceName }
         if let descriptionComment { context["description"] = descriptionComment }
 
-        return try templateRenderer.render(template: "Enumeration.stencil", context: context)
+        let rendered = try templateRenderer.render(template: "Enumeration.stencil", context: context)
+        if embedded, rendered.hasSuffix("\n") {
+            return String(rendered.dropLast())
+        }
+
+        return rendered
     }
 }
