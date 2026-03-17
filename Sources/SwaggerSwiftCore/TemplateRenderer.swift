@@ -1,6 +1,5 @@
 import Foundation
 import Stencil
-import StencilSwiftKit
 
 struct TemplateRenderer {
     private let environment: Environment
@@ -16,10 +15,16 @@ struct TemplateRenderer {
     init(templateDirectory: URL) {
         let loader = FileSystemLoader(paths: [.init(templateDirectory.path)])
         let ext = Extension()
-        ext.registerStencilSwiftExtensions()
         ext.registerFilter("indented") { (value: Any?, arguments: [Any?]) in
             guard let string = value as? String else { return value }
-            let level = (arguments.first as? Int) ?? 1
+            let level: Int
+            if let intArg = arguments.first as? Int {
+                level = intArg
+            } else if let stringArg = arguments.first as? String, let parsed = Int(stringArg) {
+                level = parsed
+            } else {
+                level = 1
+            }
             let indent = String(repeating: "    ", count: level)
             return
                 string

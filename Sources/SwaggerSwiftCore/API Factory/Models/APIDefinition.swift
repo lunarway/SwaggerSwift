@@ -8,14 +8,68 @@ struct APIDefinition {
     let fields: [APIDefinitionField]
     let functions: [APIRequest]
 
-    private static let templateRenderer = TemplateRenderer()
+    func toSwift(
+        swaggerFile: SwaggerFile,
+        accessControl: String,
+        packagesToImport: [String],
+        templateRenderer: TemplateRenderer
+    ) throws -> String {
+        let initMethod = """
+            /// Create an instance of \(serviceName)
+            /// - Parameters:
+            \(fields.map { $0.documentationString }.joined(separator: "\n"))
+            \(accessControl) init(\(fields.map { $0.initProperty }.joined(separator: ", "))) {
+            \(fields.map { $0.initAssignment }.joined(separator: "\n").indentLines(1))
+            }
+            """
 
-    func toSwift(swaggerFile: SwaggerFile, accessControl: String, packagesToImport: [String])
-        -> String
-    {
-        let importStatements = (["Foundation"] + packagesToImport).map { "import \($0)" }.joined(
-            separator: "\n"
-        )
+        let requestHelpers = """
+            private func _performRequest(request: URLRequest, requestData: Data?) async throws -> (Data, URLResponse, HTTPURLResponse) {
+                let request = interceptor?.networkWillPerformRequest(request) ?? request
+
+                let data: Data
+                let response: URLResponse
+                do {
+                    if let requestData {
+                        (data, response) = try await urlSession().upload(for: request, from: requestData)
+                    } else {
+                        (data, response) = try await urlSession().data(for: request)
+                    }
+                } catch {
+                    throw error
+                }
+
+                if let interceptor {
+                    try await interceptor.networkDidPerformRequest(
+                        urlRequest: request,
+                        urlResponse: response,
+                        data: data,
+                        error: nil
+                    )
+                }
+
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    fatalError("The response must be a URL response")
+                }
+
+                return (data, response, httpResponse)
+            }
+
+            private func _makeJSONDecoder() -> JSONDecoder {
+                let decoder = JSONDecoder()
+                decoder.dateDecodingStrategy = .custom(dateDecodingStrategy)
+                return decoder
+            }
+
+            private func _unknownStatusError(statusCode: Int, data: Data) -> NSError {
+                let result = String(data: data, encoding: .utf8) ?? ""
+                return NSError(
+                    domain: "\(serviceName)",
+                    code: statusCode,
+                    userInfo: [NSLocalizedDescriptionKey: result]
+                )
+            }
+            """
 
         let properties =
             fields
@@ -23,7 +77,6 @@ struct APIDefinition {
                 "private let \($0.name): \($0.typeIsBlock ? "@Sendable " : "")\($0.typeName)\($0.isRequired ? "" : "?")"
             }
             .joined(separator: "\n")
-            .indentLines(1)
 
         let apiFunctions = self.functions
             .sorted(by: { $0.functionName < $1.functionName })
@@ -36,26 +89,19 @@ struct APIDefinition {
                     packagesToImport: packagesToImport
                 )
             }.joined(separator: "\n")
-            .indentLines(1)
             .trimmingCharacters(in: CharacterSet.newlines)
 
-        let context: [String: Any] = [
-            "importStatements": importStatements,
-            "hasDescription": description != nil,
-            "description": description ?? "",
-            "accessControl": accessControl,
+        var context: [String: Any] = [
             "serviceName": serviceName,
+            "accessControl": accessControl,
+            "packagesToImport": packagesToImport,
             "properties": properties,
-            "initParameterDocumentation": fields.map { $0.documentationString }.joined(separator: "\n"),
-            "initProperties": fields.map { $0.initProperty }.joined(separator: ", "),
-            "initAssignments": fields.map { $0.initAssignment }.joined(separator: "\n"),
+            "initMethod": initMethod,
+            "requestHelpers": requestHelpers,
             "apiFunctions": apiFunctions,
         ]
+        if let description { context["description"] = description }
 
-        do {
-            return try Self.templateRenderer.render(template: "APIDefinition.stencil", context: context)
-        } catch {
-            fatalError("Failed to render APIDefinition for \(serviceName): \(error)")
-        }
+        return try templateRenderer.render(template: "APIDefinition.stencil", context: context)
     }
 }

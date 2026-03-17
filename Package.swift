@@ -9,10 +9,8 @@ let package = Package(
     products: [.executable(name: "swaggerswift", targets: ["SwaggerSwift"])],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.5.0"),
-        .package(url: "https://github.com/lunarway/SwaggerSwiftML", from: "3.1.0"),
         .package(url: "https://github.com/jpsim/Yams.git", from: "6.2.1"),
         .package(url: "https://github.com/stencilproject/Stencil.git", from: "0.15.1"),
-        .package(url: "https://github.com/SwiftGen/StencilSwiftKit.git", from: "2.10.1"),
     ],
     targets: [
         .executableTarget(
@@ -23,15 +21,33 @@ let package = Package(
             ]
         ),
         .target(
+            name: "SwaggerSwiftML",
+            dependencies: [
+                .product(name: "Yams", package: "Yams")
+            ]
+        ),
+        .target(
             name: "SwaggerSwiftCore",
             dependencies: [
-                .product(name: "SwaggerSwiftML", package: "SwaggerSwiftML"),
+                "SwaggerSwiftML",
                 .product(name: "Yams", package: "Yams"),
                 .product(name: "Stencil", package: "Stencil"),
-                .product(name: "StencilSwiftKit", package: "StencilSwiftKit"),
             ],
             resources: [
-                .copy("Templates"),
+                .copy("Templates")
+            ]
+        ),
+        .testTarget(
+            name: "SwaggerSwiftMLTests",
+            dependencies: ["SwaggerSwiftML"],
+            resources: [
+                .copy("BasicSwagger.yaml"),
+                .copy("Parameter"),
+                .copy("Schemas"),
+                .copy("Path"),
+                .copy("Items"),
+                .copy("Operation"),
+                .copy("Response"),
             ]
         ),
         .testTarget(

@@ -1,0 +1,29 @@
+parameters:
+  - $ref: "#/parameters/XHeaderOne"
+  - $ref: "#/parameters/XHeaderTwo"
+  - $ref: "#/parameters/XHeaderThree"
+  - in: query
+    name: param
+    type: string
+    description: some query element
+post:
+  operationId: myOperation
+  description: starts my operation
+  produces:
+    - application/json
+  consumes:
+    - application/json
+  parameters:
+    - name: data
+      in: body
+      schema:
+        $ref: '#/definitions/SomeInputData'
+  responses:
+    200:
+      description: Successful response
+      schema:
+        $ref: '#/definitions/SuccessResponse'
+    500:
+      description: Failing response
+      schema:
+        $ref: '#/definitions/FailureResponse'

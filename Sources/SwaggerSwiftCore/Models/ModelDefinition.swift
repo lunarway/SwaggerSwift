@@ -96,36 +96,41 @@ extension ModelDefinition {
         serviceName: String?,
         embedded: Bool,
         accessControl: APIAccessControl,
-        packagesToImport: [String]
-    ) -> String {
+        packagesToImport: [String],
+        templateRenderer: TemplateRenderer
+    ) throws -> String {
         switch self {
         case .enumeration(let enumeration):
-            return enumeration.toSwift(
+            return try enumeration.toSwift(
                 serviceName: serviceName,
                 embedded: embedded,
                 accessControl: accessControl,
-                packagesToImport: packagesToImport
+                packagesToImport: packagesToImport,
+                templateRenderer: templateRenderer
             )
         case .object(let model):
-            return model.toSwift(
+            return try model.toSwift(
                 serviceName: serviceName,
                 embedded: embedded,
                 accessControl: accessControl,
-                packagesToImport: packagesToImport
+                packagesToImport: packagesToImport,
+                templateRenderer: templateRenderer
             )
         case .array(let model):
-            return model.toSwift(
+            return try model.toSwift(
                 serviceName: serviceName,
                 embedded: embedded,
                 accessControl: accessControl,
-                packagesToImport: packagesToImport
+                packagesToImport: packagesToImport,
+                templateRenderer: templateRenderer
             )
         case .typeAlias(let model):
-            return model.toSwift(
+            return try model.toSwift(
                 serviceName: serviceName,
                 embedded: embedded,
                 accessControl: accessControl,
-                packagesToImport: packagesToImport
+                packagesToImport: packagesToImport,
+                templateRenderer: templateRenderer
             )
         }
     }
