@@ -1,0 +1,25 @@
+{{ accessControl }} struct StringCodingKey: CodingKey, ExpressibleByStringLiteral {
+    private let string: String
+    private var int: Int?
+
+    {{ accessControl }} var stringValue: String { return string }
+
+    {{ accessControl }} init(string: String) {
+        self.string = string
+    }
+
+    {{ accessControl }} init?(stringValue: String) {
+        self.string = stringValue
+    }
+
+    {{ accessControl }} var intValue: Int? { return int }
+
+    {{ accessControl }} init?(intValue: Int) {
+        self.string = String(describing: intValue)
+        self.int = intValue
+    }
+
+    {{ accessControl }} init(stringLiteral value: String) {
+        self.string = value
+    }
+}

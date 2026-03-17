@@ -8,13 +8,12 @@ struct APIDefinition {
     let fields: [APIDefinitionField]
     let functions: [APIRequest]
 
-    func toSwift(swaggerFile: SwaggerFile, accessControl: String, packagesToImport: [String])
-        -> String
-    {
-        let importStatements = (["Foundation"] + packagesToImport).map { "import \($0)" }.joined(
-            separator: "\n"
-        )
-
+    func toSwift(
+        swaggerFile: SwaggerFile,
+        accessControl: String,
+        packagesToImport: [String],
+        templateRenderer: TemplateRenderer
+    ) throws -> String {
         let initMethod = """
             /// Create an instance of \(serviceName)
             /// - Parameters:
@@ -22,7 +21,7 @@ struct APIDefinition {
             \(accessControl) init(\(fields.map { $0.initProperty }.joined(separator: ", "))) {
             \(fields.map { $0.initAssignment }.joined(separator: "\n").indentLines(1))
             }
-            """.indentLines(1)
+            """
 
         let requestHelpers = """
             private func _performRequest(request: URLRequest, requestData: Data?) async throws -> (Data, URLResponse, HTTPURLResponse) {
@@ -70,13 +69,7 @@ struct APIDefinition {
                     userInfo: [NSLocalizedDescriptionKey: result]
                 )
             }
-            """.indentLines(1)
-
-        var serviceDefinition = "\(importStatements)\n\n"
-
-        if let description = description {
-            serviceDefinition.append("// \(description)\n")
-        }
+            """
 
         let properties =
             fields
@@ -84,7 +77,6 @@ struct APIDefinition {
                 "private let \($0.name): \($0.typeIsBlock ? "@Sendable " : "")\($0.typeName)\($0.isRequired ? "" : "?")"
             }
             .joined(separator: "\n")
-            .indentLines(1)
 
         let apiFunctions = self.functions
             .sorted(by: { $0.functionName < $1.functionName })
@@ -97,21 +89,19 @@ struct APIDefinition {
                     packagesToImport: packagesToImport
                 )
             }.joined(separator: "\n")
-            .indentLines(1)
             .trimmingCharacters(in: CharacterSet.newlines)
 
-        serviceDefinition += """
-            \(accessControl) struct \(serviceName): APIInitialize {
-            \(properties)
+        var context: [String: Any] = [
+            "serviceName": serviceName,
+            "accessControl": accessControl,
+            "packagesToImport": packagesToImport,
+            "properties": properties,
+            "initMethod": initMethod,
+            "requestHelpers": requestHelpers,
+            "apiFunctions": apiFunctions,
+        ]
+        if let description { context["description"] = description }
 
-            \(initMethod)
-
-            \(requestHelpers)
-
-            \(apiFunctions)
-            }
-
-            """
-        return serviceDefinition
+        return try templateRenderer.render(template: "APIDefinition.stencil", context: context)
     }
 }
