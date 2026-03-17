@@ -50,14 +50,14 @@ jobs:
         run: |
           mkdir -p output
           printf '%s\n' \
-            'path: modules/swagger-codegen/src/test/resources/2_0/petstore.json' \
-            'organisation: swagger-api' \
+            'path: Tests/Fixtures/petstore.json' \
+            'organisation: lunarway' \
             'projectName: PetstoreAPI' \
             'destination: ./' \
             'accessControl: public' \
             'services:' \
-            '  swagger-codegen:' \
-            '    branch: master' \
+            '  SwaggerSwift:' \
+            '    branch: ${{ github.head_ref || github.ref_name }}' \
             > output/SwaggerFile.yml
 
       - name: Generate API from public Petstore spec
