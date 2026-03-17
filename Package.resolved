@@ -28,15 +28,6 @@
       }
     },
     {
-      "identity" : "swaggerswiftml",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/lunarway/SwaggerSwiftML",
-      "state" : {
-        "revision" : "b394a4845dbc98378c6f237b41f8af456b91db80",
-        "version" : "3.1.0"
-      }
-    },
-    {
       "identity" : "swift-argument-parser",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-argument-parser",

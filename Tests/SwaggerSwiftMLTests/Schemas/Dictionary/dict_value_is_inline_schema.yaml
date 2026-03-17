@@ -1,0 +1,9 @@
+# [String: InlineObject]
+type: object
+additionalProperties:
+  type: object
+  properties:
+    code:
+      type: integer
+    text:
+      type: string

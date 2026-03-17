@@ -1,0 +1,16 @@
+properties:
+  things:
+    items:
+      properties:
+        id:
+          type: string
+        referenced:
+          $ref: "#/definitions/Embedded"
+        sort:
+          type: integer
+      required:
+        - sort
+    type: array
+  otherField:
+    type: string
+type: object

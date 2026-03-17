@@ -1,6 +1,6 @@
 import SwaggerSwiftML
 
-extension DataFormat: @retroactive CustomStringConvertible {
+extension DataFormat: CustomStringConvertible {
     public var description: String {
         switch self {
         case .int32:
