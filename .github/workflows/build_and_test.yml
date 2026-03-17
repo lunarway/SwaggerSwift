@@ -36,3 +36,45 @@ jobs:
         if: always()
         with:
           files: "test.xml"
+
+  docker-smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t swaggerswift:test .
+
+      - name: Verify binary runs
+        run: docker run --rm swaggerswift:test --help
+
+      - name: Create SwaggerFile for smoke test
+        run: |
+          mkdir -p output
+          cp Tests/SwaggerSwiftCoreTests/Fixtures/test_spec.json output/test_spec.json
+          printf '%s\n' \
+            'path: test_spec.json' \
+            'organisation: unused' \
+            'projectName: SmokeTestAPI' \
+            'destination: ./' \
+            'accessControl: public' \
+            'services:' \
+            '  smoketest:' \
+            '    path: test_spec.json' \
+            > output/SwaggerFile.yml
+
+      - name: Generate API from local spec
+        run: |
+          docker run --rm \
+            -v "$PWD/output:/work" \
+            -w /work \
+            swaggerswift:test \
+            --swagger-file-path SwaggerFile.yml \
+            --git-hub-token unused
+
+      - name: Verify generated output
+        run: |
+          echo "Generated files:"
+          find output -name '*.swift' | head -20
+          test -f output/SmokeTestAPI/Package.swift
+          test -f output/SmokeTestAPI/Sources/TestService/TestService.swift

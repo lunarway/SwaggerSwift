@@ -12,4 +12,4 @@ RUN mkdir /swaggerswift/bin
 FROM swift:amazonlinux2-slim
 WORKDIR /app
 COPY --from=builder /swaggerswift/.build/release/swaggerswift .
-ENTRYPOINT ["./swaggerswift"]
+ENTRYPOINT ["/app/swaggerswift"]
