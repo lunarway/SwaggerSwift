@@ -1,5 +1,5 @@
 import Foundation
 
-{{ accessControl }} protocol APIInitializer: Sendable {
+public protocol APIInitializer: Sendable {
     func initializeApi<API: APIInitialize>(path: String) -> API
 }

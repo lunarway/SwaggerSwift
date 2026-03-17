@@ -1,6 +1,6 @@
-{{ accessControl }} import Foundation
+public import Foundation
 
-{{ accessControl }} protocol NetworkInterceptor: Sendable {
+public protocol NetworkInterceptor: Sendable {
     func networkWillPerformRequest(
         _ request: URLRequest
     ) -> URLRequest
