@@ -67,7 +67,7 @@ jobs:
             -w /work \
             swaggerswift:test \
             --swagger-file-path SwaggerFile.yml \
-            --git-hub-token dummy
+            --git-hub-token "${{ github.token }}"
 
       - name: Verify generated output
         run: |
