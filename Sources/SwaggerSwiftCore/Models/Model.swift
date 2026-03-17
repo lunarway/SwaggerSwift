@@ -30,7 +30,7 @@ struct Model {
         )
     }
 
-    func modelDefinition(serviceName: String?, accessControl: APIAccessControl, templateRenderer: TemplateRenderer)
+    func modelDefinition(serviceName: String?, accessControl: APIAccessControl, templateRenderer: TemplateRenderer) throws
         -> String
     {
         let comment: String?
@@ -73,10 +73,10 @@ struct Model {
         }
 
         model +=
-            embeddedDefinitions
+            try embeddedDefinitions
             .sorted(by: { $0.typeName < $1.typeName })
             .map {
-                $0.toSwift(
+                try $0.toSwift(
                     serviceName: serviceName,
                     embedded: true,
                     accessControl: accessControl,
@@ -179,13 +179,13 @@ extension Model {
         accessControl: APIAccessControl,
         packagesToImport: [String],
         templateRenderer: TemplateRenderer
-    ) -> String {
+    ) throws -> String {
         precondition(inheritsFrom.count == 0)
 
         let isInExtension = serviceName != nil
 
         if embedded {
-            return modelDefinition(
+            return try modelDefinition(
                 serviceName: serviceName,
                 accessControl: accessControl,
                 templateRenderer: templateRenderer
@@ -206,7 +206,7 @@ extension Model {
             model.appendLine("extension \(serviceName) {")
         }
 
-        model += modelDefinition(
+        model += try modelDefinition(
             serviceName: serviceName,
             accessControl: accessControl,
             templateRenderer: templateRenderer

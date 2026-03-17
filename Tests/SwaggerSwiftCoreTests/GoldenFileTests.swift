@@ -113,7 +113,7 @@ struct GoldenFileTests {
             return
         }
 
-        let output = model.toSwift(
+        let output = try model.toSwift(
             serviceName: apiDefinition.serviceName,
             embedded: false,
             accessControl: .public,

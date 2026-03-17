@@ -28,7 +28,7 @@ extension ModelDefinition {
         accessControl: APIAccessControl,
         packagesToImport: [String],
         templateRenderer: TemplateRenderer
-    ) -> String {
+    ) throws -> String {
         switch self {
         case .enumeration(let enumeration):
             return enumeration.toSwift(
@@ -38,7 +38,7 @@ extension ModelDefinition {
                 packagesToImport: packagesToImport
             )
         case .object(let model):
-            return model.toSwift(
+            return try model.toSwift(
                 serviceName: serviceName,
                 embedded: embedded,
                 accessControl: accessControl,
@@ -53,7 +53,7 @@ extension ModelDefinition {
                 packagesToImport: packagesToImport
             )
         case .typeAlias(let model):
-            return model.toSwift(
+            return try model.toSwift(
                 serviceName: serviceName,
                 embedded: embedded,
                 accessControl: accessControl,

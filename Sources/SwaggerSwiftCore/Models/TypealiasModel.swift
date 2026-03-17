@@ -26,7 +26,7 @@ extension TypeAliasModel {
         accessControl: APIAccessControl,
         packagesToImport: [String],
         templateRenderer: TemplateRenderer
-    ) -> String {
+    ) throws -> String {
         let context: [String: Any] = [
             "typeName": typeName,
             "type": type,
@@ -36,6 +36,6 @@ extension TypeAliasModel {
             "packagesToImport": packagesToImport,
         ]
 
-        return try! templateRenderer.render(template: "Typealias.stencil", context: context)
+        return try templateRenderer.render(template: "Typealias.stencil", context: context)
     }
 }

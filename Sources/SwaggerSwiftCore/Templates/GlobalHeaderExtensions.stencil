@@ -2,16 +2,13 @@ import Foundation
 {% if commonPackageName %}
 import {{ commonPackageName }}
 {% endif %}
-
 internal extension {{ typeName }} {
     func add(to request: inout URLRequest) {
 {% for field in fields %}
         if let {{ field.swiftyName }} = {{ field.swiftyName }} {
             request.setValue({{ field.swiftyName }}, forHTTPHeaderField: "{{ field.fullHeaderName }}")
         }
-{% if not forloop.last %}
-{% endif %}
-{% endfor %}
+{% endfor -%}
     }
 
     var asDictionary: [String: String] {
@@ -21,10 +18,7 @@ internal extension {{ typeName }} {
         if let {{ field.swiftyName }} = {{ field.swiftyName }} {
             headers["{{ field.fullHeaderName }}"] = {{ field.swiftyName }}
         }
-{% if not forloop.last %}
-{% endif %}
 {% endfor %}
-
         return headers
     }
 }

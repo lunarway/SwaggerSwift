@@ -345,7 +345,7 @@ public struct Generator {
         log("[\(apiDefinition.serviceName)] 🖨 \(apiDefinitionFilename)")
 
         for apiModel in modelDefinitions {
-            let file = apiModel.toSwift(
+            let file = try apiModel.toSwift(
                 serviceName: apiDefinition.serviceName,
                 embedded: false,
                 accessControl: swaggerFile.accessControl,
