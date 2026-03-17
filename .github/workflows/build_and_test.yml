@@ -45,3 +45,33 @@ jobs:
 
       - name: Verify binary runs
         run: docker run --rm swaggerswift:test --help
+
+      - name: Create SwaggerFile for Petstore
+        run: |
+          mkdir -p output
+          printf '%s\n' \
+            'path: modules/swagger-codegen/src/test/resources/2_0/petstore.json' \
+            'organisation: swagger-api' \
+            'projectName: PetstoreAPI' \
+            'destination: ./' \
+            'accessControl: public' \
+            'services:' \
+            '  swagger-codegen:' \
+            '    branch: master' \
+            > output/SwaggerFile.yml
+
+      - name: Generate API from public Petstore spec
+        run: |
+          docker run --rm \
+            -v "$PWD/output:/work" \
+            -w /work \
+            swaggerswift:test \
+            --swagger-file-path SwaggerFile.yml \
+            --git-hub-token dummy
+
+      - name: Verify generated output
+        run: |
+          echo "Generated files:"
+          find output -name '*.swift' | head -20
+          test -f output/PetstoreAPI/Package.swift
+          test -f output/PetstoreAPI/Sources/SwaggerPetstore/SwaggerPetstore.swift
