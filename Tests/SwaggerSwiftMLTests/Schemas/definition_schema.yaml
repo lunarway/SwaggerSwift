@@ -1,0 +1,8 @@
+description: Error object
+properties:
+  proper:
+    type: string
+    description: Message
+  propeer:
+    type: string
+    description: Display message
