@@ -3,7 +3,7 @@ import Foundation
 {% endfor %}
 {%- if description %}
 // {{ description }}
-{% endif -%}
+{% endif %}
 {{ accessControl }} struct {{ serviceName }}: APIInitialize {
     {{ properties|indented:1 }}
 

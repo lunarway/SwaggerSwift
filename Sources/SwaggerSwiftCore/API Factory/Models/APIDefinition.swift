@@ -13,7 +13,7 @@ struct APIDefinition {
         accessControl: String,
         packagesToImport: [String],
         templateRenderer: TemplateRenderer
-    ) -> String {
+    ) throws -> String {
         let initMethod = """
             /// Create an instance of \(serviceName)
             /// - Parameters:
@@ -43,16 +43,16 @@ struct APIDefinition {
             }.joined(separator: "\n")
             .trimmingCharacters(in: CharacterSet.newlines)
 
-        let context: [String: Any] = [
+        var context: [String: Any] = [
             "serviceName": serviceName,
-            "description": description as Any,
             "accessControl": accessControl,
             "packagesToImport": packagesToImport,
             "properties": properties,
             "initMethod": initMethod,
             "apiFunctions": apiFunctions,
         ]
+        if let description { context["description"] = description }
 
-        return try! templateRenderer.render(template: "APIDefinition.stencil", context: context)
+        return try templateRenderer.render(template: "APIDefinition.stencil", context: context)
     }
 }

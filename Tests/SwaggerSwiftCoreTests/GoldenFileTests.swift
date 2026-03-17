@@ -85,7 +85,7 @@ struct GoldenFileTests {
 
     @Test
     func apiDefinitionGoldenFile() throws {
-        let output = apiDefinition.toSwift(
+        let output = try apiDefinition.toSwift(
             swaggerFile: swaggerFile,
             accessControl: "public",
             packagesToImport: [],
