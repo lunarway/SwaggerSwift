@@ -201,7 +201,12 @@ extension APIRequest {
                 let response: URLResponse
                 let httpResponse: HTTPURLResponse
                 do {
-                    (data, response, httpResponse) = try await _performRequest(request: request, requestData: \(requestDataArgument))
+                    (data, response, httpResponse) = try await performRequest(
+                        request: request,
+                        requestData: \(requestDataArgument),
+                        urlSessionProvider: urlSession,
+                        interceptor: interceptor
+                    )
                 } catch {
                     throw .requestFailed(error: error)
                 }

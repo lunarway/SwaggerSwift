@@ -400,6 +400,9 @@ public struct Generator {
         try apiInitializerFile.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
             toFile: "\(targetPath)/APIInitializer.swift"
         )
+        try requestPerformer.write(
+            toFile: "\(targetPath)/RequestPerformer.swift"
+        )
         try stringCodingKey.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
             toFile: "\(targetPath)/StringCodingKey.swift"
         )
