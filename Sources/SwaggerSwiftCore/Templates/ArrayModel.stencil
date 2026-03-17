@@ -1,0 +1,16 @@
+{%- if not embedded -%}
+import Foundation
+{% for package in packagesToImport %}
+import {{ package }}
+{%- endfor %}
+
+{%- if serviceName %}
+extension {{ serviceName }} {
+    {{ accessControl }} typealias {{ typeName }} = [{{ containsType }}]
+}
+{%- else %}
+{{ accessControl }} typealias {{ typeName }} = [{{ containsType }}]
+{%- endif %}
+{%- else -%}
+{{ accessControl }} typealias {{ typeName }} = [{{ containsType }}]
+{%- endif %}
