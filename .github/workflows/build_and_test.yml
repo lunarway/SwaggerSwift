@@ -18,6 +18,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Swift
+        if: runner.os == 'Linux'
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '6.0'
+
       - name: Set Xcode
         if: runner.os == 'macOS'
         run: xcodes select 26.2
@@ -34,6 +40,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Swift
+        if: runner.os == 'Linux'
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '6.0'
+
       - name: Set Xcode
         if: runner.os == 'macOS'
         run: xcodes select 26.2
@@ -46,6 +58,7 @@ jobs:
         if: always()
         with:
           files: "test.xml"
+          check_name: "Test Results (${{ matrix.os }})"
 
   docker-smoke-test:
     runs-on: ubuntu-latest
