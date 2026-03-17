@@ -181,6 +181,35 @@ extension APIRequest {
             }
             .joined(separator: "\n")
 
+        let hasDecodableObjectResponse = self.responseTypes.contains { responseType in
+            switch responseType {
+            case .object(_, _, let typeName):
+                return typeName != "Data"
+            default:
+                return false
+            }
+        }
+
+        let decodeObjectHelper =
+            hasDecodableObjectResponse
+            ? """
+            func _decodeObject<T: Decodable>(_ type: T.Type) throws(\(returnType.failureType.toString(required: true))) -> T {
+                do {
+                    return try decoder.decode(T.self, from: data)
+                } catch let error {
+                    interceptor?.networkFailedToParseObject(
+                        urlRequest: request,
+                        urlResponse: response,
+                        data: data,
+                        error: error
+                    )
+                    throw \(returnType.failureType.toString(required: true)).requestFailed(error: error)
+                }
+            }
+            """
+            .trimmingCharacters(in: .newlines)
+            : ""
+
         var functionDeclaration: String = "private func _\(functionName)"
         if swaggerFile.onlyAsync && !isInternalOnly {
             functionDeclaration = "\(accessControl) func \(functionName)"
@@ -212,6 +241,8 @@ extension APIRequest {
                 }
 
                 let decoder = _makeJSONDecoder()
+
+            \(decodeObjectHelper.indentLines(1).addNewlinesIfNonEmpty())
 
                 switch httpResponse.statusCode {
             \(responseTypes.indentLines(1))

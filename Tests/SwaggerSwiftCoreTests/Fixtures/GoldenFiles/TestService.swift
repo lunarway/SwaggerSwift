@@ -67,35 +67,26 @@ public struct TestService: APIInitialize {
 
         let decoder = _makeJSONDecoder()
 
+        func _decodeObject<T: Decodable>(_ type: T.Type) throws(ServiceError<ErrorResponse>) -> T {
+            do {
+                return try decoder.decode(T.self, from: data)
+            } catch let error {
+                interceptor?.networkFailedToParseObject(
+                    urlRequest: request,
+                    urlResponse: response,
+                    data: data,
+                    error: error
+                )
+                throw ServiceError<ErrorResponse>.requestFailed(error: error)
+            }
+        }
+
+
         switch httpResponse.statusCode {
         case 201:
-            let result: User
-            do {
-                result = try decoder.decode(User.self, from: data)
-            } catch let error {
-                interceptor?.networkFailedToParseObject(
-                    urlRequest: request,
-                    urlResponse: response,
-                    data: data,
-                    error: error
-                )
-                throw ServiceError<ErrorResponse>.requestFailed(error: error)
-            }
-                return result
+            return try _decodeObject(User.self)
         case 400:
-            let result: ErrorResponse
-            do {
-                result = try decoder.decode(ErrorResponse.self, from: data)
-            } catch let error {
-                interceptor?.networkFailedToParseObject(
-                    urlRequest: request,
-                    urlResponse: response,
-                    data: data,
-                    error: error
-                )
-                throw ServiceError<ErrorResponse>.requestFailed(error: error)
-            }
-                throw ServiceError<ErrorResponse>.backendError(error: result)
+            throw ServiceError<ErrorResponse>.backendError(error: try _decodeObject(ErrorResponse.self))
         default:
             throw .requestFailed(error: _unknownStatusError(statusCode: httpResponse.statusCode, data: data))
         }
@@ -132,11 +123,9 @@ public struct TestService: APIInitialize {
 
         let decoder = _makeJSONDecoder()
 
-        switch httpResponse.statusCode {
-        case 200:
-            let result: User
+        func _decodeObject<T: Decodable>(_ type: T.Type) throws(ServiceError<Void>) -> T {
             do {
-                result = try decoder.decode(User.self, from: data)
+                return try decoder.decode(T.self, from: data)
             } catch let error {
                 interceptor?.networkFailedToParseObject(
                     urlRequest: request,
@@ -146,7 +135,12 @@ public struct TestService: APIInitialize {
                 )
                 throw ServiceError<Void>.requestFailed(error: error)
             }
-                return result
+        }
+
+
+        switch httpResponse.statusCode {
+        case 200:
+            return try _decodeObject(User.self)
         case 404:
             throw ServiceError<Void>.backendError(error: ())
         default:
@@ -193,6 +187,21 @@ public struct TestService: APIInitialize {
 
         let decoder = _makeJSONDecoder()
 
+        func _decodeObject<T: Decodable>(_ type: T.Type) throws(ServiceError<ErrorResponse>) -> T {
+            do {
+                return try decoder.decode(T.self, from: data)
+            } catch let error {
+                interceptor?.networkFailedToParseObject(
+                    urlRequest: request,
+                    urlResponse: response,
+                    data: data,
+                    error: error
+                )
+                throw ServiceError<ErrorResponse>.requestFailed(error: error)
+            }
+        }
+
+
         switch httpResponse.statusCode {
         case 200:
             let result: [TestService.User]
@@ -203,19 +212,7 @@ public struct TestService: APIInitialize {
             }
             return result
         case 400:
-            let result: ErrorResponse
-            do {
-                result = try decoder.decode(ErrorResponse.self, from: data)
-            } catch let error {
-                interceptor?.networkFailedToParseObject(
-                    urlRequest: request,
-                    urlResponse: response,
-                    data: data,
-                    error: error
-                )
-                throw ServiceError<ErrorResponse>.requestFailed(error: error)
-            }
-                throw ServiceError<ErrorResponse>.backendError(error: result)
+            throw ServiceError<ErrorResponse>.backendError(error: try _decodeObject(ErrorResponse.self))
         default:
             throw .requestFailed(error: _unknownStatusError(statusCode: httpResponse.statusCode, data: data))
         }

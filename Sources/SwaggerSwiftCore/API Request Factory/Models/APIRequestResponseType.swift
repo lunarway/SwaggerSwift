@@ -66,21 +66,10 @@ enum APIRequestResponseType {
                         \(failed ? "throw" : "return") data
                     """
             } else {
+                let decodedObjectExpression = "try _decodeObject(\(responseType.modelNamed).self)"
                 return """
                     case \(statusCode.rawValue):
-                        let result: \(responseType.modelNamed)
-                        do {
-                            result = try decoder.decode(\(responseType.modelNamed).self, from: data)
-                        } catch let error {
-                            interceptor?.networkFailedToParseObject(
-                                urlRequest: request,
-                                urlResponse: response,
-                                data: data,
-                                error: error
-                            )
-                            throw \(errorType).requestFailed(error: error)
-                        }
-                            \(failed ? "throw" : "return") \(resultType("result", resultIsEnum))
+                        \(failed ? "throw" : "return") \(resultType(decodedObjectExpression, resultIsEnum))
                     """
             }
         case .void(let statusCode, let resultIsEnum):
