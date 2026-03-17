@@ -46,32 +46,33 @@ jobs:
       - name: Verify binary runs
         run: docker run --rm swaggerswift:test --help
 
-      - name: Create SwaggerFile for Petstore
+      - name: Create SwaggerFile for smoke test
         run: |
           mkdir -p output
+          cp Tests/SwaggerSwiftCoreTests/Fixtures/test_spec.json output/test_spec.json
           printf '%s\n' \
-            'path: Tests/Fixtures/petstore.json' \
-            'organisation: lunarway' \
-            'projectName: PetstoreAPI' \
+            'path: test_spec.json' \
+            'organisation: unused' \
+            'projectName: SmokeTestAPI' \
             'destination: ./' \
             'accessControl: public' \
             'services:' \
-            '  SwaggerSwift:' \
-            '    branch: ${{ github.head_ref || github.ref_name }}' \
+            '  smoketest:' \
+            '    path: test_spec.json' \
             > output/SwaggerFile.yml
 
-      - name: Generate API from public Petstore spec
+      - name: Generate API from local spec
         run: |
           docker run --rm \
             -v "$PWD/output:/work" \
             -w /work \
             swaggerswift:test \
             --swagger-file-path SwaggerFile.yml \
-            --git-hub-token "${{ github.token }}"
+            --git-hub-token unused
 
       - name: Verify generated output
         run: |
           echo "Generated files:"
           find output -name '*.swift' | head -20
-          test -f output/PetstoreAPI/Package.swift
-          test -f output/PetstoreAPI/Sources/SwaggerPetstore/SwaggerPetstore.swift
+          test -f output/SmokeTestAPI/Package.swift
+          test -f output/SmokeTestAPI/Sources/TestService/TestService.swift

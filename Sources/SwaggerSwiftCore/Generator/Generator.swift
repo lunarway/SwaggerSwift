@@ -78,13 +78,25 @@ public struct Generator {
 
         for service in services {
             do {
-                let swagger = try await downloadSwagger(
-                    githubToken: githubToken,
-                    organisation: swaggerFile.organisation,
-                    serviceName: service.key,
-                    branch: service.value.branch ?? "master",
-                    swaggerPath: service.value.path ?? swaggerFile.path
-                )
+                let swaggerPath = service.value.path ?? swaggerFile.path
+                let swagger: Swagger
+
+                // Check if the swagger path is a local file relative to the SwaggerFile
+                let swaggerFileDir = URL(fileURLWithPath: swaggerFilePath).deletingLastPathComponent()
+                let localPath = swaggerFileDir.appendingPathComponent(swaggerPath).path
+                if fileManager.fileExists(atPath: localPath) {
+                    log("Reading local Swagger file at: \(localPath)")
+                    let contents = try String(contentsOfFile: localPath, encoding: .utf8)
+                    swagger = try SwaggerReader.read(text: contents)
+                } else {
+                    swagger = try await downloadSwagger(
+                        githubToken: githubToken,
+                        organisation: swaggerFile.organisation,
+                        serviceName: service.key,
+                        branch: service.value.branch ?? "master",
+                        swaggerPath: swaggerPath
+                    )
+                }
 
                 let apiSpec = try apiFactory.generate(
                     for: swagger,
