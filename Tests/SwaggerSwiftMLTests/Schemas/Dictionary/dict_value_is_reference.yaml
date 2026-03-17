@@ -1,0 +1,4 @@
+# [String: Message]
+type: object
+additionalProperties:
+  $ref: '#/components/schemas/Message'

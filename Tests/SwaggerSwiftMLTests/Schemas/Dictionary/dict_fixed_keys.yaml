@@ -1,0 +1,11 @@
+# If a dictionary has some fixed keys, you can define
+# them explicitly as object properties and mark them as required:
+# [String: String]
+type: object
+properties:
+  default:
+    type: string
+required:
+  - default
+additionalProperties:
+  type: string

@@ -8,10 +8,12 @@ import FoundationNetworking
 public struct Generator {
     let apiRequestFactory: APIRequestFactory
     let modelTypeResolver: ModelTypeResolver
+    let templateRenderer: TemplateRenderer
 
     public init(apiRequestFactory: APIRequestFactory, modelTypeResolver: ModelTypeResolver) {
         self.apiRequestFactory = apiRequestFactory
         self.modelTypeResolver = modelTypeResolver
+        self.templateRenderer = TemplateRenderer()
     }
 
     private static let swaggerFileCandidates = [
@@ -78,13 +80,25 @@ public struct Generator {
 
         for service in services {
             do {
-                let swagger = try await downloadSwagger(
-                    githubToken: githubToken,
-                    organisation: swaggerFile.organisation,
-                    serviceName: service.key,
-                    branch: service.value.branch ?? "master",
-                    swaggerPath: service.value.path ?? swaggerFile.path
-                )
+                let swaggerPath = service.value.path ?? swaggerFile.path
+                let swagger: Swagger
+
+                // Check if the swagger path is a local file relative to the SwaggerFile
+                let swaggerFileDir = URL(fileURLWithPath: swaggerFilePath).deletingLastPathComponent()
+                let localPath = swaggerFileDir.appendingPathComponent(swaggerPath).path
+                if fileManager.fileExists(atPath: localPath) {
+                    log("Reading local Swagger file at: \(localPath)")
+                    let contents = try String(contentsOfFile: localPath, encoding: .utf8)
+                    swagger = try SwaggerReader.read(text: contents)
+                } else {
+                    swagger = try await downloadSwagger(
+                        githubToken: githubToken,
+                        organisation: swaggerFile.organisation,
+                        serviceName: service.key,
+                        branch: service.value.branch ?? "master",
+                        swaggerPath: swaggerPath
+                    )
+                }
 
                 let apiSpec = try apiFactory.generate(
                     for: swagger,
@@ -322,15 +336,17 @@ public struct Generator {
             )
         }
 
-        let apiDefinitionFile = apiDefinition.toSwift(
+        let apiDefinitionFile = try apiDefinition.toSwift(
             swaggerFile: swaggerFile,
             accessControl: accessControl.rawValue,
-            packagesToImport: commonLibraryName != nil ? [commonLibraryName!] : []
+            packagesToImport: commonLibraryName != nil ? [commonLibraryName!] : [],
+            templateRenderer: templateRenderer
         )
 
         if swaggerFile.createSwiftPackage {
-            let globalHeadersDefinitions = globalHeadersModel.writeExtensions(
-                inCommonPackageNamed: commonLibraryName
+            let globalHeadersDefinitions = try globalHeadersModel.writeExtensions(
+                inCommonPackageNamed: commonLibraryName,
+                templateRenderer: templateRenderer
             )
             let globalHeaderExtensionsPath = "\(apiDirectory)/GlobalHeaderExtensions.swift"
             try globalHeadersDefinitions.write(toFile: globalHeaderExtensionsPath)
@@ -342,11 +358,12 @@ public struct Generator {
         log("[\(apiDefinition.serviceName)] 🖨 \(apiDefinitionFilename)")
 
         for apiModel in modelDefinitions {
-            let file = apiModel.toSwift(
+            let file = try apiModel.toSwift(
                 serviceName: apiDefinition.serviceName,
                 embedded: false,
                 accessControl: swaggerFile.accessControl,
-                packagesToImport: commonLibraryName != nil ? [commonLibraryName!] : []
+                packagesToImport: commonLibraryName != nil ? [commonLibraryName!] : [],
+                templateRenderer: templateRenderer
             )
 
             let filename = "\(modelDirectory)/\(apiDefinition.serviceName)_\(apiModel.typeName).swift"
@@ -372,52 +389,43 @@ public struct Generator {
             attributes: nil
         )
 
-        let accControl: String = accessControl.rawValue
+        let context: [String: Any] = ["accessControl": accessControl.rawValue]
 
-        try serviceError.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
-            toFile: "\(targetPath)/ServiceError.swift"
-        )
-        try urlQueryItemExtension.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
-            toFile: "\(targetPath)/URLQueryExtension.swift"
-        )
-        try jsonParsingErrorExtension.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl)
-            .write(toFile: "\(targetPath)/ParsingError.swift")
-        try networkInterceptor.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
-            toFile: "\(targetPath)/NetworkInterceptor.swift"
-        )
-        try additionalPropertyUtil.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
-            toFile: "\(targetPath)/AdditionalProperty.swift"
-        )
-        try formData.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
-            toFile: "\(targetPath)/FormData.swift"
-        )
-        try dateDecodingStrategy.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
-            toFile: "\(targetPath)/DateDecodingStrategy.swift"
-        )
-        try apiInitializeFile.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
-            toFile: "\(targetPath)/APIInitialize.swift"
-        )
-        try apiInitializerFile.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
-            toFile: "\(targetPath)/APIInitializer.swift"
-        )
+        let staticFiles: [(template: String, output: String)] = [
+            ("ServiceError.stencil", "ServiceError.swift"),
+            ("URLQueryExtension.stencil", "URLQueryExtension.swift"),
+            ("JsonParsingError.stencil", "ParsingError.swift"),
+            ("NetworkInterceptor.stencil", "NetworkInterceptor.swift"),
+            ("AdditionalProperty.stencil", "AdditionalProperty.swift"),
+            ("FormData.stencil", "FormData.swift"),
+            ("DateDecodingStrategy.stencil", "DateDecodingStrategy.swift"),
+            ("APIInitialize.stencil", "APIInitialize.swift"),
+            ("APIInitializer.stencil", "APIInitializer.swift"),
+            ("StringCodingKey.stencil", "StringCodingKey.swift"),
+        ]
+
+        for file in staticFiles {
+            try templateRenderer.render(template: file.template, context: context)
+                .write(toFile: "\(targetPath)/\(file.output)")
+        }
+
         try requestPerformer.write(
             toFile: "\(targetPath)/RequestPerformer.swift"
         )
-        try stringCodingKey.replacingOccurrences(of: "<ACCESSCONTROL>", with: accControl).write(
-            toFile: "\(targetPath)/StringCodingKey.swift"
-        )
 
         if swaggerFile.createSwiftPackage == false {
-            let globalHeadersDefinitions = globalHeadersModel.writeExtensions(inCommonPackageNamed: nil)
+            let globalHeadersDefinitions = try globalHeadersModel.writeExtensions(
+                inCommonPackageNamed: nil,
+                templateRenderer: templateRenderer
+            )
             let globalHeaderExtensionsPath = "\(targetPath)/GlobalHeaderExtensions.swift"
             try globalHeadersDefinitions.write(toFile: globalHeaderExtensionsPath)
         }
 
         if swaggerFile.globalHeaders.count > 0 {
             let globalHeadersModel = GlobalHeadersModel(headerFields: swaggerFile.globalHeaders)
-            let globalHeadersFileContents = globalHeadersModel.toSwift(
-                swaggerFile: swaggerFile,
-                accessControl: accessControl
+            let globalHeadersFileContents = try globalHeadersModel.toSwift(
+                templateRenderer: templateRenderer
             )
             try globalHeadersFileContents.write(toFile: "\(targetPath)/GlobalHeaders.swift")
         }
