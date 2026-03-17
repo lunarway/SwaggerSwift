@@ -1,0 +1,7 @@
+import Foundation
+
+public protocol {{ typeName }} {
+{% for field in fields -%}
+    var {{ field.swiftyName }}: String? { get }
+{% endfor -%}
+}

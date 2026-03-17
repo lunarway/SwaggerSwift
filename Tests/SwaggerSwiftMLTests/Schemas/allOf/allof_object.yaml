@@ -1,0 +1,12 @@
+description: Plan description
+type: object
+allOf:
+  - $ref: '#/definitions/BaseModel'
+  - required:
+      - id
+      - updated
+    properties:
+      title:
+        type: string
+      objectReference:
+        $ref: '#/definitions/SomeReference'

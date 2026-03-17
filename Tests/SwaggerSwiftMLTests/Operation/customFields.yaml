@@ -1,0 +1,16 @@
+description: Do something
+parameters:
+  - name: X-Os
+    in: header
+    description: OS
+    required: true
+    type: string
+produces:
+  - application/json
+responses:
+  200:
+    description: Successful response
+    schema:
+      type: object
+x-debug-only: true
+x-internal: true

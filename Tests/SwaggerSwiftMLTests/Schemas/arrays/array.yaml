@@ -1,0 +1,15 @@
+description: Map of things
+type: array
+items:
+  type: object
+  required:
+    - id
+    - title
+    - isBoolean
+  properties:
+    id:
+      type: string
+    title:
+      type: string
+    isBoolean:
+      type: boolean

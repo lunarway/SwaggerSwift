@@ -1,0 +1,6 @@
+in: query
+name: paramName
+required: true
+type: array
+items:
+  $ref: "#/definitions/SomeType"
