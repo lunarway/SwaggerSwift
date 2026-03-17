@@ -12,4 +12,5 @@ RUN mkdir /swaggerswift/bin
 FROM swift:amazonlinux2-slim
 WORKDIR /app
 COPY --from=builder /swaggerswift/.build/release/swaggerswift .
+COPY --from=builder /swaggerswift/.build/*/release/SwaggerSwift_SwaggerSwiftCore.resources /app/SwaggerSwift_SwaggerSwiftCore.resources
 ENTRYPOINT ["/app/swaggerswift"]

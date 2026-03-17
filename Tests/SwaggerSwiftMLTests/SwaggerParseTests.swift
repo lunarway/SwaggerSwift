@@ -22,6 +22,7 @@ final class SwaggerParseBasicFile: XCTestCase {
     }
 
     static var allTests = [
-        ("testExample", testExample)
+        ("testParseBasicFile", testParseBasicFile),
+        ("testExample", testExample),
     ]
 }
