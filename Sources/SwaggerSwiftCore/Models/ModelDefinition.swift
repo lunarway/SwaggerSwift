@@ -31,11 +31,12 @@ extension ModelDefinition {
     ) throws -> String {
         switch self {
         case .enumeration(let enumeration):
-            return enumeration.toSwift(
+            return try enumeration.toSwift(
                 serviceName: serviceName,
                 embedded: embedded,
                 accessControl: accessControl,
-                packagesToImport: packagesToImport
+                packagesToImport: packagesToImport,
+                templateRenderer: templateRenderer
             )
         case .object(let model):
             return try model.toSwift(
@@ -46,11 +47,12 @@ extension ModelDefinition {
                 templateRenderer: templateRenderer
             )
         case .array(let model):
-            return model.toSwift(
+            return try model.toSwift(
                 serviceName: serviceName,
                 embedded: embedded,
                 accessControl: accessControl,
-                packagesToImport: packagesToImport
+                packagesToImport: packagesToImport,
+                templateRenderer: templateRenderer
             )
         case .typeAlias(let model):
             return try model.toSwift(

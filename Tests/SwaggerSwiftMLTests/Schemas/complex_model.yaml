@@ -1,0 +1,16 @@
+type: object
+required:
+  - id
+  - sort
+  - updated
+  - deleted
+properties:
+  id:
+    type: string
+  sort:
+    type: integer
+  updated:
+    type: integer
+    format: int64
+  deleted:
+    type: boolean

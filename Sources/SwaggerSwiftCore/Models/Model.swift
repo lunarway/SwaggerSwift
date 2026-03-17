@@ -182,48 +182,20 @@ extension Model {
     ) throws -> String {
         precondition(inheritsFrom.count == 0)
 
-        let isInExtension = serviceName != nil
-
-        if embedded {
-            return try modelDefinition(
-                serviceName: serviceName,
-                accessControl: accessControl,
-                templateRenderer: templateRenderer
-            )
-        }
-
-        var model = ""
-        model.appendLine("import Foundation")
-        packagesToImport.forEach { model.appendLine("import \($0)") }
-        model.appendLine()
-
-        if isInternalOnly {
-            model.appendLine("#if DEBUG")
-            model.appendLine()
-        }
-
-        if let serviceName = serviceName {
-            model.appendLine("extension \(serviceName) {")
-        }
-
-        model += try modelDefinition(
+        let modelBody = try modelDefinition(
             serviceName: serviceName,
             accessControl: accessControl,
             templateRenderer: templateRenderer
-        ).indentLines(
-            isInExtension ? 1 : 0
         )
 
-        if serviceName != nil {
-            model.appendLine()
-            model.appendLine("}")
-        }
+        var context: [String: Any] = [
+            "embedded": embedded,
+            "packagesToImport": packagesToImport,
+            "isInternalOnly": isInternalOnly,
+            "modelBody": modelBody,
+        ]
+        if let serviceName { context["serviceName"] = serviceName }
 
-        if isInternalOnly {
-            model.appendLine()
-            model.appendLine("#endif")
-        }
-
-        return model
+        return try templateRenderer.render(template: "Model.stencil", context: context)
     }
 }

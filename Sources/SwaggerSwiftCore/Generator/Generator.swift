@@ -336,10 +336,11 @@ public struct Generator {
             )
         }
 
-        let apiDefinitionFile = apiDefinition.toSwift(
+        let apiDefinitionFile = try apiDefinition.toSwift(
             swaggerFile: swaggerFile,
             accessControl: accessControl.rawValue,
-            packagesToImport: commonLibraryName != nil ? [commonLibraryName!] : []
+            packagesToImport: commonLibraryName != nil ? [commonLibraryName!] : [],
+            templateRenderer: templateRenderer
         )
 
         if swaggerFile.createSwiftPackage {

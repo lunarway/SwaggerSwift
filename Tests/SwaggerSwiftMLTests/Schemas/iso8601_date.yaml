@@ -1,0 +1,3 @@
+description: An ISO8601 timestamp
+type: string
+format: ISO8601
