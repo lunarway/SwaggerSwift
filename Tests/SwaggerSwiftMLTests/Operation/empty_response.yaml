@@ -1,0 +1,5 @@
+description: Doing something
+produces:
+  - application/json
+responses:
+  200:
