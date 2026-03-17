@@ -136,7 +136,7 @@ extension Enumeration {
         accessControl: APIAccessControl,
         packagesToImport: [String],
         templateRenderer: TemplateRenderer
-    ) -> String {
+    ) throws -> String {
         let enumBody = modelDefinition(embeddedFile: embedded, accessControl: accessControl)
 
         let descriptionComment: String? =
@@ -146,14 +146,14 @@ extension Enumeration {
                 nil
             }
 
-        let context: [String: Any] = [
+        var context: [String: Any] = [
             "embedded": embedded,
-            "serviceName": serviceName as Any,
             "packagesToImport": packagesToImport,
-            "description": descriptionComment as Any,
             "enumBody": enumBody,
         ]
+        if let serviceName { context["serviceName"] = serviceName }
+        if let descriptionComment { context["description"] = descriptionComment }
 
-        return try! templateRenderer.render(template: "Enumeration.stencil", context: context)
+        return try templateRenderer.render(template: "Enumeration.stencil", context: context)
     }
 }

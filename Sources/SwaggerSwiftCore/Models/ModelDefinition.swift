@@ -31,7 +31,7 @@ extension ModelDefinition {
     ) throws -> String {
         switch self {
         case .enumeration(let enumeration):
-            return enumeration.toSwift(
+            return try enumeration.toSwift(
                 serviceName: serviceName,
                 embedded: embedded,
                 accessControl: accessControl,

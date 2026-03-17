@@ -1,11 +1,11 @@
 {%- if not embedded -%}
 {% for package in packagesToImport -%}
 import {{ package }}
-{% endfor %}
+{% endfor -%}
 {%- if serviceName %}
 
 extension {{ serviceName }} {
-{% if description %}    // {{ description }}
+{% if description %}    // {{ description|indented:1 }}
 {% endif %}    {{ enumBody|indented:1 }}
 }
 {%- else %}
@@ -16,4 +16,4 @@ extension {{ serviceName }} {
 {%- endif %}
 {%- else -%}
 {{ enumBody }}
-{%- endif %}
+{%- endif -%}
