@@ -130,6 +130,11 @@
         "role": {
           "$ref": "#/definitions/UserRole"
         },
+        "status": {
+          "type": "string",
+          "enum": ["active", "inactive", "suspended"],
+          "description": "Account status"
+        },
         "tags": {
           "type": "array",
           "items": {

@@ -47,11 +47,12 @@ extension ModelDefinition {
                 templateRenderer: templateRenderer
             )
         case .array(let model):
-            return model.toSwift(
+            return try model.toSwift(
                 serviceName: serviceName,
                 embedded: embedded,
                 accessControl: accessControl,
-                packagesToImport: packagesToImport
+                packagesToImport: packagesToImport,
+                templateRenderer: templateRenderer
             )
         case .typeAlias(let model):
             return try model.toSwift(
