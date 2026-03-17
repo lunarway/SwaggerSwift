@@ -10,22 +10,32 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
 
       - name: Set Xcode
+        if: runner.os == 'macOS'
         run: xcodes select 26.2
 
       - name: Build
         run: swift build -v
 
   test:
-    runs-on: macos-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
 
       - name: Set Xcode
+        if: runner.os == 'macOS'
         run: xcodes select 26.2
 
       - name: Run tests
