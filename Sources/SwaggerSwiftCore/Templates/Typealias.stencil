@@ -13,4 +13,4 @@ extension {{ serviceName }} {
 {%- endif %}
 {%- else -%}
 {{ accessControl }} typealias {{ typeName }} = {{ type }}
-{%- endif %}
+{%- endif -%}
