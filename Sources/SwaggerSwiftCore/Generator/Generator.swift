@@ -408,8 +408,6 @@ public struct Generator {
         if swaggerFile.globalHeaders.count > 0 {
             let globalHeadersModel = GlobalHeadersModel(headerFields: swaggerFile.globalHeaders)
             let globalHeadersFileContents = try globalHeadersModel.toSwift(
-                swaggerFile: swaggerFile,
-                accessControl: accessControl,
                 templateRenderer: templateRenderer
             )
             try globalHeadersFileContents.write(toFile: "\(targetPath)/GlobalHeaders.swift")

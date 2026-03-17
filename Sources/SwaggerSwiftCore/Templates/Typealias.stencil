@@ -1,8 +1,9 @@
 {%- if not embedded -%}
 import Foundation
-{% for package in packagesToImport -%}
+{% for package in packagesToImport %}
 import {{ package }}
-{% endfor %}
+{%- endfor %}
+
 {%- if serviceName %}
 extension {{ serviceName }} {
     {{ accessControl }} typealias {{ typeName }} = {{ type }}

@@ -4,7 +4,7 @@ import {{ commonPackageName }}
 {% endif %}
 internal extension {{ typeName }} {
     func add(to request: inout URLRequest) {
-{% for field in fields %}
+{% for field in fields -%}
         if let {{ field.swiftyName }} = {{ field.swiftyName }} {
             request.setValue({{ field.swiftyName }}, forHTTPHeaderField: "{{ field.fullHeaderName }}")
         }
@@ -13,12 +13,11 @@ internal extension {{ typeName }} {
 
     var asDictionary: [String: String] {
         var headers = [String: String]()
-
 {% for field in fields %}
         if let {{ field.swiftyName }} = {{ field.swiftyName }} {
             headers["{{ field.fullHeaderName }}"] = {{ field.swiftyName }}
         }
-{% endfor %}
+{% endfor -%}
         return headers
     }
 }
