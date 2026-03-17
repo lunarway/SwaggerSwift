@@ -24,6 +24,54 @@ struct APIDefinition {
             }
             """.indentLines(1)
 
+        let requestHelpers = """
+            private func _performRequest(request: URLRequest, requestData: Data?) async throws -> (Data, URLResponse, HTTPURLResponse) {
+                let request = interceptor?.networkWillPerformRequest(request) ?? request
+
+                let data: Data
+                let response: URLResponse
+                do {
+                    if let requestData {
+                        (data, response) = try await urlSession().upload(for: request, from: requestData)
+                    } else {
+                        (data, response) = try await urlSession().data(for: request)
+                    }
+                } catch {
+                    throw error
+                }
+
+                if let interceptor {
+                    try await interceptor.networkDidPerformRequest(
+                        urlRequest: request,
+                        urlResponse: response,
+                        data: data,
+                        error: nil
+                    )
+                }
+
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    fatalError("The response must be a URL response")
+                }
+
+                return (data, response, httpResponse)
+            }
+
+            private func _makeJSONDecoder() -> JSONDecoder {
+                let decoder = JSONDecoder()
+                decoder.dateDecodingStrategy = .custom(dateDecodingStrategy)
+                return decoder
+            }
+
+            private func _unknownStatusError(statusCode: Int, data: Data) -> NSError {
+                let result = String(data: data, encoding: .utf8) ?? ""
+                return NSError(
+                    domain: "\(serviceName)",
+                    code: statusCode,
+                    userInfo: [NSLocalizedDescriptionKey: result]
+                )
+            }
+            """.indentLines(1)
+
         var serviceDefinition = "\(importStatements)\n\n"
 
         if let description = description {
@@ -57,6 +105,8 @@ struct APIDefinition {
             \(properties)
 
             \(initMethod)
+
+            \(requestHelpers)
 
             \(apiFunctions)
             }
