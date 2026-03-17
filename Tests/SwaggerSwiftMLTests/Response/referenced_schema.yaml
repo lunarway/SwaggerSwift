@@ -1,0 +1,4 @@
+InternalError:
+  description: Internal server error
+  schema:
+    $ref: '#/definitions/ErrorModel'

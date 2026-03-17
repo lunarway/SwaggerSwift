@@ -1,30 +1,16 @@
-{{ importStatements }}
+import Foundation
+{% for package in packagesToImport %}
+import {{ package }}
+{%- endfor -%}
+{% if description %}
+// {{ description }}
+{%- endif %}
+{{ accessControl }} struct {{ serviceName }}: APIInitialize {
+    {{ properties|indented:1 }}
 
-{% if hasDescription %}// {{ description }}
-{% endif %}{{ accessControl }} struct {{ serviceName }}: APIInitialize {
-{{ properties }}
+    {{ initMethod|indented:1 }}
 
-    /// Create an instance of {{ serviceName }}
-    /// - Parameters:
-    {{ initParameterDocumentation|indented:1 }}
-    {{ accessControl }} init({{ initProperties }}) {
-        {{ initAssignments|indented:2 }}
-    }
+    {{ requestHelpers|indented:1 }}
 
-    private func _makeJSONDecoder() -> JSONDecoder {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .custom(dateDecodingStrategy)
-        return decoder
-    }
-
-    private func _unknownStatusError(statusCode: Int, data: Data) -> NSError {
-        let result = String(data: data, encoding: .utf8) ?? ""
-        return NSError(
-            domain: "{{ serviceName }}",
-            code: statusCode,
-            userInfo: [NSLocalizedDescriptionKey: result]
-        )
-    }
-
-{{ apiFunctions }}
+    {{ apiFunctions|indented:1 }}
 }

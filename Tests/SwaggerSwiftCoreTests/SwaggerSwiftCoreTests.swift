@@ -3,7 +3,7 @@ import XCTest
 @testable import SwaggerSwiftCore
 
 final class SwaggerSwiftTests: XCTestCase {
-    func testOptionalURLDecodeFormat() {
+    func testOptionalURLDecodeFormat() throws {
         let model = Model(
             description: nil,
             typeName: "Test",
@@ -16,7 +16,11 @@ final class SwaggerSwiftTests: XCTestCase {
             isCodable: true
         )
 
-        let result = model.modelDefinition(serviceName: nil, accessControl: .public)
+        let result = try model.modelDefinition(
+            serviceName: nil,
+            accessControl: .public,
+            templateRenderer: TemplateRenderer()
+        )
 
         XCTAssertEqual(
             result,
@@ -47,7 +51,7 @@ final class SwaggerSwiftTests: XCTestCase {
         )
     }
 
-    func testURLDecodeFormat() {
+    func testURLDecodeFormat() throws {
         let model = Model(
             description: nil,
             typeName: "Test",
@@ -60,7 +64,11 @@ final class SwaggerSwiftTests: XCTestCase {
             isCodable: true
         )
 
-        let result = model.modelDefinition(serviceName: nil, accessControl: .public)
+        let result = try model.modelDefinition(
+            serviceName: nil,
+            accessControl: .public,
+            templateRenderer: TemplateRenderer()
+        )
 
         XCTAssertEqual(
             result,
