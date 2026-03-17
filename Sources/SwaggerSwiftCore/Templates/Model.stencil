@@ -1,7 +1,9 @@
 {%- if not embedded -%}
 import Foundation
-{% for package in packagesToImport %}import {{ package }}
-{% endfor %}
+{% for package in packagesToImport %}
+import {{ package }}
+{%- endfor %}
+
 {%- if isInternalOnly -%}
 #if DEBUG
 
@@ -19,4 +21,4 @@ extension {{ serviceName }} {
 {%- endif %}
 {%- else -%}
 {{ modelBody }}
-{%- endif -%}
+{%- endif %}
