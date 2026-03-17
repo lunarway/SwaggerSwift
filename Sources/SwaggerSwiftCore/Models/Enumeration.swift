@@ -141,7 +141,7 @@ extension Enumeration {
 
         let descriptionComment: String? =
             if let description = description, description.count > 0 {
-                description.replacingOccurrences(of: "\n", with: "\n//")
+                description.replacingOccurrences(of: "\n", with: "\n// ")
             } else {
                 nil
             }
