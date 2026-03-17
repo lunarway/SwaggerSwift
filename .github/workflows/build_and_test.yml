@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+  merge_group:
 
 jobs:
   build:
@@ -33,3 +34,14 @@ jobs:
         if: always()
         with:
           files: "test.xml"
+
+  docker-smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t swaggerswift:test .
+
+      - name: Verify binary runs
+        run: docker run --rm swaggerswift:test --help
