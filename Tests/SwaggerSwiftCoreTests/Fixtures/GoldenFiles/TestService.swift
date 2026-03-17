@@ -1,7 +1,6 @@
 import Foundation
 
 // A test service for golden file testing
-
 public struct TestService: APIInitialize {
     private let urlSession: @Sendable () async -> URLSession
     private let baseUrlProvider: @Sendable () async -> URL
