@@ -7,8 +7,62 @@ struct Enumeration {
     let description: String?
     let typeName: String
     let values: [String]
-    let isCodable: Bool
+    let isEncodable: Bool
+    let isDecodable: Bool
     let collectionFormat: CollectionFormat?
+
+    init(
+        serviceName: String?,
+        description: String?,
+        typeName: String,
+        values: [String],
+        isCodable: Bool,
+        collectionFormat: CollectionFormat?
+    ) {
+        self.init(
+            serviceName: serviceName,
+            description: description,
+            typeName: typeName,
+            values: values,
+            isEncodable: isCodable,
+            isDecodable: isCodable,
+            collectionFormat: collectionFormat
+        )
+    }
+
+    init(
+        serviceName: String?,
+        description: String?,
+        typeName: String,
+        values: [String],
+        isEncodable: Bool,
+        isDecodable: Bool,
+        collectionFormat: CollectionFormat?
+    ) {
+        self.serviceName = serviceName
+        self.description = description
+        self.typeName = typeName
+        self.values = values
+        self.isEncodable = isEncodable
+        self.isDecodable = isDecodable
+        self.collectionFormat = collectionFormat
+    }
+
+    var supportsCodableConformanceOptimization: Bool {
+        isEncodable || isDecodable
+    }
+
+    func withConformance(isEncodable: Bool, isDecodable: Bool) -> Enumeration {
+        Enumeration(
+            serviceName: serviceName,
+            description: description,
+            typeName: typeName,
+            values: values,
+            isEncodable: isEncodable,
+            isDecodable: isDecodable,
+            collectionFormat: collectionFormat
+        )
+    }
 
     static func toCasename(_ str: String, _ isCodable: Bool) -> String {
         let str = isCodable ? str.camelized : str
@@ -25,11 +79,13 @@ struct Enumeration {
     }
 
     func modelDefinition(embeddedFile: Bool, accessControl: APIAccessControl) -> String {
+        let hasRawValueSupport = isEncodable || isDecodable
+
         let valueNames =
             values
             .sorted(by: { $0 < $1 })
-            .map { isCodable ? $0.camelized : $0 }
-            .map { Self.toCasename($0, isCodable) }
+            .map { hasRawValueSupport ? $0.camelized : $0 }
+            .map { Self.toCasename($0, hasRawValueSupport) }
 
         var cases = valueNames.map { "case \($0)" }
 
@@ -38,54 +94,58 @@ struct Enumeration {
             unknownName = "unknownCase"
         }
 
-        if isCodable {
+        if hasRawValueSupport {
             cases += ["case \(unknownName)(String)"]
         }
 
         var model = """
-            \(accessControl.rawValue) enum \(self.typeName)\(isCodable ? ": Codable, Equatable, Sendable" : ": Sendable") {
+            \(accessControl.rawValue) enum \(self.typeName)\(protocolConformanceSuffix) {
             \(cases.joined(separator: "\n").indentLines(1))
             """
-        if isCodable {
+        if hasRawValueSupport {
             let decodeCases =
                 values
                 .sorted()
-                .map { "case \"\($0)\": self = .\(Self.toCasename($0, isCodable))" }
+                .map { "case \"\($0)\": self = .\(Self.toCasename($0, hasRawValueSupport))" }
                 .joined(separator: "\n").indentLines(1)
 
-            model += """
+            if isDecodable {
+                model += """
 
 
-                \(accessControl.rawValue) init(from decoder: any Decoder) throws {
-                    let container = try decoder.singleValueContainer()
-                    let stringValue = try container.decode(String.self)
-                    switch stringValue {
-                \(decodeCases)
-                    default:
-                        self = .\(unknownName)(stringValue)
+                    \(accessControl.rawValue) init(from decoder: any Decoder) throws {
+                        let container = try decoder.singleValueContainer()
+                        let stringValue = try container.decode(String.self)
+                        switch stringValue {
+                    \(decodeCases)
+                        default:
+                            self = .\(unknownName)(stringValue)
+                        }
                     }
-                }
 
-                """.indentLines(1)
+                    """.indentLines(1)
+            }
 
-            let encodeCases = values.sorted().map {
-                """
-                case .\(Self.toCasename($0, isCodable)):
-                    try container.encode("\($0)")
-                """
-            }.joined(separator: "\n").indentLines(1)
+            if isEncodable {
+                let encodeCases = values.sorted().map {
+                    """
+                    case .\(Self.toCasename($0, hasRawValueSupport)):
+                        try container.encode("\($0)")
+                    """
+                }.joined(separator: "\n").indentLines(1)
 
-            model += """
+                model += """
 
-                \(accessControl.rawValue) func encode(to encoder: any Encoder) throws {
-                    var container = encoder.singleValueContainer()
-                    switch self {
-                \(encodeCases)
-                    case .\(unknownName)(let stringValue):
-                        try container.encode(stringValue)
+                    \(accessControl.rawValue) func encode(to encoder: any Encoder) throws {
+                        var container = encoder.singleValueContainer()
+                        switch self {
+                    \(encodeCases)
+                        case .\(unknownName)(let stringValue):
+                            try container.encode(stringValue)
+                        }
                     }
-                }
-                """.indentLines(1)
+                    """.indentLines(1)
+            }
 
             model += "\n"
 
@@ -102,7 +162,7 @@ struct Enumeration {
 
             let rawValueCases = values.sorted().map {
                 """
-                case .\(Self.toCasename($0, isCodable)):
+                case .\(Self.toCasename($0, hasRawValueSupport)):
                     return "\($0)"
                 """
             }.joined(separator: "\n").indentLines(1)
@@ -126,6 +186,19 @@ struct Enumeration {
         model += "}"
 
         return model
+    }
+
+    private var protocolConformanceSuffix: String {
+        switch (isEncodable, isDecodable) {
+        case (true, true):
+            return ": Codable, Equatable, Sendable"
+        case (true, false):
+            return ": Encodable, Equatable, Sendable"
+        case (false, true):
+            return ": Decodable, Equatable, Sendable"
+        case (false, false):
+            return ": Sendable"
+        }
     }
 }
 

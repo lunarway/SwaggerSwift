@@ -9,7 +9,66 @@ struct Model {
     let inheritsFrom: [String]
     let isInternalOnly: Bool
     let embeddedDefinitions: [ModelDefinition]
-    let isCodable: Bool
+    let isEncodable: Bool
+    let isDecodable: Bool
+
+    init(
+        description: String?,
+        typeName: String,
+        fields: [ModelField],
+        inheritsFrom: [String],
+        isInternalOnly: Bool,
+        embeddedDefinitions: [ModelDefinition],
+        isCodable: Bool
+    ) {
+        self.init(
+            description: description,
+            typeName: typeName,
+            fields: fields,
+            inheritsFrom: inheritsFrom,
+            isInternalOnly: isInternalOnly,
+            embeddedDefinitions: embeddedDefinitions,
+            isEncodable: isCodable,
+            isDecodable: isCodable
+        )
+    }
+
+    init(
+        description: String?,
+        typeName: String,
+        fields: [ModelField],
+        inheritsFrom: [String],
+        isInternalOnly: Bool,
+        embeddedDefinitions: [ModelDefinition],
+        isEncodable: Bool,
+        isDecodable: Bool
+    ) {
+        self.description = description
+        self.typeName = typeName
+        self.fields = fields
+        self.inheritsFrom = inheritsFrom
+        self.isInternalOnly = isInternalOnly
+        self.embeddedDefinitions = embeddedDefinitions
+        self.isEncodable = isEncodable
+        self.isDecodable = isDecodable
+    }
+
+    var supportsCodableConformanceOptimization: Bool {
+        isEncodable || isDecodable
+    }
+
+    func withConformance(isEncodable: Bool, isDecodable: Bool) -> Model {
+        Model(
+            description: description,
+            typeName: typeName,
+            fields: fields,
+            inheritsFrom: inheritsFrom,
+            isInternalOnly: isInternalOnly,
+            embeddedDefinitions: embeddedDefinitions,
+            isEncodable: isEncodable,
+            isDecodable: isDecodable
+        )
+    }
 
     func resolveInheritanceTree(withModels models: [Model]) -> Model {
         let inherits = inheritsFrom.compactMap { definitionName in
@@ -26,7 +85,8 @@ struct Model {
             inheritsFrom: [],
             isInternalOnly: isInternalOnly,
             embeddedDefinitions: embeddedDefinitions + inheritedEmbeddedDefinitions,
-            isCodable: isCodable
+            isEncodable: isEncodable,
+            isDecodable: isDecodable
         )
     }
 
@@ -53,17 +113,23 @@ struct Model {
         }
 
         model +=
-            "\(accessControl.rawValue) struct \(typeName)\(isCodable ? ": Codable, Sendable" : ": Sendable") {\n"
+            "\(accessControl.rawValue) struct \(typeName)\(protocolConformanceSuffix) {\n"
 
         model += fields.asPropertyList(accessControl: accessControl).indentLines(1)
 
         model += "\n\n" + initMethod.indentLines(1)
 
-        if isCodable {
+        var codingFunctions = [String]()
+        if isDecodable {
+            codingFunctions.append(decodeFunction(accessControl: accessControl).indentLines(1))
+        }
+        if isEncodable {
+            codingFunctions.append(encodeFunction(accessControl: accessControl).indentLines(1))
+        }
+
+        if !codingFunctions.isEmpty {
             model += "\n\n"
-            model += decodeFunction(accessControl: accessControl).indentLines(1)
-            model += "\n\n"
-            model += encodeFunction(accessControl: accessControl).indentLines(1)
+            model += codingFunctions.joined(separator: "\n\n")
         }
 
         if embeddedDefinitions.count > 0 {
@@ -87,6 +153,19 @@ struct Model {
         model += "\n}"
 
         return model
+    }
+
+    private var protocolConformanceSuffix: String {
+        switch (isEncodable, isDecodable) {
+        case (true, true):
+            return ": Codable, Sendable"
+        case (true, false):
+            return ": Encodable, Sendable"
+        case (false, true):
+            return ": Decodable, Sendable"
+        case (false, false):
+            return ": Sendable"
+        }
     }
 
     private func encodeFunction(accessControl: APIAccessControl) -> String {

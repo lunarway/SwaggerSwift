@@ -1,7 +1,7 @@
 import Foundation
 
 extension TestService {
-    public struct User: Codable, Sendable {
+    public struct User: Decodable, Sendable {
         // Avatar URL
         public let avatarUrl: URL?
         // Email address
@@ -40,17 +40,6 @@ extension TestService {
             self.name = try container.decode(String.self, forKey: "name")
             self.role = try container.decode(TestService.UserRole.self, forKey: "role")
             self.tags = try container.decodeIfPresent([String].self, forKey: "tags")
-        }
-
-        public func encode(to encoder: any Encoder) throws {
-            var container = encoder.container(keyedBy: StringCodingKey.self)
-            try container.encodeIfPresent(avatarUrl, forKey: "avatarUrl")
-            try container.encode(email, forKey: "email")
-            try container.encode(id, forKey: "id")
-            try container.encodeIfPresent(metadata, forKey: "metadata")
-            try container.encode(name, forKey: "name")
-            try container.encode(role, forKey: "role")
-            try container.encodeIfPresent(tags, forKey: "tags")
         }
     }
 }

@@ -96,7 +96,7 @@ Generated/
 ### What gets generated
 
 - **API Clients** — One struct per service with a method per endpoint. Supports query, path, header, and body parameters. Returns typed `Result<SuccessType, ServiceError<ErrorType>>`.
-- **Models** — Codable structs, enums, and typealiases derived from Swagger definitions and inline schemas.
+- **Models** — Structs, enums, and typealiases derived from Swagger definitions and inline schemas, with protocol conformance optimized by usage direction (`Encodable` for request-only models, `Decodable` for response-only models, and `Codable` when used in both directions).
 - **Shared Library** — Networking boilerplate: `ServiceError`, `NetworkInterceptor`, `GlobalHeaders`, `FormData`, `AdditionalProperty`, JSON date decoding, and URL query extensions.
 
 ## Requirements

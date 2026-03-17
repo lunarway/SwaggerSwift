@@ -19,7 +19,7 @@ struct APIFactory {
         // the model definitions we just need the actual models, and a model can only inherit
         // from the global swagger model definitions
         let models = modelDefinitions.compactMap { model -> Model? in
-            if case let ModelDefinition.object(model) = model {
+            if case ModelDefinition.object(let model) = model {
                 return model
             } else {
                 return nil
@@ -31,6 +31,10 @@ struct APIFactory {
             $0.resolveInheritanceTree(with: models)
         }
         let allModelDefinitions = resolvedModelDefinitions + responseModelDefinitions
+        let optimizedModelDefinitions = optimizeModelConformance(
+            in: allModelDefinitions,
+            apiRequests: apiFunctions
+        )
 
         let apiDefinitionFields = apiDefinitionsModelFields(swaggerFile: swaggerFile)
 
@@ -43,7 +47,214 @@ struct APIFactory {
             functions: apiFunctions
         )
 
-        return (apiDefinition, allModelDefinitions)
+        return (apiDefinition, optimizedModelDefinitions)
+    }
+
+    private static let typeNameTokenRegex = try! NSRegularExpression(
+        pattern: "[A-Za-z_][A-Za-z0-9_.]*"
+    )
+
+    private func optimizeModelConformance(
+        in modelDefinitions: [ModelDefinition],
+        apiRequests: [APIRequest]
+    ) -> [ModelDefinition] {
+        let availableTypeNames = Set(modelDefinitions.map(\.typeName))
+
+        let dependencyMap = buildModelDependencyMap(
+            from: modelDefinitions,
+            availableTypeNames: availableTypeNames
+        )
+
+        let requestSeedTypes = requestModelTypeNames(
+            in: apiRequests,
+            availableTypeNames: availableTypeNames
+        )
+        let responseSeedTypes = responseModelTypeNames(
+            in: apiRequests,
+            availableTypeNames: availableTypeNames
+        )
+
+        let encodableModelTypes = propagatedModelTypes(
+            from: requestSeedTypes,
+            dependencyMap: dependencyMap
+        )
+        let decodableModelTypes = propagatedModelTypes(
+            from: responseSeedTypes,
+            dependencyMap: dependencyMap
+        )
+
+        return modelDefinitions.map { definition in
+            guard definition.supportsCodableConformanceOptimization else {
+                return definition
+            }
+
+            let resolvedConformance = ModelCodingConformance.from(
+                isEncodable: encodableModelTypes.contains(definition.typeName),
+                isDecodable: decodableModelTypes.contains(definition.typeName)
+            )
+
+            // Keep backwards compatibility for models whose direction cannot be inferred.
+            let targetConformance: ModelCodingConformance =
+                resolvedConformance == .none ? .codable : resolvedConformance
+
+            return definition.withConformance(targetConformance)
+        }
+    }
+
+    private func buildModelDependencyMap(
+        from modelDefinitions: [ModelDefinition],
+        availableTypeNames: Set<String>
+    ) -> [String: Set<String>] {
+        var dependencyMap = [String: Set<String>]()
+
+        for definition in modelDefinitions {
+            let typeReferences: Set<String>
+
+            switch definition {
+            case .object(let model):
+                typeReferences = Set(
+                    model.fields.flatMap {
+                        referencedModelTypeNames(
+                            in: $0.type,
+                            availableTypeNames: availableTypeNames
+                        )
+                    }
+                )
+            case .array(let model):
+                typeReferences = referencedModelTypeNames(
+                    inTypeString: model.containsType,
+                    availableTypeNames: availableTypeNames
+                )
+            case .typeAlias(let model):
+                typeReferences = referencedModelTypeNames(
+                    inTypeString: model.type,
+                    availableTypeNames: availableTypeNames
+                )
+            case .enumeration:
+                typeReferences = []
+            }
+
+            dependencyMap[definition.typeName] = typeReferences.subtracting([definition.typeName])
+        }
+
+        return dependencyMap
+    }
+
+    private func requestModelTypeNames(
+        in apiRequests: [APIRequest],
+        availableTypeNames: Set<String>
+    ) -> Set<String> {
+        var typeNames = Set<String>()
+
+        for apiRequest in apiRequests {
+            for parameter in apiRequest.parameters where parameter.in != .nowhere {
+                typeNames.formUnion(
+                    referencedModelTypeNames(
+                        in: parameter.typeName,
+                        availableTypeNames: availableTypeNames
+                    )
+                )
+            }
+        }
+
+        return typeNames
+    }
+
+    private func responseModelTypeNames(
+        in apiRequests: [APIRequest],
+        availableTypeNames: Set<String>
+    ) -> Set<String> {
+        var typeNames = Set<String>()
+
+        for apiRequest in apiRequests {
+            for responseType in apiRequest.responseTypes {
+                switch responseType {
+                case .object(_, _, let typeName),
+                    .array(_, _, let typeName),
+                    .enumeration(_, _, let typeName):
+                    typeNames.formUnion(
+                        referencedModelTypeNames(
+                            inTypeString: typeName,
+                            availableTypeNames: availableTypeNames
+                        )
+                    )
+                default:
+                    break
+                }
+            }
+        }
+
+        return typeNames
+    }
+
+    private func propagatedModelTypes(
+        from seedTypes: Set<String>,
+        dependencyMap: [String: Set<String>]
+    ) -> Set<String> {
+        var resolvedTypes = seedTypes
+        var queue = Array(seedTypes)
+
+        while let current = queue.popLast() {
+            for dependency in dependencyMap[current, default: []] {
+                guard !resolvedTypes.contains(dependency) else { continue }
+                resolvedTypes.insert(dependency)
+                queue.append(dependency)
+            }
+        }
+
+        return resolvedTypes
+    }
+
+    private func referencedModelTypeNames(
+        in type: TypeType,
+        availableTypeNames: Set<String>
+    ) -> Set<String> {
+        switch type {
+        case .array(let wrappedType):
+            return referencedModelTypeNames(
+                in: wrappedType,
+                availableTypeNames: availableTypeNames
+            )
+        case .object(let typeName), .enumeration(let typeName):
+            return referencedModelTypeNames(
+                inTypeString: typeName,
+                availableTypeNames: availableTypeNames
+            )
+        case .typeAlias(let typeName, let wrappedType):
+            return referencedModelTypeNames(
+                inTypeString: typeName,
+                availableTypeNames: availableTypeNames
+            ).union(
+                referencedModelTypeNames(
+                    in: wrappedType,
+                    availableTypeNames: availableTypeNames
+                )
+            )
+        case .string, .int, .double, .float, .boolean, .int64, .date, .void:
+            return []
+        }
+    }
+
+    private func referencedModelTypeNames(
+        inTypeString typeName: String,
+        availableTypeNames: Set<String>
+    ) -> Set<String> {
+        let nsRange = NSRange(typeName.startIndex..<typeName.endIndex, in: typeName)
+        let matches = Self.typeNameTokenRegex.matches(in: typeName, range: nsRange)
+
+        var referencedTypeNames = Set<String>()
+        for match in matches {
+            guard let tokenRange = Range(match.range, in: typeName) else { continue }
+
+            let token = String(typeName[tokenRange])
+            let shortTypeName = token.split(separator: ".").last.map(String.init) ?? token
+
+            if availableTypeNames.contains(shortTypeName) {
+                referencedTypeNames.insert(shortTypeName)
+            }
+        }
+
+        return referencedTypeNames
     }
 
     /// Parse all service paths in the swagger - get the request function models, and all the inline model definitions
