@@ -38,7 +38,8 @@ struct APIDefinition {
                     swaggerFile: swaggerFile,
                     embedded: false,
                     accessControl: accessControl,
-                    packagesToImport: packagesToImport
+                    packagesToImport: packagesToImport,
+                    templateRenderer: templateRenderer
                 )
             }.joined(separator: "\n")
             .trimmingCharacters(in: CharacterSet.newlines)
