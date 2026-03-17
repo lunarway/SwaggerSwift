@@ -47,7 +47,7 @@ extension ModelDefinition {
                 templateRenderer: templateRenderer
             )
         case .array(let model):
-            return model.toSwift(
+            return try model.toSwift(
                 serviceName: serviceName,
                 embedded: embedded,
                 accessControl: accessControl,

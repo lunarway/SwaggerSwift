@@ -14,16 +14,16 @@ extension ArrayModel {
         accessControl: APIAccessControl,
         packagesToImport: [String],
         templateRenderer: TemplateRenderer
-    ) -> String {
-        let context: [String: Any] = [
+    ) throws -> String {
+        var context: [String: Any] = [
             "typeName": typeName,
             "containsType": containsType,
             "accessControl": accessControl.rawValue,
             "embedded": embedded,
-            "serviceName": serviceName as Any,
             "packagesToImport": packagesToImport,
         ]
+        if let serviceName { context["serviceName"] = serviceName }
 
-        return try! templateRenderer.render(template: "ArrayModel.stencil", context: context)
+        return try templateRenderer.render(template: "ArrayModel.stencil", context: context)
     }
 }

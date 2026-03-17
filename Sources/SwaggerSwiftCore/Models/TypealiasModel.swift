@@ -27,14 +27,14 @@ extension TypeAliasModel {
         packagesToImport: [String],
         templateRenderer: TemplateRenderer
     ) throws -> String {
-        let context: [String: Any] = [
+        var context: [String: Any] = [
             "typeName": typeName,
             "type": type,
             "accessControl": accessControl.rawValue,
             "embedded": embedded,
-            "serviceName": serviceName as Any,
             "packagesToImport": packagesToImport,
         ]
+        if let serviceName { context["serviceName"] = serviceName }
 
         return try templateRenderer.render(template: "Typealias.stencil", context: context)
     }
