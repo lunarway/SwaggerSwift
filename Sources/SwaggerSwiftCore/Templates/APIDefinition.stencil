@@ -10,5 +10,7 @@ import {{ package }}
 
     {{ initMethod|indented:1 }}
 
+    {{ requestHelpers|indented:1 }}
+
     {{ apiFunctions|indented:1 }}
 }

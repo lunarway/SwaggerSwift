@@ -17,6 +17,48 @@ public struct TestService: APIInitialize {
         self.interceptor = interceptor
     }
 
+    private func _performRequest(request: URLRequest, requestData: Data?) async throws -> (URLRequest, Data, URLResponse, HTTPURLResponse) {
+        let request = interceptor?.networkWillPerformRequest(request) ?? request
+
+        let data: Data
+        let response: URLResponse
+        if let requestData {
+            (data, response) = try await urlSession().upload(for: request, from: requestData)
+        } else {
+            (data, response) = try await urlSession().data(for: request)
+        }
+
+        if let interceptor {
+            try await interceptor.networkDidPerformRequest(
+                urlRequest: request,
+                urlResponse: response,
+                data: data,
+                error: nil
+            )
+        }
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            fatalError("The response must be a URL response")
+        }
+
+        return (request, data, response, httpResponse)
+    }
+
+    private func _makeJSONDecoder() -> JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .custom(dateDecodingStrategy)
+        return decoder
+    }
+
+    private func _unknownStatusError(statusCode: Int, data: Data) -> NSError {
+        let result = String(data: data, encoding: .utf8) ?? ""
+        return NSError(
+            domain: "TestService",
+            code: statusCode,
+            userInfo: [NSLocalizedDescriptionKey: result]
+        )
+    }
+
     /// No description provided
     /// - Endpoint: `POST /users`
     /// - Parameters:
@@ -35,35 +77,17 @@ public struct TestService: APIInitialize {
         jsonEncoder.dateEncodingStrategy = .iso8601
         request.httpBody = try? jsonEncoder.encode(body)
 
-        request = interceptor?.networkWillPerformRequest(request) ?? request
 
         let data: Data
         let response: URLResponse
+        let httpResponse: HTTPURLResponse
         do {
-            (data, response) = try await urlSession().data(for: request)
+            (request, data, response, httpResponse) = try await _performRequest(request: request, requestData: nil)
         } catch {
             throw .requestFailed(error: error)
         }
 
-        if let interceptor {
-            do {
-                try await interceptor.networkDidPerformRequest(
-                    urlRequest: request,
-                    urlResponse: response,
-                    data: data,
-                    error: nil
-                )
-            } catch {
-                throw .requestFailed(error: error)
-            }
-        }
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-        fatalError("The response must be a URL response")
-        }
-
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .custom(dateDecodingStrategy)
+        let decoder = _makeJSONDecoder()
 
         switch httpResponse.statusCode {
         case 201:
@@ -95,9 +119,7 @@ public struct TestService: APIInitialize {
             }
                 throw ServiceError<ErrorResponse>.backendError(error: result)
         default:
-            let result = String(data: data, encoding: .utf8) ?? ""
-            let error = NSError(domain: "TestService", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: result])
-            throw .requestFailed(error: error)
+            throw .requestFailed(error: _unknownStatusError(statusCode: httpResponse.statusCode, data: data))
         }
     }
 
@@ -115,35 +137,17 @@ public struct TestService: APIInitialize {
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        request = interceptor?.networkWillPerformRequest(request) ?? request
 
         let data: Data
         let response: URLResponse
+        let httpResponse: HTTPURLResponse
         do {
-            (data, response) = try await urlSession().data(for: request)
+            (request, data, response, httpResponse) = try await _performRequest(request: request, requestData: nil)
         } catch {
             throw .requestFailed(error: error)
         }
 
-        if let interceptor {
-            do {
-                try await interceptor.networkDidPerformRequest(
-                    urlRequest: request,
-                    urlResponse: response,
-                    data: data,
-                    error: nil
-                )
-            } catch {
-                throw .requestFailed(error: error)
-            }
-        }
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-        fatalError("The response must be a URL response")
-        }
-
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .custom(dateDecodingStrategy)
+        let decoder = _makeJSONDecoder()
 
         switch httpResponse.statusCode {
         case 200:
@@ -163,9 +167,7 @@ public struct TestService: APIInitialize {
         case 404:
             throw ServiceError<Void>.backendError(error: ())
         default:
-            let result = String(data: data, encoding: .utf8) ?? ""
-            let error = NSError(domain: "TestService", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: result])
-            throw .requestFailed(error: error)
+            throw .requestFailed(error: _unknownStatusError(statusCode: httpResponse.statusCode, data: data))
         }
     }
 
@@ -191,35 +193,17 @@ public struct TestService: APIInitialize {
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        request = interceptor?.networkWillPerformRequest(request) ?? request
 
         let data: Data
         let response: URLResponse
+        let httpResponse: HTTPURLResponse
         do {
-            (data, response) = try await urlSession().data(for: request)
+            (request, data, response, httpResponse) = try await _performRequest(request: request, requestData: nil)
         } catch {
             throw .requestFailed(error: error)
         }
 
-        if let interceptor {
-            do {
-                try await interceptor.networkDidPerformRequest(
-                    urlRequest: request,
-                    urlResponse: response,
-                    data: data,
-                    error: nil
-                )
-            } catch {
-                throw .requestFailed(error: error)
-            }
-        }
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-        fatalError("The response must be a URL response")
-        }
-
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .custom(dateDecodingStrategy)
+        let decoder = _makeJSONDecoder()
 
         switch httpResponse.statusCode {
         case 200:
@@ -245,9 +229,7 @@ public struct TestService: APIInitialize {
             }
                 throw ServiceError<ErrorResponse>.backendError(error: result)
         default:
-            let result = String(data: data, encoding: .utf8) ?? ""
-            let error = NSError(domain: "TestService", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: result])
-            throw .requestFailed(error: error)
+            throw .requestFailed(error: _unknownStatusError(statusCode: httpResponse.statusCode, data: data))
         }
     }
 }

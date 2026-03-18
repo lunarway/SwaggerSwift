@@ -153,15 +153,15 @@ extension APIRequest {
                 """
         }
 
-        let urlSessionMethodName: String
+        let requestDataArgument: String
         switch consumes {
         case .json:
-            urlSessionMethodName = "data(for: request)"
+            requestDataArgument = "nil"
             headerStatements.append(
                 "request.setValue(\"application/json\", forHTTPHeaderField: \"Content-Type\")"
             )
         case .formUrlEncoded, .multiPartFormData:
-            urlSessionMethodName = "upload(for: request, from: requestData as Data)"
+            requestDataArgument = "requestData"
         }
 
         let requestPart =
@@ -196,42 +196,22 @@ extension APIRequest {
                 var request = URLRequest(url: requestUrl)
                 request.httpMethod = "\(httpMethod.rawValue.uppercased())"
             \(requestPart)
-                request = interceptor?.networkWillPerformRequest(request) ?? request
 
                 let data: Data
                 let response: URLResponse
+                let httpResponse: HTTPURLResponse
                 do {
-                    (data, response) = try await urlSession().\(urlSessionMethodName)
+                    (request, data, response, httpResponse) = try await _performRequest(request: request, requestData: \(requestDataArgument))
                 } catch {
                     throw .requestFailed(error: error)
                 }
 
-                if let interceptor {
-                    do {
-                        try await interceptor.networkDidPerformRequest(
-                            urlRequest: request,
-                            urlResponse: response,
-                            data: data,
-                            error: nil
-                        )
-                    } catch {
-                        throw .requestFailed(error: error)
-                    }
-                }
-
-                guard let httpResponse = response as? HTTPURLResponse else {
-                fatalError("The response must be a URL response")
-                }
-
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .custom(dateDecodingStrategy)
+                let decoder = _makeJSONDecoder()
 
                 switch httpResponse.statusCode {
             \(responseTypes.indentLines(1))
                 default:
-                    let result = String(data: data, encoding: .utf8) ?? ""
-                    let error = NSError(domain: "\(serviceName ?? "Generic")", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: result])
-                    throw .requestFailed(error: error)
+                    throw .requestFailed(error: _unknownStatusError(statusCode: httpResponse.statusCode, data: data))
                 }
             }
 
