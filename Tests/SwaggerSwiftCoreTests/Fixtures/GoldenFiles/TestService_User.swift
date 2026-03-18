@@ -46,7 +46,7 @@ extension TestService {
             self.tags = try container.decodeIfPresent([String].self, forKey: "tags")
         }
 
-        public enum Status: Codable, Equatable, Sendable {
+        public enum Status: Decodable, Equatable, Sendable {
             case active
             case inactive
             case suspended
@@ -62,21 +62,6 @@ extension TestService {
                 case "suspended": self = .suspended
                 default:
                     self = .unknown(stringValue)
-                }
-            }
-
-
-            public func encode(to encoder: any Encoder) throws {
-                var container = encoder.singleValueContainer()
-                switch self {
-                case .active:
-                    try container.encode("active")
-                case .inactive:
-                    try container.encode("inactive")
-                case .suspended:
-                    try container.encode("suspended")
-                case .unknown(let stringValue):
-                    try container.encode(stringValue)
                 }
             }
 
