@@ -58,13 +58,19 @@ struct Model {
     }
 
     func withConformance(isEncodable: Bool, isDecodable: Bool) -> Model {
-        Model(
+        let conformance = ModelCodingConformance.from(
+            isEncodable: isEncodable,
+            isDecodable: isDecodable
+        )
+        return Model(
             description: description,
             typeName: typeName,
             fields: fields,
             inheritsFrom: inheritsFrom,
             isInternalOnly: isInternalOnly,
-            embeddedDefinitions: embeddedDefinitions,
+            embeddedDefinitions: embeddedDefinitions.map {
+                $0.withConformance(conformance)
+            },
             isEncodable: isEncodable,
             isDecodable: isDecodable
         )
@@ -90,7 +96,8 @@ struct Model {
         )
     }
 
-    func modelDefinition(serviceName: String?, accessControl: APIAccessControl, templateRenderer: TemplateRenderer) throws
+    func modelDefinition(serviceName: String?, accessControl: APIAccessControl, templateRenderer: TemplateRenderer)
+        throws
         -> String
     {
         let comment: String?

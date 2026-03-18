@@ -31,9 +31,11 @@ struct APIFactory {
             $0.resolveInheritanceTree(with: models)
         }
         let allModelDefinitions = resolvedModelDefinitions + responseModelDefinitions
+        let responseModelTypeNames = Set(responseModelDefinitions.map(\.typeName))
         let optimizedModelDefinitions = optimizeModelConformance(
             in: allModelDefinitions,
-            apiRequests: apiFunctions
+            apiRequests: apiFunctions,
+            responseModelTypeNames: responseModelTypeNames
         )
 
         let apiDefinitionFields = apiDefinitionsModelFields(swaggerFile: swaggerFile)
@@ -56,7 +58,8 @@ struct APIFactory {
 
     private func optimizeModelConformance(
         in modelDefinitions: [ModelDefinition],
-        apiRequests: [APIRequest]
+        apiRequests: [APIRequest],
+        responseModelTypeNames: Set<String>
     ) -> [ModelDefinition] {
         let availableTypeNames = Set(modelDefinitions.map(\.typeName))
 
@@ -69,10 +72,10 @@ struct APIFactory {
             in: apiRequests,
             availableTypeNames: availableTypeNames
         )
-        let responseSeedTypes = responseModelTypeNames(
+        let responseSeedTypes = self.responseModelTypeNames(
             in: apiRequests,
             availableTypeNames: availableTypeNames
-        )
+        ).union(responseModelTypeNames)
 
         let encodableModelTypes = propagatedModelTypes(
             from: requestSeedTypes,

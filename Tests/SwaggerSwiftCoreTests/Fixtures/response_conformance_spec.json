@@ -1,0 +1,134 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "ResponseConformanceService",
+    "description": "Test spec for response model conformance optimization",
+    "version": "1.0.0"
+  },
+  "host": "api.example.com",
+  "basePath": "/v1",
+  "schemes": ["https"],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "responses": {
+    "BadRequestError": {
+      "description": "Bad request error",
+      "schema": {
+        "$ref": "#/definitions/ErrorModel"
+      }
+    },
+    "InternalError": {
+      "description": "Internal server error",
+      "schema": {
+        "$ref": "#/definitions/ErrorModel"
+      }
+    }
+  },
+  "paths": {
+    "/items": {
+      "get": {
+        "operationId": "getItems",
+        "responses": {
+          "200": {
+            "description": "A list of items",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Item"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/responses/BadRequestError"
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createItem",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreateItemRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Item created",
+            "schema": {
+              "$ref": "#/definitions/Item"
+            }
+          },
+          "500": {
+            "$ref": "#/responses/InternalError"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Item": {
+      "type": "object",
+      "required": ["id", "name", "detail"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "detail": {
+          "$ref": "#/definitions/ItemDetail"
+        }
+      }
+    },
+    "ItemDetail": {
+      "type": "object",
+      "required": ["value"],
+      "properties": {
+        "value": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "CreateItemRequest": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "detail": {
+          "$ref": "#/definitions/ItemDetail"
+        }
+      }
+    },
+    "ErrorModel": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "integer"
+        },
+        "message": {
+          "type": "string"
+        },
+        "detail": {
+          "$ref": "#/definitions/ItemDetail"
+        }
+      }
+    }
+  }
+}
