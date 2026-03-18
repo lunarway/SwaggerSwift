@@ -52,6 +52,7 @@ extension TestService {
             case suspended
             case unknown(String)
 
+
             public init(from decoder: any Decoder) throws {
                 let container = try decoder.singleValueContainer()
                 let stringValue = try container.decode(String.self)
@@ -63,6 +64,7 @@ extension TestService {
                     self = .unknown(stringValue)
                 }
             }
+
 
             public func encode(to encoder: any Encoder) throws {
                 var container = encoder.singleValueContainer()
@@ -77,6 +79,7 @@ extension TestService {
                     try container.encode(stringValue)
                 }
             }
+
 
             public init(rawValue: String) {
                 switch rawValue {

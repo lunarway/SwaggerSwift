@@ -110,4 +110,3 @@ Generated/
 - OpenAPI 2.0 (Swagger) only — OpenAPI 3.x is not supported
 - No support for dictionary types (`additionalProperties` with typed values)
 - Object inheritance is flattened (fields are inlined into concrete types)
-- No support for the `deprecated` field in Swagger specs

@@ -48,6 +48,8 @@ struct Enumeration {
         self.collectionFormat = collectionFormat
     }
 
+    private static let templateRenderer = TemplateRenderer()
+
     var supportsCodableConformanceOptimization: Bool {
         isEncodable || isDecodable
     }
@@ -78,114 +80,49 @@ struct Enumeration {
         return str
     }
 
-    func modelDefinition(embeddedFile: Bool, accessControl: APIAccessControl) -> String {
+    func modelDefinition(embeddedFile _: Bool, accessControl: APIAccessControl) -> String {
         let hasRawValueSupport = isEncodable || isDecodable
 
-        let valueNames =
+        let enumCases =
             values
             .sorted(by: { $0 < $1 })
-            .map { hasRawValueSupport ? $0.camelized : $0 }
-            .map { Self.toCasename($0, hasRawValueSupport) }
+            .map { rawValue in
+                [
+                    "rawValue": rawValue,
+                    "caseName": Self.toCasename(rawValue, hasRawValueSupport),
+                ]
+            }
 
-        var cases = valueNames.map { "case \($0)" }
+        var cases = enumCases.compactMap { $0["caseName"] }
 
         var unknownName = "unknown"
-        if valueNames.contains(unknownName) {
+        if cases.contains(unknownName) {
             unknownName = "unknownCase"
         }
 
         if hasRawValueSupport {
-            cases += ["case \(unknownName)(String)"]
+            cases += ["\(unknownName)(String)"]
         }
 
-        var model = """
-            \(accessControl.rawValue) enum \(self.typeName)\(protocolConformanceSuffix) {
-            \(cases.joined(separator: "\n").indentLines(1))
-            """
-        if hasRawValueSupport {
-            let decodeCases =
-                values
-                .sorted()
-                .map { "case \"\($0)\": self = .\(Self.toCasename($0, hasRawValueSupport))" }
-                .joined(separator: "\n").indentLines(1)
+        let context: [String: Any] = [
+            "accessControl": accessControl.rawValue,
+            "typeName": typeName,
+            "protocolConformanceSuffix": protocolConformanceSuffix,
+            "cases": cases,
+            "hasRawValueSupport": hasRawValueSupport,
+            "isDecodable": isDecodable,
+            "isEncodable": isEncodable,
+            "decodeCases": enumCases,
+            "encodeCases": enumCases,
+            "unknownName": unknownName,
+        ]
 
-            if isDecodable {
-                model += """
-
-
-                    \(accessControl.rawValue) init(from decoder: any Decoder) throws {
-                        let container = try decoder.singleValueContainer()
-                        let stringValue = try container.decode(String.self)
-                        switch stringValue {
-                    \(decodeCases)
-                        default:
-                            self = .\(unknownName)(stringValue)
-                        }
-                    }
-
-                    """.indentLines(1)
-            }
-
-            if isEncodable {
-                let encodeCases = values.sorted().map {
-                    """
-                    case .\(Self.toCasename($0, hasRawValueSupport)):
-                        try container.encode("\($0)")
-                    """
-                }.joined(separator: "\n").indentLines(1)
-
-                model += """
-
-                    \(accessControl.rawValue) func encode(to encoder: any Encoder) throws {
-                        var container = encoder.singleValueContainer()
-                        switch self {
-                    \(encodeCases)
-                        case .\(unknownName)(let stringValue):
-                            try container.encode(stringValue)
-                        }
-                    }
-                    """.indentLines(1)
-            }
-
-            model += "\n"
-
-            model += """
-
-                \(accessControl.rawValue) init(rawValue: String) {
-                    switch rawValue {
-                \(decodeCases)
-                    default:
-                        self = .\(unknownName)(rawValue)
-                    }
-                }
-                """.indentLines(1)
-
-            let rawValueCases = values.sorted().map {
-                """
-                case .\(Self.toCasename($0, hasRawValueSupport)):
-                    return "\($0)"
-                """
-            }.joined(separator: "\n").indentLines(1)
-
-            model += "\n"
-
-            model += """
-
-                \(accessControl.rawValue) var rawValue: String {
-                    switch self {
-                \(rawValueCases)
-                    case .\(unknownName)(let stringValue):
-                        return stringValue
-                    }
-                }
-                """.indentLines(1)
+        do {
+            return try Self.templateRenderer.render(template: "EnumerationBody.stencil", context: context)
+                .trimmingCharacters(in: .newlines)
+        } catch {
+            fatalError("Failed to render Enumeration \(typeName): \(error)")
         }
-
-        model += "\n"
-
-        model += "}"
-
-        return model
     }
 
     private var protocolConformanceSuffix: String {
