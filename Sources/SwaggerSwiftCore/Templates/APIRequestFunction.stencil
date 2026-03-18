@@ -1,0 +1,41 @@
+{{ functionDeclaration }}({{ functionArguments }}) async throws({{ failureType }}) -> {{ successType }} {
+    let endpointUrl = await baseUrlProvider().appendingPathComponent("{{ servicePath }}")
+
+    {% if hasQueries %}var{% else %}let{% endif %} urlComponents = URLComponents(url: endpointUrl, resolvingAgainstBaseURL: true)!
+{%- if queryItemsCode %}
+    {{ queryItemsCode|indented:1 }}
+{%- else %}
+{% endif %}
+    let requestUrl = urlComponents.url!
+    var request = URLRequest(url: requestUrl)
+    request.httpMethod = "{{ httpMethod }}"
+{%- if requestPart %}
+    {{ requestPart|indented:1 }}
+{% endif %}
+
+    let data: Data
+    let response: URLResponse
+    let httpResponse: HTTPURLResponse
+    do {
+        (request, data, response, httpResponse) = try await performRequest(
+            request: request,
+            requestData: {{ requestDataArgument }},
+            urlSessionProvider: urlSession,
+            interceptor: interceptor
+        )
+    } catch {
+        throw .requestFailed(error: error)
+    }
+
+    let decoder = _makeJSONDecoder()
+{%- if decodeObjectHelper %}
+
+    {{ decodeObjectHelper|indented:1 }}
+{% endif %}
+
+    switch httpResponse.statusCode {
+    {{ responseTypesCode|indented:1 }}
+    default:
+        throw .requestFailed(error: _unknownStatusError(statusCode: httpResponse.statusCode, data: data))
+    }
+}

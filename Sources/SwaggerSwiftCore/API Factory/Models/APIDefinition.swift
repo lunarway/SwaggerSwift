@@ -14,15 +14,16 @@ struct APIDefinition {
         packagesToImport: [String],
         templateRenderer: TemplateRenderer
     ) throws -> String {
-        let apiFunctions = self.functions
+        let apiFunctions = try self.functions
             .sorted(by: { $0.functionName < $1.functionName })
             .map {
-                $0.toSwift(
+                try $0.toSwift(
                     serviceName: serviceName,
                     swaggerFile: swaggerFile,
                     embedded: false,
                     accessControl: accessControl,
-                    packagesToImport: packagesToImport
+                    packagesToImport: packagesToImport,
+                    templateRenderer: templateRenderer
                 )
             }.joined(separator: "\n")
             .trimmingCharacters(in: CharacterSet.newlines)
