@@ -9,6 +9,8 @@ struct SwaggerFile: Decodable {
     let organisation: String
     let services: [String: Service]
     let globalHeaders: [String]
+    /// Paths to exclude from code generation (e.g. ["/swagger", "/ping"])
+    let ignoredPaths: [String]
     let createSwiftPackage: Bool
     /// What is the name of the directory the files will be placed in? This is also the name as the project in the Swift Package (if created)
     let projectName: String
@@ -22,6 +24,7 @@ struct SwaggerFile: Decodable {
         case organisation
         case services
         case globalHeaders
+        case ignoredPaths
         case accessControl
         case createSwiftPackage
         case projectName
@@ -34,6 +37,7 @@ struct SwaggerFile: Decodable {
         organisation: String,
         services: [String: Service],
         globalHeaders: [String] = [],
+        ignoredPaths: [String] = [],
         createSwiftPackage: Bool = true,
         accessControl: APIAccessControl = .public,
         destination: String = "./",
@@ -44,6 +48,7 @@ struct SwaggerFile: Decodable {
         self.organisation = organisation
         self.services = services
         self.globalHeaders = globalHeaders
+        self.ignoredPaths = ignoredPaths
         self.accessControl = accessControl
         self.createSwiftPackage = createSwiftPackage
         self.destination = destination
@@ -58,6 +63,8 @@ struct SwaggerFile: Decodable {
         self.services = try container.decode([String: Service].self, forKey: .services)
         self.globalHeaders =
             (try container.decodeIfPresent([String].self, forKey: .globalHeaders)) ?? []
+        self.ignoredPaths =
+            (try container.decodeIfPresent([String].self, forKey: .ignoredPaths)) ?? []
         self.accessControl =
             try container.decodeIfPresent(APIAccessControl.self, forKey: .accessControl) ?? .public
         self.createSwiftPackage =
