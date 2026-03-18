@@ -1,0 +1,41 @@
+{{ accessControl }} enum {{ typeName }}{{ protocolConformanceSuffix }} {
+{% for enumCase in cases %}    case {{ enumCase }}
+{% endfor %}{% if hasCodable %}
+
+    {{ accessControl }} init(from decoder: any Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let stringValue = try container.decode(String.self)
+        switch stringValue {
+{% for decodeCase in decodeCases %}        case "{{ decodeCase.rawValue }}": self = .{{ decodeCase.caseName }}
+{% endfor %}        default:
+            self = .{{ unknownName }}(stringValue)
+        }
+    }
+
+    {{ accessControl }} func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+{% for encodeCase in encodeCases %}        case .{{ encodeCase.caseName }}:
+            try container.encode("{{ encodeCase.rawValue }}")
+{% endfor %}        case .{{ unknownName }}(let stringValue):
+            try container.encode(stringValue)
+        }
+    }
+
+    {{ accessControl }} init(rawValue: String) {
+        switch rawValue {
+{% for decodeCase in decodeCases %}        case "{{ decodeCase.rawValue }}": self = .{{ decodeCase.caseName }}
+{% endfor %}        default:
+            self = .{{ unknownName }}(rawValue)
+        }
+    }
+
+    {{ accessControl }} var rawValue: String {
+        switch self {
+{% for encodeCase in encodeCases %}        case .{{ encodeCase.caseName }}:
+            return "{{ encodeCase.rawValue }}"
+{% endfor %}        case .{{ unknownName }}(let stringValue):
+            return stringValue
+        }
+    }
+{% endif %}}
