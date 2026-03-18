@@ -409,6 +409,10 @@ public struct Generator {
                 .write(toFile: "\(targetPath)/\(file.output)")
         }
 
+        try requestPerformer.write(
+            toFile: "\(targetPath)/RequestPerformer.swift"
+        )
+
         if swaggerFile.createSwiftPackage == false {
             let globalHeadersDefinitions = try globalHeadersModel.writeExtensions(
                 inCommonPackageNamed: nil,

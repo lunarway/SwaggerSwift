@@ -17,33 +17,6 @@ public struct TestService: APIInitialize {
         self.interceptor = interceptor
     }
 
-    private func _performRequest(request: URLRequest, requestData: Data?) async throws -> (URLRequest, Data, URLResponse, HTTPURLResponse) {
-        let request = interceptor?.networkWillPerformRequest(request) ?? request
-
-        let data: Data
-        let response: URLResponse
-        if let requestData {
-            (data, response) = try await urlSession().upload(for: request, from: requestData)
-        } else {
-            (data, response) = try await urlSession().data(for: request)
-        }
-
-        if let interceptor {
-            try await interceptor.networkDidPerformRequest(
-                urlRequest: request,
-                urlResponse: response,
-                data: data,
-                error: nil
-            )
-        }
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            fatalError("The response must be a URL response")
-        }
-
-        return (request, data, response, httpResponse)
-    }
-
     private func _makeJSONDecoder() -> JSONDecoder {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .custom(dateDecodingStrategy)
@@ -82,7 +55,12 @@ public struct TestService: APIInitialize {
         let response: URLResponse
         let httpResponse: HTTPURLResponse
         do {
-            (request, data, response, httpResponse) = try await _performRequest(request: request, requestData: nil)
+            (request, data, response, httpResponse) = try await performRequest(
+                request: request,
+                requestData: nil,
+                urlSessionProvider: urlSession,
+                interceptor: interceptor
+            )
         } catch {
             throw .requestFailed(error: error)
         }
@@ -142,7 +120,12 @@ public struct TestService: APIInitialize {
         let response: URLResponse
         let httpResponse: HTTPURLResponse
         do {
-            (request, data, response, httpResponse) = try await _performRequest(request: request, requestData: nil)
+            (request, data, response, httpResponse) = try await performRequest(
+                request: request,
+                requestData: nil,
+                urlSessionProvider: urlSession,
+                interceptor: interceptor
+            )
         } catch {
             throw .requestFailed(error: error)
         }
@@ -198,7 +181,12 @@ public struct TestService: APIInitialize {
         let response: URLResponse
         let httpResponse: HTTPURLResponse
         do {
-            (request, data, response, httpResponse) = try await _performRequest(request: request, requestData: nil)
+            (request, data, response, httpResponse) = try await performRequest(
+                request: request,
+                requestData: nil,
+                urlSessionProvider: urlSession,
+                interceptor: interceptor
+            )
         } catch {
             throw .requestFailed(error: error)
         }
