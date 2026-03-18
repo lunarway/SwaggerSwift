@@ -11,7 +11,7 @@ public struct TestService: APIInitialize {
     ///   - urlSession: the underlying URLSession. This is an autoclosure to allow updated instances to come into this instance.
     ///   - baseUrlProvider: the block provider for the baseUrl of the service. The reason this is a block is that this enables automatically updating the network layer on backend environment change.
     ///   - interceptor: use this if you need to intercept overall requests
-    public init(urlSession: @escaping @Sendable() async -> URLSession, baseUrlProvider: @escaping @Sendable() async -> URL, interceptor: (any NetworkInterceptor)? = nil) {
+    public init(urlSession: @escaping @Sendable () async -> URLSession, baseUrlProvider: @escaping @Sendable () async -> URL, interceptor: (any NetworkInterceptor)? = nil) {
         self.urlSession = urlSession
         self.baseUrlProvider = baseUrlProvider
         self.interceptor = interceptor
