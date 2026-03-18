@@ -70,6 +70,15 @@ struct ResponseConformanceTests {
             .first(where: { $0.typeName == typeName })
     }
 
+    private func findEnumeration(_ typeName: String) -> Enumeration? {
+        modelDefinitions
+            .compactMap { def -> Enumeration? in
+                if case .enumeration(let e) = def { return e }
+                return nil
+            }
+            .first(where: { $0.typeName == typeName })
+    }
+
     // MARK: - Response-only models should be Decodable, not Codable
 
     @Test
@@ -98,6 +107,36 @@ struct ResponseConformanceTests {
         #expect(
             request.isDecodable == false,
             "CreateItemRequest is never decoded from responses, should not be Decodable"
+        )
+    }
+
+    // MARK: - Fallback Codable models propagate to dependencies
+
+    @Test
+    func fallbackCodableModelPropagatesConformanceToDependency() throws {
+        // ErrorViewModel is not directly referenced in any API request or response,
+        // so its conformance cannot be inferred and falls back to Codable.
+        // Its dependency ChallengeType (used in a response elsewhere) must also
+        // become Codable, otherwise the generated encode method on ErrorViewModel
+        // would fail to compile because ChallengeType would only be Decodable.
+        let errorViewModel = try #require(findModel("ErrorViewModel"))
+        #expect(
+            errorViewModel.isEncodable == true,
+            "ErrorViewModel falls back to Codable (not referenced in API paths)"
+        )
+        #expect(
+            errorViewModel.isDecodable == true,
+            "ErrorViewModel falls back to Codable (not referenced in API paths)"
+        )
+
+        let challengeType = try #require(findEnumeration("ChallengeType"))
+        #expect(
+            challengeType.isEncodable == true,
+            "ChallengeType must be Encodable because ErrorViewModel (Codable fallback) depends on it"
+        )
+        #expect(
+            challengeType.isDecodable == true,
+            "ChallengeType must be Decodable because it is used in a GET response"
         )
     }
 

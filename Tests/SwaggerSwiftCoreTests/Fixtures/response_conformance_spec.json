@@ -25,6 +25,19 @@
     }
   },
   "paths": {
+    "/challenge": {
+      "get": {
+        "operationId": "getChallenge",
+        "responses": {
+          "200": {
+            "description": "The challenge type",
+            "schema": {
+              "$ref": "#/definitions/ChallengeType"
+            }
+          }
+        }
+      }
+    },
     "/items": {
       "get": {
         "operationId": "getItems",
@@ -127,6 +140,22 @@
         },
         "detail": {
           "$ref": "#/definitions/ItemDetail"
+        }
+      }
+    },
+    "ChallengeType": {
+      "type": "string",
+      "enum": ["sms", "email", "push"]
+    },
+    "ErrorViewModel": {
+      "type": "object",
+      "required": ["code"],
+      "properties": {
+        "code": {
+          "type": "integer"
+        },
+        "challenge": {
+          "$ref": "#/definitions/ChallengeType"
         }
       }
     }
