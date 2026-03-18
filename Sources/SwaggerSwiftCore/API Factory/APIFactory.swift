@@ -266,7 +266,7 @@ struct APIFactory {
     ) {
         var networkRequestFunctions = [APIRequest]()
         var inlineModelDefinitions = [ModelDefinition]()
-        for swaggerPath in swagger.paths {
+        for swaggerPath in swagger.paths where !swaggerFile.ignoredPaths.contains(swaggerPath.key) {
             let (pathNetworkRequestFunctions, pathCurrentInlineDefinitions) = try apisAndModels(
                 fromPath: swaggerPath.value,
                 servicePath: swaggerPath.key,
