@@ -1,6 +1,6 @@
 {{ accessControl }} enum {{ typeName }}{{ protocolConformanceSuffix }} {
 {% for enumCase in cases %}    case {{ enumCase }}
-{% endfor %}{% if hasCodable %}
+{% endfor %}{% if isDecodable %}
 
     {{ accessControl }} init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
@@ -11,6 +11,7 @@
             self = .{{ unknownName }}(stringValue)
         }
     }
+{% endif %}{% if isEncodable %}
 
     {{ accessControl }} func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
@@ -21,6 +22,7 @@
             try container.encode(stringValue)
         }
     }
+{% endif %}{% if hasRawValueSupport %}
 
     {{ accessControl }} init(rawValue: String) {
         switch rawValue {

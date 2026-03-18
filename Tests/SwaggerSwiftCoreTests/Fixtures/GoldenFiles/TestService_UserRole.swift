@@ -20,6 +20,7 @@ extension TestService {
             }
         }
 
+
         public func encode(to encoder: any Encoder) throws {
             var container = encoder.singleValueContainer()
             switch self {
@@ -33,6 +34,7 @@ extension TestService {
                 try container.encode(stringValue)
             }
         }
+
 
         public init(rawValue: String) {
             switch rawValue {

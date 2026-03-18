@@ -1,7 +1,7 @@
 import Foundation
 
 extension TestService {
-    public struct CreateUserRequest: Codable, Sendable {
+    public struct CreateUserRequest: Encodable, Sendable {
         public let email: String
         public let name: String
         public let role: TestService.UserRole?
@@ -10,13 +10,6 @@ extension TestService {
             self.email = email
             self.name = name
             self.role = role
-        }
-
-        public init(from decoder: any Decoder) throws {
-            let container = try decoder.container(keyedBy: StringCodingKey.self)
-            self.email = try container.decode(String.self, forKey: "email")
-            self.name = try container.decode(String.self, forKey: "name")
-            self.role = try container.decodeIfPresent(TestService.UserRole.self, forKey: "role")
         }
 
         public func encode(to encoder: any Encoder) throws {

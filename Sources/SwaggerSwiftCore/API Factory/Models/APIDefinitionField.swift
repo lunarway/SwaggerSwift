@@ -12,7 +12,7 @@ struct APIDefinitionField {
     }
 
     var initProperty: String {
-        "\(name): \(typeIsAutoclosure ? "@autoclosure " : "")\(typeIsBlock ? "@escaping @Sendable" : "")\(typeName)\(isRequired ? "" : "?")\(defaultValue != nil ? " = \(defaultValue!)" : "")"
+        "\(name): \(typeIsAutoclosure ? "@autoclosure " : "")\(typeIsBlock ? "@escaping @Sendable " : "")\(typeName)\(isRequired ? "" : "?")\(defaultValue != nil ? " = \(defaultValue!)" : "")"
     }
 
     var initAssignment: String {

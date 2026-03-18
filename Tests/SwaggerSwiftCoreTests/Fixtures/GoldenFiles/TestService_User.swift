@@ -1,7 +1,7 @@
 import Foundation
 
 extension TestService {
-    public struct User: Codable, Sendable {
+    public struct User: Decodable, Sendable {
         // Avatar URL
         public let avatarUrl: URL?
         // Email address
@@ -46,18 +46,6 @@ extension TestService {
             self.tags = try container.decodeIfPresent([String].self, forKey: "tags")
         }
 
-        public func encode(to encoder: any Encoder) throws {
-            var container = encoder.container(keyedBy: StringCodingKey.self)
-            try container.encodeIfPresent(avatarUrl, forKey: "avatarUrl")
-            try container.encode(email, forKey: "email")
-            try container.encode(id, forKey: "id")
-            try container.encodeIfPresent(metadata, forKey: "metadata")
-            try container.encode(name, forKey: "name")
-            try container.encode(role, forKey: "role")
-            try container.encodeIfPresent(status, forKey: "status")
-            try container.encodeIfPresent(tags, forKey: "tags")
-        }
-
         public enum Status: Codable, Equatable, Sendable {
             case active
             case inactive
@@ -77,6 +65,7 @@ extension TestService {
                 }
             }
 
+
             public func encode(to encoder: any Encoder) throws {
                 var container = encoder.singleValueContainer()
                 switch self {
@@ -90,6 +79,7 @@ extension TestService {
                     try container.encode(stringValue)
                 }
             }
+
 
             public init(rawValue: String) {
                 switch rawValue {

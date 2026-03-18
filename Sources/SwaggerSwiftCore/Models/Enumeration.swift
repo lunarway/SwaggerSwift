@@ -7,10 +7,64 @@ struct Enumeration {
     let description: String?
     let typeName: String
     let values: [String]
-    let isCodable: Bool
+    let isEncodable: Bool
+    let isDecodable: Bool
     let collectionFormat: CollectionFormat?
 
+    init(
+        serviceName: String?,
+        description: String?,
+        typeName: String,
+        values: [String],
+        isCodable: Bool,
+        collectionFormat: CollectionFormat?
+    ) {
+        self.init(
+            serviceName: serviceName,
+            description: description,
+            typeName: typeName,
+            values: values,
+            isEncodable: isCodable,
+            isDecodable: isCodable,
+            collectionFormat: collectionFormat
+        )
+    }
+
+    init(
+        serviceName: String?,
+        description: String?,
+        typeName: String,
+        values: [String],
+        isEncodable: Bool,
+        isDecodable: Bool,
+        collectionFormat: CollectionFormat?
+    ) {
+        self.serviceName = serviceName
+        self.description = description
+        self.typeName = typeName
+        self.values = values
+        self.isEncodable = isEncodable
+        self.isDecodable = isDecodable
+        self.collectionFormat = collectionFormat
+    }
+
     private static let templateRenderer = TemplateRenderer()
+
+    var supportsCodableConformanceOptimization: Bool {
+        isEncodable || isDecodable
+    }
+
+    func withConformance(isEncodable: Bool, isDecodable: Bool) -> Enumeration {
+        Enumeration(
+            serviceName: serviceName,
+            description: description,
+            typeName: typeName,
+            values: values,
+            isEncodable: isEncodable,
+            isDecodable: isDecodable,
+            collectionFormat: collectionFormat
+        )
+    }
 
     static func toCasename(_ str: String, _ isCodable: Bool) -> String {
         let str = isCodable ? str.camelized : str
@@ -27,13 +81,15 @@ struct Enumeration {
     }
 
     func modelDefinition(embeddedFile _: Bool, accessControl: APIAccessControl) -> String {
+        let hasRawValueSupport = isEncodable || isDecodable
+
         let enumCases =
             values
             .sorted(by: { $0 < $1 })
             .map { rawValue in
                 [
                     "rawValue": rawValue,
-                    "caseName": Self.toCasename(rawValue, isCodable),
+                    "caseName": Self.toCasename(rawValue, hasRawValueSupport),
                 ]
             }
 
@@ -44,16 +100,18 @@ struct Enumeration {
             unknownName = "unknownCase"
         }
 
-        if isCodable {
+        if hasRawValueSupport {
             cases += ["\(unknownName)(String)"]
         }
 
         let context: [String: Any] = [
             "accessControl": accessControl.rawValue,
             "typeName": typeName,
-            "protocolConformanceSuffix": isCodable ? ": Codable, Equatable, Sendable" : ": Sendable",
+            "protocolConformanceSuffix": protocolConformanceSuffix,
             "cases": cases,
-            "hasCodable": isCodable,
+            "hasRawValueSupport": hasRawValueSupport,
+            "isDecodable": isDecodable,
+            "isEncodable": isEncodable,
             "decodeCases": enumCases,
             "encodeCases": enumCases,
             "unknownName": unknownName,
@@ -64,6 +122,19 @@ struct Enumeration {
                 .trimmingCharacters(in: .newlines)
         } catch {
             fatalError("Failed to render Enumeration \(typeName): \(error)")
+        }
+    }
+
+    private var protocolConformanceSuffix: String {
+        switch (isEncodable, isDecodable) {
+        case (true, true):
+            return ": Codable, Equatable, Sendable"
+        case (true, false):
+            return ": Encodable, Equatable, Sendable"
+        case (false, true):
+            return ": Decodable, Equatable, Sendable"
+        case (false, false):
+            return ": Sendable"
         }
     }
 }
