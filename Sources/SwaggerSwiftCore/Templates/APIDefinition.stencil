@@ -6,11 +6,35 @@ import {{ package }}
 // {{ description }}
 {%- endif %}
 {{ accessControl }} struct {{ serviceName }}: APIInitialize {
-    {{ properties|indented:1 }}
+{%- for field in fields %}
+    private let {{ field.name }}: {% if field.typeIsBlock %}@Sendable {% endif %}{{ field.typeName }}{% if not field.isRequired %}?{% endif %}
+{%- endfor %}
 
-    {{ initMethod|indented:1 }}
+    /// Create an instance of {{ serviceName }}
+    /// - Parameters:
+{%- for field in fields %}
+    ///   - {{ field.name }}: {{ field.description }}
+{%- endfor %}
+    {{ accessControl }} init({% for field in fields %}{{ field.name }}: {% if field.typeIsAutoclosure %}@autoclosure {% endif %}{% if field.typeIsBlock %}@escaping @Sendable {% endif %}{{ field.typeName }}{% if not field.isRequired %}?{% endif %}{% if field.defaultValue %} = {{ field.defaultValue }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}) {
+{%- for field in fields %}
+        self.{{ field.name }} = {{ field.name }}
+{%- endfor %}
+    }
 
-    {{ requestHelpers|indented:1 }}
+    private func _makeJSONDecoder() -> JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .custom(dateDecodingStrategy)
+        return decoder
+    }
+
+    private func _unknownStatusError(statusCode: Int, data: Data) -> NSError {
+        let result = String(data: data, encoding: .utf8) ?? ""
+        return NSError(
+            domain: "{{ serviceName }}",
+            code: statusCode,
+            userInfo: [NSLocalizedDescriptionKey: result]
+        )
+    }
 
     {{ apiFunctions|indented:1 }}
 }

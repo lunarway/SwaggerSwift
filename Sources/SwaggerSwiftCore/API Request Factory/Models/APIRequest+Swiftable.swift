@@ -19,11 +19,18 @@ extension APIRequest {
         }.joined(separator: ", ")
     }
 
-    private func makeRequestFunction(
+    private var forwardedArguments: String {
+        parameters.map {
+            let name = $0.name.variableNameFormatted
+            return "\(name): \(name)"
+        }.joined(separator: ", ")
+    }
+
+    private func makeRequestFunctionContext(
         serviceName: String?,
         swaggerFile: SwaggerFile,
         accessControl: String
-    ) -> String {
+    ) -> [String: Any] {
         let servicePath = self.servicePath.split(separator: "/")
             .map {
                 let path = String($0)
@@ -169,8 +176,6 @@ extension APIRequest {
             + headerStatements.joined(separator: "\n").addNewlinesIfNonEmpty(2)
             + bodyInjection.addNewlinesIfNonEmpty(2))
             .trimmingCharacters(in: .whitespacesAndNewlines)
-            .indentLines(1)
-            .addNewlinesIfNonEmpty()
 
         let responseTypes = self.responseTypes
             .map {
@@ -190,10 +195,11 @@ extension APIRequest {
             }
         }
 
+        let failureType = returnType.failureType.toString(required: true)
         let decodeObjectHelper =
             hasDecodableObjectResponse
             ? """
-            func _decodeObject<T: Decodable>(_ type: T.Type) throws(\(returnType.failureType.toString(required: true))) -> T {
+            func _decodeObject<T: Decodable>(_ type: T.Type) throws(\(failureType)) -> T {
                 do {
                     return try decoder.decode(T.self, from: data)
                 } catch let error {
@@ -203,7 +209,7 @@ extension APIRequest {
                         data: data,
                         error: error
                     )
-                    throw \(returnType.failureType.toString(required: true)).requestFailed(error: error)
+                    throw \(failureType).requestFailed(error: error)
                 }
             }
             """
@@ -215,43 +221,24 @@ extension APIRequest {
             functionDeclaration = "\(accessControl) func \(functionName)"
         }
 
-        return """
-            \(functionDeclaration)(\(functionArguments)) async throws(\(returnType.failureType.toString(required: true))) -> \(returnType.successType.toString(required: true)) {
-                let endpointUrl = await baseUrlProvider().appendingPathComponent("\(servicePath)")
+        var context: [String: Any] = [
+            "functionDeclaration": functionDeclaration,
+            "functionArguments": functionArguments,
+            "failureType": failureType,
+            "successType": returnType.successType.toString(required: true),
+            "servicePath": servicePath,
+            "hasQueries": !queries.isEmpty,
+            "httpMethod": httpMethod.rawValue.uppercased(),
+            "requestDataArgument": requestDataArgument,
+            "responseTypesCode": responseTypes,
+        ]
 
-                \(queries.count > 0 ? "var" : "let") urlComponents = URLComponents(url: endpointUrl, resolvingAgainstBaseURL: true)!
-            \(queries.toQueryItems().indentLines(1))
-                let requestUrl = urlComponents.url!
-                var request = URLRequest(url: requestUrl)
-                request.httpMethod = "\(httpMethod.rawValue.uppercased())"
-            \(requestPart)
+        let queryItemsCode = queries.toQueryItems()
+        if !queryItemsCode.isEmpty { context["queryItemsCode"] = queryItemsCode }
+        if !requestPart.isEmpty { context["requestPart"] = requestPart }
+        if !decodeObjectHelper.isEmpty { context["decodeObjectHelper"] = decodeObjectHelper }
 
-                let data: Data
-                let response: URLResponse
-                let httpResponse: HTTPURLResponse
-                do {
-                    (request, data, response, httpResponse) = try await performRequest(
-                        request: request,
-                        requestData: \(requestDataArgument),
-                        urlSessionProvider: urlSession,
-                        interceptor: interceptor
-                    )
-                } catch {
-                    throw .requestFailed(error: error)
-                }
-
-                let decoder = _makeJSONDecoder()
-
-            \(decodeObjectHelper.indentLines(1).addNewlinesIfNonEmpty())
-
-                switch httpResponse.statusCode {
-            \(responseTypes.indentLines(1))
-                default:
-                    throw .requestFailed(error: _unknownStatusError(statusCode: httpResponse.statusCode, data: data))
-                }
-            }
-
-            """
+        return context
     }
 
     func toSwift(
@@ -259,8 +246,20 @@ extension APIRequest {
         swaggerFile: SwaggerFile,
         embedded: Bool,
         accessControl: String,
-        packagesToImport: [String]
-    ) -> String {
+        packagesToImport: [String],
+        templateRenderer: TemplateRenderer
+    ) throws -> String {
+        let requestFunctionContext = makeRequestFunctionContext(
+            serviceName: serviceName,
+            swaggerFile: swaggerFile,
+            accessControl: accessControl
+        )
+
+        let requestFunction = try templateRenderer.render(
+            template: "APIRequestFunction.stencil",
+            context: requestFunctionContext
+        ).trimmingCharacters(in: .newlines)
+
         var documentation = """
             \(description?.documentationFormat() ?? "/// No description provided")
             /// - Endpoint: `\(self.httpMethod.rawValue.uppercased()) \(self.servicePath)`
@@ -274,95 +273,32 @@ extension APIRequest {
                 """
         }
 
-        var body: String = ""
+        let failureType = returnType.failureType.toString(required: true)
+        let successType = returnType.successType.toString(required: true)
 
-        if isInternalOnly {
-            body += "#if DEBUG\n"
-        }
+        var context: [String: Any] = [
+            "documentation": documentation,
+            "requestFunction": requestFunction,
+            "isInternalOnly": isInternalOnly,
+            "isDeprecated": isDeprecated,
+            "renderWrappers": !swaggerFile.onlyAsync,
+            "functionName": functionName,
+            "functionArguments": functionArguments,
+            "forwardedArguments": forwardedArguments,
+            "successType": successType,
+            "failureType": failureType,
+            "accessControl": accessControl,
+            "returnsVoid": successType == "Void",
+        ]
 
-        if isDeprecated {
-            body += "\n"
-            body += "@available(*, deprecated)\n"
-        }
+        // Only set if true to simplify Stencil conditionals
+        if !isInternalOnly { context.removeValue(forKey: "isInternalOnly") }
+        if !isDeprecated { context.removeValue(forKey: "isDeprecated") }
 
-        body += documentation + "\n"
-
-        body += makeRequestFunction(
-            serviceName: serviceName,
-            swaggerFile: swaggerFile,
-            accessControl: accessControl
+        return try templateRenderer.render(
+            template: "APIRequest.stencil",
+            context: context
         )
-
-        if swaggerFile.onlyAsync == false {
-            if isDeprecated {
-                body += "\n"
-                body += "@available(*, deprecated)\n"
-            }
-
-            body += documentation
-
-            body += "\n"
-
-            body += """
-                        \(accessControl) func \(functionName)(\(functionArguments)\(functionArguments.isEmpty ? "" : ", ")completion: @Sendable @escaping (Result<\(returnType.successType.toString(required: true)), \(returnType.failureType.toString(required: true))>) -> Void = { _ in }) {
-                            _Concurrency.Task {
-                                do {
-
-                """
-
-            if returnType.successType.toString(required: true) == "Void" {
-                body += """
-                                try await _\(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ", ")))
-                                completion(.success(()))
-
-                    """
-            } else {
-                body += """
-                                let result = try await _\(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ", ")))
-                                completion(.success(result))
-
-                    """
-            }
-
-            body += """
-                        } catch let error {
-                            let error = error as! \(returnType.failureType.toString(required: true)) 
-                            completion(.failure(error))
-                        }
-                    }
-                }
-
-                """
-        }
-
-        if swaggerFile.onlyAsync == false {
-            if isDeprecated {
-                body += "\n"
-                body += "@available(*, deprecated)\n"
-            }
-
-            body += documentation
-
-            body += "\n"
-
-            if returnType.successType.toString(required: true) != "Void" {
-                body += "@discardableResult\n"
-            }
-
-            body +=
-                """
-                \(accessControl) func \(functionName)(\(functionArguments)) async throws(\(returnType.failureType.toString(required: true))) -> \(returnType.successType.toString(required: true)) {
-                    try await _\(functionName)(\(parameters.map { "\($0.name.variableNameFormatted): \($0.name.variableNameFormatted)" }.joined(separator: ", ")))
-                }
-
-                """
-        }
-
-        if isInternalOnly {
-            body += "#endif\n"
-        }
-
-        return body
     }
 }
 
