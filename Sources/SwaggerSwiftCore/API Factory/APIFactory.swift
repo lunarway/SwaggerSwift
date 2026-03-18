@@ -77,14 +77,35 @@ struct APIFactory {
             availableTypeNames: availableTypeNames
         ).union(responseModelTypeNames)
 
-        let encodableModelTypes = propagatedModelTypes(
+        var encodableModelTypes = propagatedModelTypes(
             from: requestSeedTypes,
             dependencyMap: dependencyMap
         )
-        let decodableModelTypes = propagatedModelTypes(
+        var decodableModelTypes = propagatedModelTypes(
             from: responseSeedTypes,
             dependencyMap: dependencyMap
         )
+
+        // Models whose direction cannot be inferred fall back to Codable.
+        // Their dependencies must also be treated as both Encodable and Decodable
+        // so that the generated encode/decode methods compile.
+        var fallbackCodableSeeds = Set<String>()
+        for definition in modelDefinitions where definition.supportsCodableConformanceOptimization {
+            let isEncodable = encodableModelTypes.contains(definition.typeName)
+            let isDecodable = decodableModelTypes.contains(definition.typeName)
+            if !isEncodable && !isDecodable {
+                fallbackCodableSeeds.insert(definition.typeName)
+            }
+        }
+
+        if !fallbackCodableSeeds.isEmpty {
+            let propagatedFromFallback = propagatedModelTypes(
+                from: fallbackCodableSeeds,
+                dependencyMap: dependencyMap
+            )
+            encodableModelTypes.formUnion(propagatedFromFallback)
+            decodableModelTypes.formUnion(propagatedFromFallback)
+        }
 
         return modelDefinitions.map { definition in
             guard definition.supportsCodableConformanceOptimization else {

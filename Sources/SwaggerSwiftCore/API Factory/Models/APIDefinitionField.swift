@@ -7,15 +7,16 @@ struct APIDefinitionField {
     let typeIsBlock: Bool
     let defaultValue: String?
 
-    var documentationString: String {
-        "///   - \(name): \(description ?? "")"
-    }
-
-    var initProperty: String {
-        "\(name): \(typeIsAutoclosure ? "@autoclosure " : "")\(typeIsBlock ? "@escaping @Sendable " : "")\(typeName)\(isRequired ? "" : "?")\(defaultValue != nil ? " = \(defaultValue!)" : "")"
-    }
-
-    var initAssignment: String {
-        "self.\(name) = \(name)"
+    var templateContext: [String: Any] {
+        var context: [String: Any] = [
+            "name": name,
+            "typeName": typeName,
+            "isRequired": isRequired,
+            "typeIsAutoclosure": typeIsAutoclosure,
+            "typeIsBlock": typeIsBlock,
+        ]
+        if let description { context["description"] = description }
+        if let defaultValue { context["defaultValue"] = defaultValue }
+        return context
     }
 }

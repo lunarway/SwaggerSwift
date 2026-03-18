@@ -1,0 +1,43 @@
+{%- if isInternalOnly %}#if DEBUG
+{% endif -%}
+{%- if isDeprecated %}
+@available(*, deprecated)
+{% endif -%}
+{{ documentation }}
+{{ requestFunction }}
+{%- if renderWrappers %}
+{% if isDeprecated %}
+@available(*, deprecated)
+{% endif -%}
+{{ documentation }}
+{{ accessControl }} func {{ functionName }}({{ functionArguments }}{% if functionArguments %}, {% endif %}completion: @Sendable @escaping (Result<{{ successType }}, {{ failureType }}>) -> Void = { _ in }) {
+    _Concurrency.Task {
+        do {
+{% if returnsVoid -%}
+            try await _{{ functionName }}({{ forwardedArguments }})
+            completion(.success(()))
+{% else -%}
+            let result = try await _{{ functionName }}({{ forwardedArguments }})
+            completion(.success(result))
+{% endif -%}
+        } catch let error {
+            let error = error as! {{ failureType }} 
+            completion(.failure(error))
+        }
+    }
+}
+
+{% if isDeprecated %}
+@available(*, deprecated)
+{% endif -%}
+{{ documentation }}
+{% if not returnsVoid -%}
+@discardableResult
+{% endif -%}
+{{ accessControl }} func {{ functionName }}({{ functionArguments }}) async throws({{ failureType }}) -> {{ successType }} {
+    try await _{{ functionName }}({{ forwardedArguments }})
+}
+{% endif -%}
+{%- if isInternalOnly %}
+#endif
+{% endif %}

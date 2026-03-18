@@ -14,48 +14,16 @@ struct APIDefinition {
         packagesToImport: [String],
         templateRenderer: TemplateRenderer
     ) throws -> String {
-        let initMethod = """
-            /// Create an instance of \(serviceName)
-            /// - Parameters:
-            \(fields.map { $0.documentationString }.joined(separator: "\n"))
-            \(accessControl) init(\(fields.map { $0.initProperty }.joined(separator: ", "))) {
-            \(fields.map { $0.initAssignment }.joined(separator: "\n").indentLines(1))
-            }
-            """
-
-        let requestHelpers = """
-            private func _makeJSONDecoder() -> JSONDecoder {
-                let decoder = JSONDecoder()
-                decoder.dateDecodingStrategy = .custom(dateDecodingStrategy)
-                return decoder
-            }
-
-            private func _unknownStatusError(statusCode: Int, data: Data) -> NSError {
-                let result = String(data: data, encoding: .utf8) ?? ""
-                return NSError(
-                    domain: "\(serviceName)",
-                    code: statusCode,
-                    userInfo: [NSLocalizedDescriptionKey: result]
-                )
-            }
-            """
-
-        let properties =
-            fields
-            .map {
-                "private let \($0.name): \($0.typeIsBlock ? "@Sendable " : "")\($0.typeName)\($0.isRequired ? "" : "?")"
-            }
-            .joined(separator: "\n")
-
-        let apiFunctions = self.functions
+        let apiFunctions = try self.functions
             .sorted(by: { $0.functionName < $1.functionName })
             .map {
-                $0.toSwift(
+                try $0.toSwift(
                     serviceName: serviceName,
                     swaggerFile: swaggerFile,
                     embedded: false,
                     accessControl: accessControl,
-                    packagesToImport: packagesToImport
+                    packagesToImport: packagesToImport,
+                    templateRenderer: templateRenderer
                 )
             }.joined(separator: "\n")
             .trimmingCharacters(in: CharacterSet.newlines)
@@ -64,9 +32,7 @@ struct APIDefinition {
             "serviceName": serviceName,
             "accessControl": accessControl,
             "packagesToImport": packagesToImport,
-            "properties": properties,
-            "initMethod": initMethod,
-            "requestHelpers": requestHelpers,
+            "fields": fields.map(\.templateContext),
             "apiFunctions": apiFunctions,
         ]
         if let description { context["description"] = description }
