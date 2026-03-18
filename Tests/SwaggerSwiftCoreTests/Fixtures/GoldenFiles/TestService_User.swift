@@ -64,6 +64,7 @@ extension TestService {
             case suspended
             case unknown(String)
 
+
             public init(from decoder: any Decoder) throws {
                 let container = try decoder.singleValueContainer()
                 let stringValue = try container.decode(String.self)
