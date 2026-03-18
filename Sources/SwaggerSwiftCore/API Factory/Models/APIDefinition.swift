@@ -24,7 +24,7 @@ struct APIDefinition {
             """
 
         let requestHelpers = """
-            private func _performRequest(request: URLRequest, requestData: Data?) async throws -> (Data, URLResponse, HTTPURLResponse) {
+            private func _performRequest(request: URLRequest, requestData: Data?) async throws -> (URLRequest, Data, URLResponse, HTTPURLResponse) {
                 let request = interceptor?.networkWillPerformRequest(request) ?? request
 
                 let data: Data
@@ -48,7 +48,7 @@ struct APIDefinition {
                     fatalError("The response must be a URL response")
                 }
 
-                return (data, response, httpResponse)
+                return (request, data, response, httpResponse)
             }
 
             private func _makeJSONDecoder() -> JSONDecoder {
