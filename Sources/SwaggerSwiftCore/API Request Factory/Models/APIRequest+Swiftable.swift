@@ -201,7 +201,7 @@ extension APIRequest {
                 let response: URLResponse
                 let httpResponse: HTTPURLResponse
                 do {
-                    (data, response, httpResponse) = try await performRequest(
+                    (request, data, response, httpResponse) = try await performRequest(
                         request: request,
                         requestData: \(requestDataArgument),
                         urlSessionProvider: urlSession,
