@@ -1,8 +1,16 @@
 import Foundation
 import SwaggerSwiftML
 
-struct NotFound: Error {
+struct NotFound: Error, LocalizedError {
     let reference: String
+
+    var errorDescription: String? {
+        "Swagger reference '\(reference)' not found"
+    }
+
+    var localizedDescription: String {
+        "Swagger reference '\(reference)' not found"
+    }
 }
 
 extension Swagger {

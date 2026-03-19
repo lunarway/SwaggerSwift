@@ -3,7 +3,7 @@ import SwaggerSwiftML
 import Yams
 
 struct SwaggerFileParser {
-    static func parse(at path: String, fileManager: FileManager) throws -> SwaggerFile {
+    static func parse(at path: String, fileManager: FileManager = .default) throws -> SwaggerFile {
         guard fileManager.fileExists(atPath: path) else {
             throw NSError(
                 domain: "SwaggerFileParser",
