@@ -157,6 +157,8 @@ extension APIRequest {
                 if let endBoundaryData = "--\\(boundary)--".data(using: .utf8) {
                     requestData.append(endBoundaryData)
                 }
+                
+                request.httpBody = requestData
                 """
         }
 
