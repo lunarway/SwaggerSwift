@@ -217,4 +217,77 @@ public struct TestService: APIInitialize {
             throw .requestFailed(error: _unknownStatusError(statusCode: httpResponse.statusCode, data: data))
         }
     }
+
+    /// No description provided
+    /// - Endpoint: `POST /users/login`
+    /// - Parameters:
+    ///   - username: The username
+    ///   - password: The password
+    public func loginUser(username: String, password: String) async throws(ServiceError<ErrorResponse>) -> User {
+        let endpointUrl = await baseUrlProvider().appendingPathComponent("users/login")
+
+        let urlComponents = URLComponents(url: endpointUrl, resolvingAgainstBaseURL: true)!
+
+        let requestUrl = urlComponents.url!
+        var request = URLRequest(url: requestUrl)
+        request.httpMethod = "POST"
+        let boundary = "Boundary-\(UUID().uuidString)"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+        var requestData = Data()
+        if let data = username.data(using: .utf8) {
+            requestData.append(FormData(data: data).toRequestData(named: "username", using: boundary))
+        }
+
+        if let data = password.data(using: .utf8) {
+            requestData.append(FormData(data: data).toRequestData(named: "password", using: boundary))
+        }
+
+        if let endBoundaryData = "--\(boundary)--".data(using: .utf8) {
+            requestData.append(endBoundaryData)
+        }
+
+        request.httpBody = requestData
+
+
+        let data: Data
+        let response: URLResponse
+        let httpResponse: HTTPURLResponse
+        do {
+            (request, data, response, httpResponse) = try await performRequest(
+                request: request,
+                requestData: requestData,
+                urlSessionProvider: urlSession,
+                interceptor: interceptor
+            )
+        } catch {
+            throw .requestFailed(error: error)
+        }
+
+        let decoder = _makeJSONDecoder()
+
+        func _decodeObject<T: Decodable>(_ type: T.Type) throws(ServiceError<ErrorResponse>) -> T {
+            do {
+                return try decoder.decode(T.self, from: data)
+            } catch let error {
+                interceptor?.networkFailedToParseObject(
+                    urlRequest: request,
+                    urlResponse: response,
+                    data: data,
+                    error: error
+                )
+                throw ServiceError<ErrorResponse>.requestFailed(error: error)
+            }
+        }
+
+
+        switch httpResponse.statusCode {
+        case 200:
+            return try _decodeObject(User.self)
+        case 401:
+            throw ServiceError<ErrorResponse>.backendError(error: try _decodeObject(ErrorResponse.self))
+        default:
+            throw .requestFailed(error: _unknownStatusError(statusCode: httpResponse.statusCode, data: data))
+        }
+    }
 }

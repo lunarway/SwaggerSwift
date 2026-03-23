@@ -78,6 +78,43 @@
         }
       }
     },
+    "/users/login": {
+      "post": {
+        "operationId": "loginUser",
+        "summary": "Login with form data",
+        "consumes": ["multipart/form-data"],
+        "parameters": [
+          {
+            "name": "username",
+            "in": "formData",
+            "type": "string",
+            "required": true,
+            "description": "The username"
+          },
+          {
+            "name": "password",
+            "in": "formData",
+            "type": "string",
+            "required": true,
+            "description": "The password"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
     "/users/{userId}": {
       "get": {
         "operationId": "getUser",
