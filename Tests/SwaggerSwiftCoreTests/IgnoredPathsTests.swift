@@ -60,7 +60,7 @@ struct IgnoredPathsTests {
     func noIgnoredPathsGeneratesAllEndpoints() throws {
         let api = try generateAPI(ignoredPaths: [])
         let functionNames = api.functions.map(\.functionName).sorted()
-        #expect(functionNames == ["createUser", "getUser", "getUsers"])
+        #expect(functionNames == ["createUser", "getUser", "getUsers", "loginUser"])
     }
 
     @Test
@@ -68,19 +68,19 @@ struct IgnoredPathsTests {
         // /users has both GET and POST — ignoring it should remove both
         let api = try generateAPI(ignoredPaths: ["/users"])
         let functionNames = api.functions.map(\.functionName).sorted()
-        #expect(functionNames == ["getUser"])
+        #expect(functionNames == ["getUser", "loginUser"])
     }
 
     @Test
     func ignoredPathDoesNotAffectOtherPaths() throws {
         let api = try generateAPI(ignoredPaths: ["/users/{userId}"])
         let functionNames = api.functions.map(\.functionName).sorted()
-        #expect(functionNames == ["createUser", "getUsers"])
+        #expect(functionNames == ["createUser", "getUsers", "loginUser"])
     }
 
     @Test
     func multipleIgnoredPathsAreAllExcluded() throws {
-        let api = try generateAPI(ignoredPaths: ["/users", "/users/{userId}"])
+        let api = try generateAPI(ignoredPaths: ["/users", "/users/{userId}", "/users/login"])
         #expect(api.functions.isEmpty)
     }
 }
