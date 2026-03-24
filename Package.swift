@@ -21,6 +21,9 @@ let package = Package(
             ]
         ),
         .target(
+            name: "SwaggerSwiftIR"
+        ),
+        .target(
             name: "SwaggerSwiftML",
             dependencies: [
                 .product(name: "Yams", package: "Yams")
