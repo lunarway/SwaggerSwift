@@ -14,7 +14,7 @@ struct SwaggerSwiftParser: AsyncParsableCommand {
     var verbose: Bool = false
 
     @Option(name: .shortAndLong, help: "GitHub token (or set GITHUB_TOKEN env var)")
-    var gitHubToken: String?
+    var githubToken: String?
 
     @Option(
         name: .shortAndLong,
@@ -26,7 +26,7 @@ struct SwaggerSwiftParser: AsyncParsableCommand {
     var apiList: [String]?
 
     mutating func run() async throws {
-        guard let token = gitHubToken ?? ProcessInfo.processInfo.environment["GITHUB_TOKEN"] else {
+        guard let token = githubToken ?? ProcessInfo.processInfo.environment["GITHUB_TOKEN"] else {
             throw ValidationError(
                 "GitHub token must be provided via --git-hub-token or GITHUB_TOKEN environment variable"
             )
@@ -42,10 +42,12 @@ struct SwaggerSwiftParser: AsyncParsableCommand {
             requestParameterFactory: requestParameterFactory,
             modelTypeResolver: modelTypeResolver
         )
+        
         let swaggerParser = SwaggerSwiftCore.Generator(
             apiRequestFactory: apiRequestFactory,
             modelTypeResolver: modelTypeResolver
         )
+
         try await swaggerParser.parse(
             swaggerFilePath: swaggerFilePath,
             githubToken: token,

@@ -22,14 +22,25 @@ public struct Generator {
     ]
 
     /// Find a SwaggerFile in the current directory by checking known filenames.
-    private static func findSwaggerFile(fileManager: FileManager) -> String {
+    private static func findSwaggerFile(directory: String?) -> String? {
+        guard let directory else { return nil }
+
+        FileManager.default.changeCurrentDirectoryPath(directory)
+
         for candidate in swaggerFileCandidates {
-            let path = "./\(candidate)"
-            if fileManager.fileExists(atPath: path) {
+            let path = "\(directory)/\(candidate)"
+
+            log("looking for SwaggerFile at: \(path)", error: false)
+
+            if FileManager.default.fileExists(atPath: path) {
                 return path
+            } else {
+                log("Did not find SwaggerFile at \(path)", error: false)
             }
         }
-        return "./\(swaggerFileCandidates[0])"
+
+        log("Failed to find SwaggerFile", error: true)
+        return nil
     }
 
     /// Parse and generate the network layer for a SwaggerFile
@@ -50,14 +61,13 @@ public struct Generator {
     ) async throws {
         isVerboseMode = verbose
 
-        let fileManager = FileManager.default
-
-        let swaggerFilePath = swaggerFilePath ?? Self.findSwaggerFile(fileManager: fileManager)
+        guard let swaggerFilePath = Self.findSwaggerFile(directory: swaggerFilePath) else {
+            throw SwaggerError.fileNotFound
+        }
 
         log("Parsing SwaggerFile at: \(swaggerFilePath)")
         let swaggerFile = try SwaggerFileParser.parse(
-            at: swaggerFilePath,
-            fileManager: fileManager
+            at: swaggerFilePath
         )
 
         let accessControl = swaggerFile.accessControl
@@ -78,15 +88,17 @@ public struct Generator {
             modelTypeResolver: modelTypeResolver
         )
 
-        for service in services {
+        for (name, service) in services {
+            log("Fetching service: \(name)")
+            let swagger: Swagger
+
             do {
-                let swaggerPath = service.value.path ?? swaggerFile.path
-                let swagger: Swagger
+                let swaggerPath = service.path ?? swaggerFile.path
 
                 // Check if the swagger path is a local file relative to the SwaggerFile
                 let swaggerFileDir = URL(fileURLWithPath: swaggerFilePath).deletingLastPathComponent()
                 let localPath = swaggerFileDir.appendingPathComponent(swaggerPath).path
-                if fileManager.fileExists(atPath: localPath) {
+                if FileManager.default.fileExists(atPath: localPath) {
                     log("Reading local Swagger file at: \(localPath)")
                     let contents = try String(contentsOfFile: localPath, encoding: .utf8)
                     swagger = try SwaggerReader.read(text: contents)
@@ -94,18 +106,11 @@ public struct Generator {
                     swagger = try await downloadSwagger(
                         githubToken: githubToken,
                         organisation: swaggerFile.organisation,
-                        serviceName: service.key,
-                        branch: service.value.branch ?? "master",
+                        serviceName: name,
+                        branch: service.branch ?? "master",
                         swaggerPath: swaggerPath
                     )
                 }
-
-                let apiSpec = try apiFactory.generate(
-                    for: swagger,
-                    withSwaggerFile: swaggerFile
-                )
-
-                apiSpecs.append(apiSpec)
             } catch {
                 if let error = error as? FetchSwaggerError {
                     error.logError()
@@ -125,6 +130,20 @@ public struct Generator {
                 } else {
                     log("Failed to download Swagger: \(error.localizedDescription)", error: true)
                 }
+
+                return
+            }
+
+            do {
+                let apiSpec = try apiFactory.generate(
+                    for: swagger,
+                    withSwaggerFile: swaggerFile
+                )
+
+                apiSpecs.append(apiSpec)
+            } catch {
+                log("Invalid Swagger for service: \(name). Error: \(error.localizedDescription)", error: true)
+                return
             }
         }
 
@@ -140,7 +159,7 @@ public struct Generator {
             let projectRoot = "\(destination)/\(swaggerFile.projectName)"
             let swiftPackageSourcesDirectory = "\(projectRoot)/Sources"
 
-            try fileManager.createDirectory(
+            try FileManager.default.createDirectory(
                 atPath: destination,
                 withIntermediateDirectories: true,
                 attributes: nil
@@ -155,7 +174,7 @@ public struct Generator {
                     commonLibraryName: commonLibraryName,
                     accessControl: accessControl,
                     globalHeadersModel: globalHeadersModel,
-                    fileManager: fileManager,
+                    fileManager: FileManager.default,
                     dummyMode: dummyMode
                 )
             }
@@ -173,12 +192,12 @@ public struct Generator {
                 swaggerFile: swaggerFile,
                 accessControl: .public,  // this needs to be public for the other files to see it
                 globalHeadersModel: globalHeadersModel,
-                fileManager: fileManager
+                fileManager: FileManager.default
             )
         } else {
             let rootDir = "\(destination)/\(swaggerFile.projectName)"
 
-            try fileManager.createDirectory(
+            try FileManager.default.createDirectory(
                 atPath: rootDir,
                 withIntermediateDirectories: true,
                 attributes: nil
@@ -193,7 +212,7 @@ public struct Generator {
                     commonLibraryName: nil,
                     accessControl: accessControl,
                     globalHeadersModel: globalHeadersModel,
-                    fileManager: fileManager,
+                    fileManager: FileManager.default,
                     dummyMode: dummyMode
                 )
             }
@@ -204,7 +223,7 @@ public struct Generator {
                 swaggerFile: swaggerFile,
                 accessControl: accessControl,
                 globalHeadersModel: globalHeadersModel,
-                fileManager: fileManager
+                fileManager: FileManager.default
             )
         }
     }
