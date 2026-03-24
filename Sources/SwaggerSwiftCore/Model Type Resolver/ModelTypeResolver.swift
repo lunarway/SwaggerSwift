@@ -117,7 +117,7 @@ public struct ModelTypeResolver {
                 )
             }
         case .file:
-            return .init(.void)
+            return .init(.object(typeName: "Data"))
         case .freeform:
             return .init(
                 .object(typeName: "[String: AdditionalProperty]"),

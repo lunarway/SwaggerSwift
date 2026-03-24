@@ -280,6 +280,7 @@ extension Model {
             "isInternalOnly": isInternalOnly,
             "modelBody": modelBody,
         ]
+
         if let serviceName { context["serviceName"] = serviceName }
 
         return try templateRenderer.render(template: "Model.stencil", context: context)

@@ -51,21 +51,23 @@ public struct APIRequestFactory {
 
             guard let requestResponse = $0.value else { return nil }
 
-            if let (responseType, embeddedDefinitions) = try parseResponse(
-                request: requestResponse,
-                httpMethod: httpMethod,
-                servicePath: servicePath,
-                statusCode: statusCodeString,
-                swagger: swagger,
-                modelTypeResolver: modelTypeResolver
-            ) {
-                return .init(
+            return
+                if let (responseType, embeddedDefinitions) = try parseResponse(
+                    request: requestResponse,
+                    httpMethod: httpMethod,
+                    servicePath: servicePath,
+                    statusCode: statusCodeString,
+                    swagger: swagger,
+                    modelTypeResolver: modelTypeResolver
+                )
+            {
+                Response(
                     statusCode: statusCode,
                     responseType: responseType,
                     inlineModels: embeddedDefinitions
                 )
             } else {
-                return nil
+                nil
             }
         }
 
@@ -212,6 +214,7 @@ public struct APIRequestFactory {
                     namespace: swagger.serviceName,
                     swagger: swagger
                 )
+
                 return (resolvedType.propertyType, resolvedType.inlineModelDefinitions)
             case .reference(let ref):
                 let schema = try swagger.findSchema(reference: ref)

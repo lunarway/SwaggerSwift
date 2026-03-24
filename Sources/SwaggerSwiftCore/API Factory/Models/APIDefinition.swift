@@ -35,6 +35,7 @@ struct APIDefinition {
             "fields": fields.map(\.templateContext),
             "apiFunctions": apiFunctions,
         ]
+
         if let description { context["description"] = description }
 
         return try templateRenderer.render(template: "APIDefinition.stencil", context: context)
