@@ -101,7 +101,7 @@ extension ModelDefinition {
     ) throws -> String {
         switch self {
         case .enumeration(let enumeration):
-            return try enumeration.toSwift(
+            try enumeration.toSwift(
                 serviceName: serviceName,
                 embedded: embedded,
                 accessControl: accessControl,
@@ -109,7 +109,7 @@ extension ModelDefinition {
                 templateRenderer: templateRenderer
             )
         case .object(let model):
-            return try model.toSwift(
+            try model.toSwift(
                 serviceName: serviceName,
                 embedded: embedded,
                 accessControl: accessControl,
@@ -117,7 +117,7 @@ extension ModelDefinition {
                 templateRenderer: templateRenderer
             )
         case .array(let model):
-            return try model.toSwift(
+            try model.toSwift(
                 serviceName: serviceName,
                 embedded: embedded,
                 accessControl: accessControl,
@@ -125,7 +125,7 @@ extension ModelDefinition {
                 templateRenderer: templateRenderer
             )
         case .typeAlias(let model):
-            return try model.toSwift(
+            try model.toSwift(
                 serviceName: serviceName,
                 embedded: embedded,
                 accessControl: accessControl,

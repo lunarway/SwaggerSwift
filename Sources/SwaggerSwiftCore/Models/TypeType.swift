@@ -29,33 +29,34 @@ indirect enum TypeType {
     case typeAlias(typeName: String, type: TypeType)
 
     func toString(required: Bool) -> String {
-        return { obj -> String in
-            switch obj {
+        let typeName =
+            switch self {
             case .string:
-                return "String"
+                "String"
             case .int:
-                return "Int"
+                "Int"
             case .double:
-                return "Double"
+                "Double"
             case .array(let typeName):
-                return "[\(typeName.toString(required: true))]"
+                "[\(typeName.toString(required: true))]"
             case .object(let typeName):
-                return typeName
+                typeName
             case .void:
-                return "Void"
+                "Void"
             case .boolean:
-                return "Bool"
+                "Bool"
             case .float:
-                return "Float"
+                "Float"
             case .int64:
-                return "Int64"
+                "Int64"
             case .date:
-                return "Date"
+                "Date"
             case .enumeration(let typeName):
-                return typeName
+                typeName
             case .typeAlias(let typeName, _):
-                return typeName
+                typeName
             }
-        }(self) + (required ? "" : "?")
+
+        return typeName + (required ? "" : "?")
     }
 }
